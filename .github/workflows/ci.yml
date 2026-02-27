@@ -1,0 +1,278 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch to save runner minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+  # uv installs into a .venv inside the project directory so we can cache it.
+  UV_PROJECT_ENVIRONMENT: ".venv"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Python linting (api + bot share one job to keep things DRY)
+  # ---------------------------------------------------------------------------
+  lint-python:
+    name: Lint Python (api + bot)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # Install uv itself – no project deps needed for ruff, so we just
+      # pin the uv version for reproducibility.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+
+      # ruff is declared as a dev dependency in both pyproject.toml files.
+      # We install only the dev extras so the cache stays small.
+      - name: Install ruff (api)
+        working-directory: apps/api
+        run: uv sync --frozen --only-dev
+
+      - name: Install ruff (bot)
+        working-directory: apps/bot
+        run: uv sync --frozen --only-dev
+
+      - name: ruff check – api
+        working-directory: apps/api
+        run: uv run ruff check .
+
+      - name: ruff format --check – api
+        working-directory: apps/api
+        run: uv run ruff format --check .
+
+      - name: ruff check – bot
+        working-directory: apps/bot
+        run: uv run ruff check .
+
+      - name: ruff format --check – bot
+        working-directory: apps/bot
+        run: uv run ruff format --check .
+
+  # ---------------------------------------------------------------------------
+  # Web linting
+  # ---------------------------------------------------------------------------
+  lint-web:
+    name: Lint Web (biome)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: biome check
+        working-directory: apps/web
+        run: npx biome check .
+
+  # ---------------------------------------------------------------------------
+  # API tests
+  # ---------------------------------------------------------------------------
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: company_brain_test
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dev -d company_brain_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Provide minimal env vars so pydantic-settings can initialise.
+      # Real secret values are not required for unit / integration tests that
+      # use mocks, but the connection strings must resolve to the containers.
+      DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/company_brain_test
+      REDIS_URL: redis://localhost:6379/0
+      ENVIRONMENT: test
+      # Suppress optional third-party integrations during tests.
+      ANTHROPIC_API_KEY: "test-key"
+      COHERE_API_KEY: "test-key"
+      SENTRY_DSN: ""
+      LANGFUSE_SECRET_KEY: "test-key"
+      LANGFUSE_PUBLIC_KEY: "test-key"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "apps/api/uv.lock"
+
+      - name: Install dependencies
+        working-directory: apps/api
+        run: uv sync --frozen --all-extras
+
+      - name: Run pytest
+        working-directory: apps/api
+        run: uv run pytest --tb=short -q
+
+  # ---------------------------------------------------------------------------
+  # Web tests
+  # ---------------------------------------------------------------------------
+  test-web:
+    name: Test Web (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Run vitest
+        working-directory: apps/web
+        run: npx vitest run
+
+  # ---------------------------------------------------------------------------
+  # Bot tests
+  # ---------------------------------------------------------------------------
+  test-bot:
+    name: Test Bot
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: test
+      TELEGRAM_BOT_TOKEN: "test-token"
+      API_BASE_URL: "http://localhost:8000"
+      REDIS_URL: redis://localhost:6379/0
+      SENTRY_DSN: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "apps/bot/uv.lock"
+
+      - name: Install dependencies
+        working-directory: apps/bot
+        run: uv sync --frozen --all-extras
+
+      - name: Run pytest
+        working-directory: apps/bot
+        run: uv run pytest --tb=short -q
+
+  # ---------------------------------------------------------------------------
+  # Docker build validation (all lint + test jobs must pass first)
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    needs:
+      - lint-python
+      - lint-web
+      - test-api
+      - test-web
+      - test-bot
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Enable BuildKit for layer caching and faster multi-stage builds.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build api image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          file: apps/api/Dockerfile
+          push: false
+          # Cache layers to GitHub Actions cache so subsequent runs are faster.
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+          tags: company-brain/api:${{ github.sha }}
+
+      - name: Build bot image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/bot
+          file: apps/bot/Dockerfile
+          push: false
+          cache-from: type=gha,scope=bot
+          cache-to: type=gha,mode=max,scope=bot
+          tags: company-brain/bot:${{ github.sha }}
+
+      # Next.js is built with output: standalone, producing a self-contained
+      # server bundle. The Dockerfile lives at apps/web/Dockerfile.
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          file: apps/web/Dockerfile
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+          tags: company-brain/web:${{ github.sha }}

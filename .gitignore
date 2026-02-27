@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.local
+.env.production.local
+docker-compose.override.yml
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/plans/
+.claude/todos/
+.claude/tasks/
+
+# Build outputs
+.next/
+.turbo/
+dist/
+build/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Logs
+*.log

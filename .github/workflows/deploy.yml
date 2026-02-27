@@ -1,0 +1,178 @@
+name: Deploy
+
+on:
+  # Only deploy after a successful CI run on main.
+  # The `workflow_run` trigger fires once the referenced workflow completes.
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+# Prevent concurrent deployments to the same environment.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Guard: only proceed when CI actually passed (not when it was cancelled or
+  # failed). This is the correct way to guard workflow_run deployments.
+  # ---------------------------------------------------------------------------
+  check-ci:
+    name: Guard – CI must have passed
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: CI passed, proceeding to deploy
+        run: echo "CI workflow passed. Starting deployment."
+
+  # ---------------------------------------------------------------------------
+  # Deploy API to Railway
+  # ---------------------------------------------------------------------------
+  deploy-api:
+    name: Deploy API (Railway)
+    runs-on: ubuntu-latest
+    needs: check-ci
+    environment:
+      name: production
+      url: https://api.company-brain.railway.app  # Update with your actual Railway URL
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy API service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        # --service flag must match the service name you created in Railway.
+        # --detach returns immediately; Railway streams build logs in its
+        # dashboard. Remove --detach if you want the step to wait for health.
+        run: |
+          railway up \
+            --service api \
+            --detach \
+            --dir apps/api
+
+  # ---------------------------------------------------------------------------
+  # Deploy Bot to Railway
+  # ---------------------------------------------------------------------------
+  deploy-bot:
+    name: Deploy Bot (Railway)
+    runs-on: ubuntu-latest
+    needs: check-ci
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy Bot service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up \
+            --service bot \
+            --detach \
+            --dir apps/bot
+
+  # ---------------------------------------------------------------------------
+  # Deploy Web to Vercel
+  # ---------------------------------------------------------------------------
+  deploy-web:
+    name: Deploy Web (Vercel)
+    runs-on: ubuntu-latest
+    needs: check-ci
+    environment:
+      name: production
+      url: https://company-brain.vercel.app  # Update with your actual Vercel URL
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Pull the Vercel project settings so the build uses the same env vars
+      # that are configured in the Vercel dashboard.
+      - name: Pull Vercel environment
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build for production
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to production
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+  # ---------------------------------------------------------------------------
+  # Post-deploy notification (optional – extend with Slack/PagerDuty/etc.)
+  # ---------------------------------------------------------------------------
+  notify:
+    name: Notify deployment result
+    runs-on: ubuntu-latest
+    needs: [deploy-api, deploy-bot, deploy-web]
+    if: always()
+    steps:
+      - name: Report outcome
+        run: |
+          if [[ "${{ needs.deploy-api.result }}" == "success" && \
+                "${{ needs.deploy-bot.result }}" == "success" && \
+                "${{ needs.deploy-web.result }}" == "success" ]]; then
+            echo "All deployments succeeded for commit ${{ github.sha }}"
+          else
+            echo "One or more deployments failed:"
+            echo "  api:  ${{ needs.deploy-api.result }}"
+            echo "  bot:  ${{ needs.deploy-bot.result }}"
+            echo "  web:  ${{ needs.deploy-web.result }}"
+            exit 1
+          fi
+
+# ---------------------------------------------------------------------------
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#
+#   RAILWAY_TOKEN      - Railway API token (railway.app > Account Settings > Tokens)
+#   VERCEL_TOKEN       - Vercel personal access token
+#   VERCEL_ORG_ID      - Found in Vercel project settings or `vercel whoami`
+#   VERCEL_PROJECT_ID  - Found in Vercel project settings (starts with "prj_")
+#
+# Required Railway setup:
+#   1. Create a Railway project and add two services named "api" and "bot".
+#   2. Set the build method to Dockerfile in each service's settings.
+#   3. Point each service's root directory to apps/api or apps/bot.
+#   4. Add all required env vars (DATABASE_URL, REDIS_URL, etc.) in Railway.
+#
+# Required Vercel setup:
+#   1. Run `vercel link` inside apps/web once to generate .vercel/project.json.
+#   2. Copy org/project IDs from that file into the repository secrets above.
+#   3. Set all required env vars (NEXTAUTH_SECRET, etc.) in the Vercel dashboard.
+# ---------------------------------------------------------------------------

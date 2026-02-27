@@ -1,0 +1,12 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "SIM"]
+
+[lint.per-file-ignores]
+"app/api/routes/*.py" = ["B008"]  # Depends() in defaults is standard FastAPI
+"app/core/auth.py" = ["B008"]
+
+[format]
+quote-style = "double"

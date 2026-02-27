@@ -1,0 +1,27 @@
+{
+  "name": "Company Brain Dev",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "postgres",
+  "workspaceFolder": "/workspaces/company-brain",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "biomejs.biome",
+        "ms-python.python",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "postCreateCommand": "make setup",
+  "remoteUser": "vscode"
+}

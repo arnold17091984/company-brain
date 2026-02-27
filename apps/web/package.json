@@ -1,0 +1,33 @@
+{
+	"name": "company-brain-web",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "biome check .",
+		"test": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@auth/core": "^0.37.4",
+		"next": "^14.2.29",
+		"next-auth": "^5.0.0-beta.25",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^20.17.30",
+		"@types/react": "^18.3.20",
+		"@types/react-dom": "^18.3.5",
+		"@vitejs/plugin-react": "^4.3.4",
+		"@tailwindcss/postcss": "^4.0.15",
+		"autoprefixer": "^10.4.20",
+		"postcss": "^8.5.3",
+		"tailwindcss": "^4.0.15",
+		"typescript": "^5.8.2",
+		"vitest": "^2.1.9"
+	}
+}
