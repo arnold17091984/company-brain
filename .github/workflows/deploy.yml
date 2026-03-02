@@ -38,7 +38,7 @@ jobs:
       url: https://api.company-brain.railway.app  # Update with your actual Railway URL
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Railway CLI
         run: |
@@ -68,7 +68,7 @@ jobs:
       name: production
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Railway CLI
         run: |
@@ -96,10 +96,10 @@ jobs:
       url: https://company-brain.vercel.app  # Update with your actual Vercel URL
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
