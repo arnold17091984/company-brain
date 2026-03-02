@@ -38,9 +38,7 @@ class Department(Base):
 
     __tablename__ = "departments"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -49,9 +47,7 @@ class Department(Base):
 
     # Relationships
     users: Mapped[list["User"]] = relationship("User", back_populates="department_rel")
-    documents: Mapped[list["Document"]] = relationship(
-        "Document", back_populates="department_rel"
-    )
+    documents: Mapped[list["Document"]] = relationship("Document", back_populates="department_rel")
 
 
 class User(Base):
@@ -59,17 +55,13 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     department_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
-    access_level: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="restricted"
-    )
+    access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
     google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -82,12 +74,8 @@ class User(Base):
     )
 
     # Relationships
-    department_rel: Mapped["Department | None"] = relationship(
-        "Department", back_populates="users"
-    )
-    chat_sessions: Mapped[list["ChatSession"]] = relationship(
-        "ChatSession", back_populates="user"
-    )
+    department_rel: Mapped["Department | None"] = relationship("Department", back_populates="users")
+    chat_sessions: Mapped[list["ChatSession"]] = relationship("ChatSession", back_populates="user")
     feedbacks: Mapped[list["Feedback"]] = relationship("Feedback", back_populates="user")
     audit_logs: Mapped[list["AuditLog"]] = relationship("AuditLog", back_populates="user")
 
@@ -97,18 +85,14 @@ class Document(Base):
 
     __tablename__ = "documents"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     # Connector type: "google_drive" | "telegram" | "notion" | etc.
     source_type: Mapped[str] = mapped_column(String(100), nullable=False)
     # Original identifier in the source system (file ID, message ID, page ID…)
     source_id: Mapped[str] = mapped_column(String(512), nullable=False)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    access_level: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="restricted"
-    )
+    access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
     department_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
@@ -125,9 +109,7 @@ class Document(Base):
         onupdate=func.now(),
         nullable=False,
     )
-    indexed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     department_rel: Mapped["Department | None"] = relationship(
@@ -140,9 +122,7 @@ class ChatSession(Base):
 
     __tablename__ = "chat_sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
@@ -168,9 +148,7 @@ class ChatMessage(Base):
 
     __tablename__ = "chat_messages"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     session_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("chat_sessions.id", ondelete="CASCADE"),
@@ -196,9 +174,7 @@ class Feedback(Base):
 
     __tablename__ = "feedbacks"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     message_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("chat_messages.id", ondelete="CASCADE"),
@@ -222,9 +198,7 @@ class AuditLog(Base):
 
     __tablename__ = "audit_logs"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=False
     )

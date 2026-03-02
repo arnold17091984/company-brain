@@ -1,10 +1,19 @@
-"""RAG (Retrieval-Augmented Generation) service package.
+"""RAG (Retrieval-Augmented Generation) service package."""
 
-TODO – implement the following modules:
+from __future__ import annotations
 
-- ``pipeline.py``   : Orchestrates the full RAG flow (retrieve → rerank → generate).
-- ``retriever.py``  : Hybrid dense + sparse search against Qdrant using BGE-M3 embeddings.
-- ``reranker.py``   : Cohere rerank cross-encoder to sort retrieved chunks by relevance.
-- ``cache.py``      : Semantic cache layer (Redis) to short-circuit repeated queries.
-- ``contextual.py`` : Anthropic contextual-retrieval preprocessing for chunk enrichment.
-"""
+from app.services.rag.cache import RedisSemanticCache
+from app.services.rag.collection import ensure_collection
+from app.services.rag.embedder import TogetherEmbeddingService
+from app.services.rag.pipeline import DefaultRAGPipeline
+from app.services.rag.reranker import CohereRerankerService
+from app.services.rag.retriever import QdrantRetrieverService
+
+__all__ = [
+    "CohereRerankerService",
+    "DefaultRAGPipeline",
+    "QdrantRetrieverService",
+    "RedisSemanticCache",
+    "TogetherEmbeddingService",
+    "ensure_collection",
+]

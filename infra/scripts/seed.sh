@@ -1,25 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Seed script for local development
-# Usage: bash infra/scripts/seed.sh
+# Seed script for local development.
+# Delegates to the idempotent Python seed module which uses SQLAlchemy async.
+#
+# Usage:
+#   bash infra/scripts/seed.sh
+#
+# The script assumes it is executed from the repository root and that
+# `uv` is available in PATH (installed via `make setup`).
 
-DB_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/company_brain}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+API_DIR="${REPO_ROOT}/apps/api"
 
-echo "Seeding database at ${DB_URL}..."
-
-psql "$DB_URL" <<'SQL'
--- Insert test departments
-INSERT INTO departments (id, name, slug) VALUES
-  (gen_random_uuid(), 'Engineering', 'engineering'),
-  (gen_random_uuid(), 'Product', 'product'),
-  (gen_random_uuid(), 'QA', 'qa'),
-  (gen_random_uuid(), 'Business Development', 'bd'),
-  (gen_random_uuid(), 'HR & Admin', 'hr-admin'),
-  (gen_random_uuid(), 'Management', 'management')
-ON CONFLICT (slug) DO NOTHING;
-
-SELECT 'Seeded ' || count(*) || ' departments' FROM departments;
-SQL
-
-echo "✓ Seed complete."
+echo "Running database seed via Python (${API_DIR})..."
+cd "${API_DIR}"
+uv run python -m app.scripts.seed
+echo "Seed complete."

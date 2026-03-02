@@ -1,3 +1,4 @@
+import { AuthSessionProvider } from "@/components/providers/session-provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -28,7 +29,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={inter.variable}>
 			<body className="bg-slate-50 text-slate-900 antialiased font-sans">
-				{children}
+				<AuthSessionProvider>{children}</AuthSessionProvider>
 			</body>
 		</html>
 	);

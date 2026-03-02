@@ -1,5 +1,8 @@
 """Callback query handler for inline keyboard interactions."""
 
+from __future__ import annotations
+
+import contextlib
 import logging
 
 from telegram import Update
@@ -9,6 +12,7 @@ from telegram.ext import ContextTypes
 from app.api_client import APIError, CompanyBrainClient
 from app.config import settings
 from app.formatters.response import escape_markdown, format_sources
+from app.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +48,14 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         await _handle_show_more_sources(query, context)
     else:
         logger.warning("Received unknown callback data: %r", data)
+        try:
+            if query.message:
+                await query.message.reply_text(
+                    escape_markdown(t("error", "en")),
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+        except Exception as exc:
+            logger.warning("Failed to send unknown-callback fallback: %s", exc)
 
 
 async def _handle_feedback(
@@ -51,7 +63,11 @@ async def _handle_feedback(
     context: ContextTypes.DEFAULT_TYPE,
     data: str,
 ) -> None:
-    """Send user rating to the API and acknowledge with a toast notification.
+    """Send user rating to the API and update message to remove buttons.
+
+    After feedback is recorded the original message text is preserved but the
+    inline keyboard is replaced with a plain "Thanks for your feedback!" line,
+    preventing duplicate submissions.
 
     Args:
         query: The ``CallbackQuery`` object.
@@ -63,6 +79,7 @@ async def _handle_feedback(
     if not isinstance(query, CallbackQuery):
         return
 
+    lang: str = (context.user_data or {}).get("language") or settings.default_language
     rating = data.split(":", 1)[1]  # "up" or "down"
 
     user_data = context.user_data or {}
@@ -71,7 +88,9 @@ async def _handle_feedback(
 
     if conversation_id and message_id:
         try:
-            async with CompanyBrainClient(settings.api_base_url) as client:
+            async with CompanyBrainClient(
+                settings.api_base_url, auth_token=settings.api_auth_token
+            ) as client:
                 await client.send_feedback(
                     conversation_id=conversation_id,
                     message_id=message_id,
@@ -83,16 +102,25 @@ async def _handle_feedback(
         except Exception as exc:
             logger.exception("Unexpected error sending feedback: %s", exc)
 
-    ack_message = _FEEDBACK_ACK.get(rating, "Feedback recorded.")
-    # Edit the reply markup to remove buttons after feedback is given,
-    # preventing duplicate submissions.
+    # Append the acknowledgement text to the original message and remove keyboard.
+    thanks_text = escape_markdown(t("feedback_thanks", lang))
     try:
         if query.message:
-            await query.message.edit_reply_markup(reply_markup=None)
-    except Exception:
-        pass  # Non-critical; the edit may fail if the message is too old.
-
-    await query.answer(text=ack_message, show_alert=False)
+            original_text = query.message.text or ""
+            updated_text = f"{original_text}\n\n{thanks_text}"
+            await query.message.edit_text(
+                updated_text,
+                parse_mode=ParseMode.MARKDOWN_V2,
+                reply_markup=None,
+            )
+    except Exception as exc:
+        logger.warning("Failed to edit message after feedback: %s", exc)
+        # Non-critical: attempt to at least remove buttons.
+        try:
+            if query.message:
+                await query.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
 
 
 async def _handle_show_more_sources(
@@ -114,15 +142,27 @@ async def _handle_show_more_sources(
     if not isinstance(query, CallbackQuery) or query.message is None:
         return
 
+    lang: str = (context.user_data or {}).get("language") or settings.default_language
     user_data = context.user_data or {}
     sources = user_data.get("last_sources", [])
 
     if not sources:
-        await query.message.reply_text(
-            escape_markdown("No additional sources are available for this answer."),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
+        try:
+            await query.message.reply_text(
+                escape_markdown("No additional sources are available for this answer."),
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+        except Exception as exc:
+            logger.warning("Failed to send no-sources fallback: %s", exc)
         return
 
-    text = format_sources(sources)
-    await query.message.reply_text(text, parse_mode=ParseMode.MARKDOWN_V2)
+    try:
+        text = format_sources(sources)
+        await query.message.reply_text(text, parse_mode=ParseMode.MARKDOWN_V2)
+    except Exception as exc:
+        logger.error("Failed to show more sources: %s", exc, exc_info=True)
+        with contextlib.suppress(Exception):
+            await query.message.reply_text(
+                escape_markdown(t("error", lang)),
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )

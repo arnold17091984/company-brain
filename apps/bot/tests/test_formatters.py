@@ -1,6 +1,6 @@
 """Tests for the Telegram MarkdownV2 response formatters."""
 
-import pytest
+from datetime import UTC
 
 from app.formatters.response import (
     _MARKDOWN_V2_SPECIAL,
@@ -10,7 +10,6 @@ from app.formatters.response import (
     format_sources,
 )
 from app.models import Source
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -97,9 +96,9 @@ class TestFormatSources:
 
     def test_freshness_indicator_recent(self) -> None:
         """Sources updated today should show 'today'."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        today = datetime.now(tz=timezone.utc).isoformat()
+        today = datetime.now(tz=UTC).isoformat()
         src = _make_source(updated_at=today)
         result = format_sources([src])
         assert "today" in result

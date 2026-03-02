@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     notion_integration_token: str = ""
 
+    # ── Inngest ─────────────────────────────────────────────────────────────────
+    inngest_event_key: str = ""
+    inngest_signing_key: str = ""
+
     # ── Infrastructure ─────────────────────────────────────────────────────────
     database_url: str = "postgresql+asyncpg://dev:dev@localhost:5432/company_brain"
     redis_url: str = "redis://localhost:6379/0"
@@ -45,6 +49,14 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_host: str = "https://cloud.langfuse.com"
     sentry_dsn: str = ""
+
+    # ── Auth / JWT ─────────────────────────────────────────────────────────────
+    # Used to sign internal JWTs issued after Google token exchange.
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"
+    jwt_secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    # Token lifetime in minutes (default 24 hours)
+    jwt_expiration_minutes: int = 1440
 
     # ── Runtime ────────────────────────────────────────────────────────────────
     app_env: Literal["development", "staging", "production"] = "development"

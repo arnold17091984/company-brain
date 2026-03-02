@@ -1,9 +1,13 @@
 """Async HTTP client for the Company Brain API."""
 
+from __future__ import annotations
+
 import logging
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
+import httpx_sse
 
 from app.models import ChatResponse, QueryResponse
 
@@ -36,21 +40,29 @@ class CompanyBrainClient:
 
     Example::
 
-        async with CompanyBrainClient(base_url="http://localhost:8000") as client:
+        async with CompanyBrainClient(base_url="http://localhost:8000", auth_token="tok") as client:
             response = await client.query("What is our leave policy?", user_id="u1")
     """
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, auth_token: str = "") -> None:
         self._base_url = base_url.rstrip("/")
+        self._auth_token = auth_token
         self._client: httpx.AsyncClient | None = None
 
     # ── Lifecycle ──────────────────────────────────────────────────────────────
 
-    async def __aenter__(self) -> "CompanyBrainClient":
+    async def __aenter__(self) -> CompanyBrainClient:
+        headers: dict[str, str] = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if self._auth_token:
+            headers["Authorization"] = f"Bearer {self._auth_token}"
+
         self._client = httpx.AsyncClient(
             base_url=self._base_url,
             timeout=_DEFAULT_TIMEOUT,
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            headers=headers,
         )
         return self
 
@@ -63,9 +75,7 @@ class CompanyBrainClient:
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            raise RuntimeError(
-                "CompanyBrainClient must be used as an async context manager."
-            )
+            raise RuntimeError("CompanyBrainClient must be used as an async context manager.")
         return self._client
 
     async def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -171,6 +181,80 @@ class CompanyBrainClient:
             payload["language"] = language
         data = await self._post("/api/v1/chat", payload)
         return ChatResponse.model_validate(data)
+
+    async def stream_chat(
+        self,
+        message: str,
+        user_id: str,
+        conversation_id: str | None = None,
+        language: str | None = None,
+    ) -> AsyncIterator[str]:
+        """Stream chat responses via SSE, yielding text chunks as they arrive.
+
+        Connects to ``POST /api/v1/chat/stream`` and yields each ``data`` field
+        from the server-sent event stream.
+
+        Args:
+            message: The user's latest message.
+            user_id: Stable identifier for the Telegram user.
+            conversation_id: Existing conversation thread ID, or ``None`` to start
+                a new one.
+            language: Preferred response language (en, ja, ko, tl).
+
+        Yields:
+            Text chunks from the streamed response.
+
+        Raises:
+            APIError: When the connection fails or the server returns an error.
+        """
+        return self._stream_chat_inner(message, user_id, conversation_id, language)
+
+    async def _stream_chat_inner(
+        self,
+        message: str,
+        user_id: str,
+        conversation_id: str | None,
+        language: str | None,
+    ) -> AsyncIterator[str]:
+        """Internal async generator for SSE streaming."""
+        client = self._get_client()
+        payload: dict[str, Any] = {"message": message, "user_id": user_id}
+        if conversation_id:
+            payload["conversation_id"] = conversation_id
+        if language:
+            payload["language"] = language
+
+        try:
+            async with httpx_sse.aconnect_sse(
+                client, "POST", "/api/v1/chat/stream", json=payload
+            ) as event_source:
+                async for event in event_source.aiter_sse():
+                    if event.data and event.data != "[DONE]":
+                        yield event.data
+        except httpx.RequestError as exc:
+            raise APIError(
+                "Streaming request to /api/v1/chat/stream failed",
+                detail=str(exc),
+            ) from exc
+
+    async def get_history(self, user_id: str, conversation_id: str) -> dict[str, Any]:
+        """Fetch recent conversation history summary from the API.
+
+        Args:
+            user_id: Stable identifier for the Telegram user.
+            conversation_id: The conversation to fetch history for.
+
+        Returns:
+            Raw dict from the API containing conversation summary.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        data = await self._post(
+            "/api/v1/history",
+            {"user_id": user_id, "conversation_id": conversation_id},
+        )
+        return data
 
     async def send_feedback(
         self,

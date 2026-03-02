@@ -15,6 +15,7 @@ docker-compose.override.yml
 .claude/plans/
 .claude/todos/
 .claude/tasks/
+.claude/worktrees/
 
 # Build outputs
 .next/

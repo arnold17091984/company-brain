@@ -1,6 +1,7 @@
 "use client";
 
 import type { Message } from "@/types";
+import { useEffect, useRef } from "react";
 
 function SourceCard({
 	title,
@@ -75,13 +76,33 @@ function UserIcon() {
 	);
 }
 
+function TypingIndicator() {
+	return (
+		<div className="flex gap-3">
+			<AssistantIcon />
+			<div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+				<span
+					className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+					style={{ animationDelay: "0ms" }}
+				/>
+				<span
+					className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+					style={{ animationDelay: "150ms" }}
+				/>
+				<span
+					className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+					style={{ animationDelay: "300ms" }}
+				/>
+			</div>
+		</div>
+	);
+}
+
 function ChatMessage({ message }: { message: Message }) {
 	const isUser = message.role === "user";
 
 	return (
-		<div
-			className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-		>
+		<div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
 			{isUser ? <UserIcon /> : <AssistantIcon />}
 
 			<div
@@ -99,18 +120,16 @@ function ChatMessage({ message }: { message: Message }) {
 				</div>
 
 				{/* Sources */}
-				{!isUser &&
-					message.sources &&
-					message.sources.length > 0 && (
-						<div className="w-full">
-							<p className="text-xs text-slate-400 mb-1.5 ml-0.5">Sources</p>
-							<div className="grid gap-2">
-								{message.sources.map((source) => (
-									<SourceCard key={source.url} {...source} />
-								))}
-							</div>
+				{!isUser && message.sources && message.sources.length > 0 && (
+					<div className="w-full">
+						<p className="text-xs text-slate-400 mb-1.5 ml-0.5">Sources</p>
+						<div className="grid gap-2">
+							{message.sources.map((source) => (
+								<SourceCard key={source.url} {...source} />
+							))}
 						</div>
-					)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -118,15 +137,35 @@ function ChatMessage({ message }: { message: Message }) {
 
 interface MessageListProps {
 	messages: Message[];
+	isStreaming?: boolean;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({
+	messages,
+	isStreaming = false,
+}: MessageListProps) {
+	const bottomRef = useRef<HTMLDivElement>(null);
+	const lastAssistant =
+		messages.length > 0 ? messages[messages.length - 1] : null;
+	const showTypingIndicator =
+		isStreaming &&
+		lastAssistant?.role === "assistant" &&
+		lastAssistant.content === "";
+
+	// Auto-scroll to bottom when new messages arrive or content streams in
+	// biome-ignore lint/correctness/useExhaustiveDependencies: messages and isStreaming are intentional scroll triggers
+	useEffect(() => {
+		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [messages, isStreaming]);
+
 	return (
 		<div className="chat-scroll h-full overflow-y-auto">
 			<div className="max-w-3xl mx-auto px-6 py-6 flex flex-col gap-6">
 				{messages.map((message) => (
 					<ChatMessage key={message.id} message={message} />
 				))}
+				{showTypingIndicator && <TypingIndicator />}
+				<div ref={bottomRef} />
 			</div>
 		</div>
 	);

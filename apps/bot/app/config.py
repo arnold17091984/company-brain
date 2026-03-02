@@ -1,5 +1,7 @@
 """Application configuration loaded from environment variables."""
 
+from __future__ import annotations
+
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,6 +26,8 @@ class Settings(BaseSettings):
 
     # ── API ────────────────────────────────────────────────────────────────────
     api_base_url: str = "http://localhost:8000"
+    api_auth_token: str = ""
+    default_language: str = "en"
 
     # ── Infrastructure ─────────────────────────────────────────────────────────
     redis_url: str | None = None

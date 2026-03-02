@@ -1,11 +1,15 @@
 """Handler registration for the Company Brain Telegram bot."""
 
-from telegram.ext import Application, CallbackQueryHandler, MessageHandler, filters
+from __future__ import annotations
+
+from telegram.ext import Application, CallbackQueryHandler, CommandHandler, MessageHandler, filters
 
 from app.handlers.callback import handle_callback_query
 from app.handlers.command import (
     handle_ask,
+    handle_clear,
     handle_help,
+    handle_history,
     handle_lang,
     handle_search,
     handle_start,
@@ -24,18 +28,17 @@ def register_handlers(application: Application) -> None:  # type: ignore[type-ar
             returned by ``ApplicationBuilder``.
     """
     # ── Commands ───────────────────────────────────────────────────────────────
-    from telegram.ext import CommandHandler
-
     application.add_handler(CommandHandler("start", handle_start))
     application.add_handler(CommandHandler("help", handle_help))
     application.add_handler(CommandHandler("ask", handle_ask))
     application.add_handler(CommandHandler("search", handle_search))
     application.add_handler(CommandHandler("lang", handle_lang))
+    application.add_handler(CommandHandler("language", handle_lang))
+    application.add_handler(CommandHandler("history", handle_history))
+    application.add_handler(CommandHandler("clear", handle_clear))
 
     # ── Callback queries (inline keyboard buttons) ─────────────────────────────
     application.add_handler(CallbackQueryHandler(handle_callback_query))
 
     # ── Plain messages (DMs + group @mentions) ─────────────────────────────────
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
-    )
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))

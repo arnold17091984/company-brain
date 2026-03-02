@@ -51,9 +51,7 @@ def _build_application() -> Application:  # type: ignore[type-arg]
         Fully configured ``Application`` with all handlers registered.
     """
     app: Application = (  # type: ignore[type-arg]
-        ApplicationBuilder()
-        .token(settings.telegram_bot_token)
-        .build()
+        ApplicationBuilder().token(settings.telegram_bot_token).build()
     )
     register_handlers(app)
     return app
