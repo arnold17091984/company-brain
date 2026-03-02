@@ -2,6 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -258,17 +260,19 @@ function ConnectorCard({
 	);
 }
 
-// ---- Static section card (Usage Analytics — kept as-is) ------------------
+// ---- Analytics link card --------------------------------------------------
 
-function SectionCard({
+function AnalyticsLinkCard({
 	title,
 	description,
-	comingSoon,
+	href,
+	linkLabel,
 	icon,
 }: {
 	title: string;
 	description: string;
-	comingSoon: string;
+	href: string;
+	linkLabel: string;
 	icon: React.ReactNode;
 }) {
 	return (
@@ -284,10 +288,15 @@ function SectionCard({
 					<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
 						{description}
 					</p>
-					<span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-						<span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-						{comingSoon}
-					</span>
+					<Link
+						href={href}
+						className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-1 hover:bg-indigo-100 transition-colors dark:text-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800 dark:hover:bg-indigo-900/50"
+					>
+						<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+							<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+						</svg>
+						{linkLabel}
+					</Link>
 				</div>
 			</div>
 		</div>
@@ -299,6 +308,7 @@ function SectionCard({
 export default function AdminPage() {
 	const t = useTranslations("admin");
 	const tCommon = useTranslations("common");
+	const locale = useLocale();
 	const { data: session } = useSession();
 
 	const [sources, setSources] = useState<KnowledgeSource[]>([]);
@@ -358,14 +368,15 @@ export default function AdminPage() {
 		async (sourceId: string) => {
 			setIngestStates((prev) => ({ ...prev, [sourceId]: "loading" }));
 			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/knowledge/ingest`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${getAccessToken()}`,
+				const res = await fetch(
+					`${API_BASE_URL}/api/v1/knowledge/ingest?connector_type=${encodeURIComponent(sourceId)}`,
+					{
+						method: "POST",
+						headers: {
+							Authorization: `Bearer ${getAccessToken()}`,
+						},
 					},
-					body: JSON.stringify({ connector: sourceId }),
-				});
+				);
 
 				if (!res.ok) {
 					throw new Error(`${res.status}`);
@@ -443,7 +454,7 @@ export default function AdminPage() {
 						</div>
 					</section>
 
-					{/* Usage Analytics section — static, coming soon */}
+					{/* Usage Analytics section — links to /analytics */}
 					<section>
 						<div className="mb-4">
 							<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
@@ -455,10 +466,11 @@ export default function AdminPage() {
 						</div>
 
 						<div className="grid gap-4 sm:grid-cols-2">
-							<SectionCard
+							<AnalyticsLinkCard
 								title={t("queryAnalytics")}
 								description={t("queryAnalyticsSub")}
-								comingSoon={tCommon("comingSoon")}
+								href={`/${locale}/analytics`}
+								linkLabel={t("viewAnalytics")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -476,10 +488,11 @@ export default function AdminPage() {
 									</svg>
 								}
 							/>
-							<SectionCard
+							<AnalyticsLinkCard
 								title={t("userActivity")}
 								description={t("userActivitySub")}
-								comingSoon={tCommon("comingSoon")}
+								href={`/${locale}/analytics`}
+								linkLabel={t("viewAnalytics")}
 								icon={
 									<svg
 										className="w-5 h-5"

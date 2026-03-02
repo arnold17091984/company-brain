@@ -15,6 +15,7 @@ from app.core.database import get_db
 from app.models.database import Document
 from app.models.schemas import QueryRequest, QueryResponse, Source
 from app.services.llm.claude_service import ClaudeService, LLMError
+from app.services.security.data_classifier import classify_input, RiskLevel
 from app.services.types import ConnectorType
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,15 @@ async def query_knowledge(
         "Knowledge query",
         extra={"user": current_user.email, "query": body.query[:120]},
     )
+
+    # ── Sensitive data check ──────────────────────────────────────────────
+    classification = classify_input(body.query)
+    if classification.risk_level == RiskLevel.HIGH and classification.warning_message:
+        return QueryResponse(
+            answer=classification.warning_message,
+            sources=[],
+            cached=False,
+        )
 
     # ── Attempt RAG pipeline ──────────────────────────────────────────────
     try:

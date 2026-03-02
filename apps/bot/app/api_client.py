@@ -41,7 +41,7 @@ class CompanyBrainClient:
     Example::
 
         async with CompanyBrainClient(base_url="http://localhost:8000", auth_token="tok") as client:
-            response = await client.query("What is our leave policy?", user_id="u1")
+            response = await client.query("What is our leave policy?")
     """
 
     def __init__(self, base_url: str, auth_token: str = "") -> None:
@@ -125,19 +125,64 @@ class CompanyBrainClient:
             detail=str(last_exc),
         )
 
+    async def _get(self, path: str) -> dict[str, Any]:
+        """GET with simple retry logic for transient server errors."""
+        client = self._get_client()
+        last_exc: Exception | None = None
+
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                response = await client.get(path)
+                if response.status_code in _RETRYABLE_STATUS and attempt < _MAX_RETRIES:
+                    logger.warning(
+                        "Retryable status %s from %s (attempt %d/%d)",
+                        response.status_code,
+                        path,
+                        attempt + 1,
+                        _MAX_RETRIES,
+                    )
+                    continue
+                if response.status_code >= 400:
+                    detail = ""
+                    try:
+                        detail = response.json().get("detail", "")
+                    except Exception:
+                        detail = response.text
+                    raise APIError(
+                        f"API request to {path} failed",
+                        status_code=response.status_code,
+                        detail=str(detail),
+                    )
+                return response.json()  # type: ignore[no-any-return]
+            except httpx.TimeoutException as exc:
+                last_exc = exc
+                logger.warning("Timeout on %s (attempt %d/%d)", path, attempt + 1, _MAX_RETRIES)
+            except httpx.RequestError as exc:
+                last_exc = exc
+                logger.warning(
+                    "Request error on %s: %s (attempt %d/%d)",
+                    path,
+                    exc,
+                    attempt + 1,
+                    _MAX_RETRIES,
+                )
+
+        raise APIError(
+            f"All {_MAX_RETRIES + 1} attempts to {path} failed",
+            detail=str(last_exc),
+        )
+
     # ── Public API ─────────────────────────────────────────────────────────────
 
     async def query(
         self,
         text: str,
-        user_id: str,
         language: str | None = None,
     ) -> QueryResponse:
         """Send a one-shot knowledge query to the API.
 
         Args:
             text: The user's natural-language question.
-            user_id: Stable identifier for the Telegram user.
             language: BCP-47 language code (``"en"``, ``"ja"``, ``"ko"``).
 
         Returns:
@@ -146,16 +191,15 @@ class CompanyBrainClient:
         Raises:
             APIError: When the API returns an error or times out after retries.
         """
-        payload: dict[str, Any] = {"text": text, "user_id": user_id}
+        payload: dict[str, Any] = {"query": text}
         if language:
             payload["language"] = language
-        data = await self._post("/api/v1/query", payload)
+        data = await self._post("/api/v1/knowledge/query", payload)
         return QueryResponse.model_validate(data)
 
     async def chat(
         self,
         message: str,
-        user_id: str,
         conversation_id: str | None = None,
         language: str | None = None,
     ) -> ChatResponse:
@@ -163,7 +207,6 @@ class CompanyBrainClient:
 
         Args:
             message: The user's latest message.
-            user_id: Stable identifier for the Telegram user.
             conversation_id: Existing conversation thread ID, or ``None`` to start
                 a new one.
             language: Preferred response language (en, ja, ko).
@@ -174,7 +217,7 @@ class CompanyBrainClient:
         Raises:
             APIError: When the API returns an error or times out after retries.
         """
-        payload: dict[str, Any] = {"message": message, "user_id": user_id}
+        payload: dict[str, Any] = {"message": message}
         if conversation_id:
             payload["conversation_id"] = conversation_id
         if language:
@@ -185,7 +228,6 @@ class CompanyBrainClient:
     async def stream_chat(
         self,
         message: str,
-        user_id: str,
         conversation_id: str | None = None,
         language: str | None = None,
     ) -> AsyncIterator[str]:
@@ -196,7 +238,6 @@ class CompanyBrainClient:
 
         Args:
             message: The user's latest message.
-            user_id: Stable identifier for the Telegram user.
             conversation_id: Existing conversation thread ID, or ``None`` to start
                 a new one.
             language: Preferred response language (en, ja, ko, tl).
@@ -207,18 +248,17 @@ class CompanyBrainClient:
         Raises:
             APIError: When the connection fails or the server returns an error.
         """
-        return self._stream_chat_inner(message, user_id, conversation_id, language)
+        return self._stream_chat_inner(message, conversation_id, language)
 
     async def _stream_chat_inner(
         self,
         message: str,
-        user_id: str,
         conversation_id: str | None,
         language: str | None,
     ) -> AsyncIterator[str]:
         """Internal async generator for SSE streaming."""
         client = self._get_client()
-        payload: dict[str, Any] = {"message": message, "user_id": user_id}
+        payload: dict[str, Any] = {"message": message}
         if conversation_id:
             payload["conversation_id"] = conversation_id
         if language:
@@ -237,11 +277,10 @@ class CompanyBrainClient:
                 detail=str(exc),
             ) from exc
 
-    async def get_history(self, user_id: str, conversation_id: str) -> dict[str, Any]:
+    async def get_history(self, conversation_id: str) -> dict[str, Any]:
         """Fetch recent conversation history summary from the API.
 
         Args:
-            user_id: Stable identifier for the Telegram user.
             conversation_id: The conversation to fetch history for.
 
         Returns:
@@ -250,11 +289,7 @@ class CompanyBrainClient:
         Raises:
             APIError: When the API returns an error or times out after retries.
         """
-        data = await self._post(
-            "/api/v1/history",
-            {"user_id": user_id, "conversation_id": conversation_id},
-        )
-        return data
+        return await self._get(f"/api/v1/chat/sessions/{conversation_id}")
 
     async def send_feedback(
         self,
@@ -273,7 +308,7 @@ class CompanyBrainClient:
             APIError: When the API returns an error or times out after retries.
         """
         await self._post(
-            "/api/v1/feedback",
+            "/api/v1/chat/feedback",
             {
                 "conversation_id": conversation_id,
                 "message_id": message_id,

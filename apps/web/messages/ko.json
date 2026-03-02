@@ -108,6 +108,7 @@
     "ingesting": "수집 중…",
     "ingestSuccess": "수집이 시작되었습니다",
     "ingestError": "수집에 실패했습니다",
+    "viewAnalytics": "분석 보기",
     "documents": "{count}개의 문서",
     "lastSynced": "마지막 동기화: {time}",
     "neverSynced": "동기화 없음",

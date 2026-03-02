@@ -36,6 +36,8 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
     Distance,
     PointStruct,
+    SparseIndexParams,
+    SparseVectorParams,
     VectorParams,
 )
 from sqlalchemy import select
@@ -70,7 +72,7 @@ inngest_client = inngest.Inngest(
 _TOGETHER_EMBED_URL = "https://api.together.xyz/v1/embeddings"
 _EMBED_MODEL = "BAAI/bge-m3"
 _EMBED_DIM = 1024
-_QDRANT_COLLECTION = "documents"
+_QDRANT_COLLECTION = "company_brain_chunks"
 
 # Batch size for Together AI embedding calls
 _EMBED_BATCH_SIZE = 32
@@ -117,14 +119,43 @@ async def _embed_texts(texts: list[str]) -> list[list[float]]:
 
 
 async def _ensure_qdrant_collection(client: AsyncQdrantClient) -> None:
-    """Create the Qdrant collection if it does not already exist."""
+    """Create the Qdrant collection if it does not already exist.
+
+    The collection uses named vectors to support hybrid dense + sparse search:
+    - ``dense``: 1024-dimensional COSINE vectors produced by BGE-M3.
+    - ``bm25``: sparse vectors for BM25 keyword search.
+
+    Payload indexes are created on ``access_level``, ``department_id``, and
+    ``source_type`` to enable fast filtered retrieval.
+    """
     existing = {c.name for c in (await client.get_collections()).collections}
-    if _QDRANT_COLLECTION not in existing:
-        await client.create_collection(
+    if _QDRANT_COLLECTION in existing:
+        return
+
+    await client.create_collection(
+        collection_name=_QDRANT_COLLECTION,
+        vectors_config={
+            "dense": VectorParams(size=_EMBED_DIM, distance=Distance.COSINE),
+        },
+        sparse_vectors_config={
+            "bm25": SparseVectorParams(index=SparseIndexParams()),
+        },
+    )
+    logger.info("Created Qdrant collection '%s'", _QDRANT_COLLECTION)
+
+    from qdrant_client.models import PayloadSchemaType
+
+    for field_name, schema_type in [
+        ("access_level", PayloadSchemaType.KEYWORD),
+        ("department_id", PayloadSchemaType.KEYWORD),
+        ("source_type", PayloadSchemaType.KEYWORD),
+    ]:
+        await client.create_payload_index(
             collection_name=_QDRANT_COLLECTION,
-            vectors_config=VectorParams(size=_EMBED_DIM, distance=Distance.COSINE),
+            field_name=field_name,
+            field_schema=schema_type,
         )
-        logger.info("Created Qdrant collection '%s'", _QDRANT_COLLECTION)
+        logger.info("Created payload index: %s (%s)", field_name, schema_type)
 
 
 async def _upsert_chunks(
@@ -146,7 +177,7 @@ async def _upsert_chunks(
             "chunk_index": chunk.chunk_index,
             **chunk.metadata,
         }
-        points.append(PointStruct(id=point_id, vector=vector, payload=payload))
+        points.append(PointStruct(id=point_id, vector={"dense": vector}, payload=payload))
 
     if points:
         await qdrant.upsert(collection_name=_QDRANT_COLLECTION, points=points)

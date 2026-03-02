@@ -108,6 +108,7 @@
     "ingesting": "Ingesting…",
     "ingestSuccess": "Ingestion started",
     "ingestError": "Ingest failed",
+    "viewAnalytics": "View Analytics",
     "documents": "{count, plural, one {# document} other {# documents}}",
     "lastSynced": "Last synced {time}",
     "neverSynced": "Never synced",
