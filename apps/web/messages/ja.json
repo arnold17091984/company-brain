@@ -103,7 +103,17 @@
     "queryAnalytics": "クエリ分析",
     "queryAnalyticsSub": "ユーザーからよく寄せられる質問を確認し、ナレッジギャップを特定します。",
     "userActivity": "ユーザーアクティビティ",
-    "userActivitySub": "アクティブユーザー数、セッション時間、機能の採用率を追跡します。"
+    "userActivitySub": "アクティブユーザー数、セッション時間、機能の採用率を追跡します。",
+    "ingest": "取り込む",
+    "ingesting": "取り込み中…",
+    "ingestSuccess": "取り込みを開始しました",
+    "ingestError": "取り込みに失敗しました",
+    "documents": "{count}件のドキュメント",
+    "lastSynced": "最終同期: {time}",
+    "neverSynced": "未同期",
+    "statusActive": "アクティブ",
+    "statusInactive": "非アクティブ",
+    "loadError": "ソースの読み込みに失敗しました"
   },
   "privacy": {
     "pageTitle": "データプライバシーガイドライン",

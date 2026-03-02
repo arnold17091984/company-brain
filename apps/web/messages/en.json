@@ -103,7 +103,17 @@
     "queryAnalytics": "Query Analytics",
     "queryAnalyticsSub": "See the most common questions users ask and identify knowledge gaps.",
     "userActivity": "User Activity",
-    "userActivitySub": "Track active users, session lengths, and feature adoption rates."
+    "userActivitySub": "Track active users, session lengths, and feature adoption rates.",
+    "ingest": "Ingest",
+    "ingesting": "Ingesting…",
+    "ingestSuccess": "Ingestion started",
+    "ingestError": "Ingest failed",
+    "documents": "{count, plural, one {# document} other {# documents}}",
+    "lastSynced": "Last synced {time}",
+    "neverSynced": "Never synced",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "loadError": "Failed to load sources"
   },
   "privacy": {
     "pageTitle": "Data Privacy Guidelines",

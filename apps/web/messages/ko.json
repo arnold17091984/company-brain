@@ -103,7 +103,17 @@
     "queryAnalytics": "쿼리 분석",
     "queryAnalyticsSub": "사용자가 가장 많이 묻는 질문을 확인하고 지식 격차를 파악합니다.",
     "userActivity": "사용자 활동",
-    "userActivitySub": "활성 사용자 수, 세션 길이, 기능 채택률을 추적합니다."
+    "userActivitySub": "활성 사용자 수, 세션 길이, 기능 채택률을 추적합니다.",
+    "ingest": "수집",
+    "ingesting": "수집 중…",
+    "ingestSuccess": "수집이 시작되었습니다",
+    "ingestError": "수집에 실패했습니다",
+    "documents": "{count}개의 문서",
+    "lastSynced": "마지막 동기화: {time}",
+    "neverSynced": "동기화 없음",
+    "statusActive": "활성",
+    "statusInactive": "비활성",
+    "loadError": "소스를 불러오는 데 실패했습니다"
   },
   "privacy": {
     "pageTitle": "데이터 개인정보 보호 지침",

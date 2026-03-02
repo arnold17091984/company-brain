@@ -2,24 +2,76 @@
 
 import { useTranslations } from "next-intl";
 
-interface Department {
-	nameKey: string;
-	queries: number;
-	color: string;
-	textColor: string;
+// ---- Types ----------------------------------------------------------------
+
+export interface DepartmentData {
+	department: string;
+	query_count: number;
 }
 
-const DEPARTMENTS: Department[] = [
-	{ nameKey: "deptDev", queries: 312, color: "bg-indigo-500", textColor: "text-indigo-700" },
-	{ nameKey: "deptSales", queries: 218, color: "bg-green-500", textColor: "text-green-700" },
-	{ nameKey: "deptBackOffice", queries: 174, color: "bg-violet-500", textColor: "text-violet-700" },
-	{ nameKey: "deptMarketing", queries: 96, color: "bg-amber-500", textColor: "text-amber-700" },
+// ---- Color palette (cycled by index) --------------------------------------
+
+const PALETTE: Array<{ bar: string; text: string; dot: string }> = [
+	{
+		bar: "bg-indigo-500",
+		text: "text-indigo-700 dark:text-indigo-400",
+		dot: "bg-indigo-500",
+	},
+	{
+		bar: "bg-green-500",
+		text: "text-green-700 dark:text-green-400",
+		dot: "bg-green-500",
+	},
+	{
+		bar: "bg-violet-500",
+		text: "text-violet-700 dark:text-violet-400",
+		dot: "bg-violet-500",
+	},
+	{
+		bar: "bg-amber-500",
+		text: "text-amber-700 dark:text-amber-400",
+		dot: "bg-amber-500",
+	},
+	{
+		bar: "bg-rose-500",
+		text: "text-rose-700 dark:text-rose-400",
+		dot: "bg-rose-500",
+	},
+	{
+		bar: "bg-cyan-500",
+		text: "text-cyan-700 dark:text-cyan-400",
+		dot: "bg-cyan-500",
+	},
 ];
 
-const MAX_QUERIES = Math.max(...DEPARTMENTS.map((d) => d.queries));
+// ---- Skeleton -------------------------------------------------------------
 
-export function DepartmentChart() {
+function SkeletonBar() {
+	return (
+		<div className="animate-pulse">
+			<div className="flex items-center justify-between mb-1.5">
+				<div className="h-4 w-28 bg-stone-200 dark:bg-stone-700 rounded" />
+				<div className="h-4 w-16 bg-stone-200 dark:bg-stone-700 rounded" />
+			</div>
+			<div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
+				<div className="h-3 rounded-full bg-stone-200 dark:bg-stone-600 w-3/4" />
+			</div>
+		</div>
+	);
+}
+
+// ---- Component ------------------------------------------------------------
+
+interface DepartmentChartProps {
+	data: DepartmentData[] | null;
+	isLoading: boolean;
+}
+
+export function DepartmentChart({ data, isLoading }: DepartmentChartProps) {
 	const t = useTranslations("analytics");
+
+	const maxQueries =
+		data && data.length > 0 ? Math.max(...data.map((d) => d.query_count)) : 1;
 
 	return (
 		<section>
@@ -33,43 +85,60 @@ export function DepartmentChart() {
 					</p>
 				</div>
 
-				<div className="space-y-4">
-					{DEPARTMENTS.map((dept) => {
-						const pct = Math.round((dept.queries / MAX_QUERIES) * 100);
-						const name = t(dept.nameKey as Parameters<typeof t>[0]);
-						return (
-							<div key={dept.nameKey}>
-								<div className="flex items-center justify-between mb-1.5">
-									<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-										{name}
-									</span>
-									<span className={`text-sm font-semibold ${dept.textColor}`}>
-										{t("queries", { count: dept.queries })}
-									</span>
-								</div>
-								<div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
-									<div
-										className={`h-3 rounded-full ${dept.color} transition-all duration-500`}
-										style={{ width: `${pct}%` }}
-									/>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-
-				<div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-700 flex flex-wrap gap-3">
-					{DEPARTMENTS.map((dept) => (
-						<div key={dept.nameKey} className="flex items-center gap-1.5">
-							<span
-								className={`w-2.5 h-2.5 rounded-full ${dept.color} shrink-0`}
-							/>
-							<span className="text-xs text-stone-500 dark:text-stone-400">
-								{t(dept.nameKey as Parameters<typeof t>[0])}
-							</span>
+				{isLoading || !data ? (
+					<div className="space-y-4">
+						<SkeletonBar />
+						<SkeletonBar />
+						<SkeletonBar />
+						<SkeletonBar />
+					</div>
+				) : (
+					<>
+						<div className="space-y-4">
+							{data.map((dept, idx) => {
+								const palette = PALETTE[idx % PALETTE.length];
+								const pct = Math.round((dept.query_count / maxQueries) * 100);
+								return (
+									<div key={dept.department}>
+										<div className="flex items-center justify-between mb-1.5">
+											<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+												{dept.department}
+											</span>
+											<span className={`text-sm font-semibold ${palette.text}`}>
+												{t("queries", { count: dept.query_count })}
+											</span>
+										</div>
+										<div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
+											<div
+												className={`h-3 rounded-full ${palette.bar} transition-all duration-500`}
+												style={{ width: `${pct}%` }}
+											/>
+										</div>
+									</div>
+								);
+							})}
 						</div>
-					))}
-				</div>
+
+						<div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-700 flex flex-wrap gap-3">
+							{data.map((dept, idx) => {
+								const palette = PALETTE[idx % PALETTE.length];
+								return (
+									<div
+										key={dept.department}
+										className="flex items-center gap-1.5"
+									>
+										<span
+											className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`}
+										/>
+										<span className="text-xs text-stone-500 dark:text-stone-400">
+											{dept.department}
+										</span>
+									</div>
+								);
+							})}
+						</div>
+					</>
+				)}
 			</div>
 		</section>
 	);
