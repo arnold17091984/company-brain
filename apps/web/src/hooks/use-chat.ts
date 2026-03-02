@@ -2,7 +2,7 @@
 
 import type { Message, Source } from "@/types";
 import { useSession } from "next-auth/react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -41,6 +41,9 @@ export function useChat(): UseChatReturn {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [sessionId, setSessionId] = useState<string | null>(null);
+	// Use a ref so the sendMessage callback always sees the latest messages
+	const messagesRef = useRef<Message[]>([]);
+	messagesRef.current = messages;
 
 	const clearMessages = useCallback(() => {
 		setMessages([]);
@@ -52,8 +55,8 @@ export function useChat(): UseChatReturn {
 		async (text: string) => {
 			if (!text.trim() || isLoading) return;
 
-			const accessToken = (session as { accessToken?: string } | null)
-				?.accessToken;
+			const accessToken =
+				(session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
 
 			const userMessage: Message = {
 				id: generateId(),
@@ -77,18 +80,22 @@ export function useChat(): UseChatReturn {
 				const headers: Record<string, string> = {
 					"Content-Type": "application/json",
 					Accept: "text/event-stream",
+					Authorization: `Bearer ${accessToken}`,
 				};
 
-				if (accessToken) {
-					headers.Authorization = `Bearer ${accessToken}`;
-				}
+				// Build conversation history from previous messages (max 20 turns)
+				const history = messagesRef.current
+					.filter((m) => m.content.length > 0)
+					.slice(-20)
+					.map((m) => ({ role: m.role, content: m.content }));
 
-				const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
+				const response = await fetch(`${API_BASE_URL}/api/v1/chat/stream`, {
 					method: "POST",
 					headers,
 					body: JSON.stringify({
 						message: text,
 						conversation_id: sessionId,
+						history,
 					}),
 				});
 
@@ -187,8 +194,14 @@ export function useChat(): UseChatReturn {
 					);
 				}
 			} catch (err) {
-				const message =
-					err instanceof Error ? err.message : "An unexpected error occurred";
+				const networkError =
+					err instanceof TypeError &&
+					err.message.toLowerCase().includes("fetch");
+				const message = networkError
+					? "Cannot connect to API server. Make sure the backend is running on port 8000."
+					: err instanceof Error
+						? err.message
+						: "An unexpected error occurred";
 				setError(message);
 				// Remove the empty assistant placeholder on error
 				setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));

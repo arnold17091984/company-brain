@@ -1,30 +1,36 @@
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-	title: "Admin",
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const t = await getTranslations("admin");
+	return {
+		title: t("pageTitle"),
+	};
+}
 
 function SectionCard({
 	title,
 	description,
+	comingSoon,
 	icon,
 }: {
 	title: string;
 	description: string;
+	comingSoon: string;
 	icon: React.ReactNode;
 }) {
 	return (
-		<div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
 			<div className="flex items-start gap-4">
-				<div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					{icon}
 				</div>
 				<div className="flex-1 min-w-0">
-					<h3 className="font-semibold text-slate-900 mb-1">{title}</h3>
-					<p className="text-sm text-slate-500 mb-4">{description}</p>
+					<h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-1">{title}</h3>
+					<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">{description}</p>
 					<span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
 						<span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-						Coming soon
+						{comingSoon}
 					</span>
 				</div>
 			</div>
@@ -32,14 +38,17 @@ function SectionCard({
 	);
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
+	const t = await getTranslations("admin");
+	const tCommon = await getTranslations("common");
+
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-slate-200 bg-white px-6 py-4 flex-shrink-0">
-				<h1 className="text-lg font-semibold text-slate-900">Admin</h1>
-				<p className="text-sm text-slate-500 mt-0.5">
-					Manage data sources and review usage analytics
+			<div className="border-b border-stone-200 dark:border-stone-700/60 bg-white dark:bg-stone-900/80 px-6 py-4 shrink-0">
+				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{t("pageTitle")}</h1>
+				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					{t("subtitle")}
 				</p>
 			</div>
 
@@ -49,20 +58,20 @@ export default function AdminPage() {
 					<section>
 						<div className="flex items-center justify-between mb-4">
 							<div>
-								<h2 className="text-base font-semibold text-slate-900">
-									Data Sources
+								<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+									{t("dataSources")}
 								</h2>
-								<p className="text-sm text-slate-500 mt-0.5">
-									Connect and manage the knowledge sources ingested into Company
-									Brain.
+								<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+									{t("dataSourcesSub")}
 								</p>
 							</div>
 						</div>
 
 						<div className="grid gap-4 sm:grid-cols-2">
 							<SectionCard
-								title="Google Drive"
-								description="Sync documents and files from your Google Drive workspace."
+								title={t("googleDrive")}
+								description={t("googleDriveSub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -81,8 +90,9 @@ export default function AdminPage() {
 								}
 							/>
 							<SectionCard
-								title="Notion"
-								description="Import pages and databases from your Notion workspace."
+								title={t("notion")}
+								description={t("notionSub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -101,8 +111,9 @@ export default function AdminPage() {
 								}
 							/>
 							<SectionCard
-								title="Confluence"
-								description="Index your Confluence spaces and pages automatically."
+								title={t("confluence")}
+								description={t("confluenceSub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -121,8 +132,9 @@ export default function AdminPage() {
 								}
 							/>
 							<SectionCard
-								title="Slack"
-								description="Connect Slack channels to include conversations in search."
+								title={t("slack")}
+								description={t("slackSub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -146,18 +158,19 @@ export default function AdminPage() {
 					{/* Usage Analytics section */}
 					<section>
 						<div className="mb-4">
-							<h2 className="text-base font-semibold text-slate-900">
-								Usage Analytics
+							<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+								{t("usageAnalytics")}
 							</h2>
-							<p className="text-sm text-slate-500 mt-0.5">
-								Monitor search queries, chat usage, and knowledge gaps.
+							<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+								{t("usageAnalyticsSub")}
 							</p>
 						</div>
 
 						<div className="grid gap-4 sm:grid-cols-2">
 							<SectionCard
-								title="Query Analytics"
-								description="See the most common questions users ask and identify knowledge gaps."
+								title={t("queryAnalytics")}
+								description={t("queryAnalyticsSub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"
@@ -176,8 +189,9 @@ export default function AdminPage() {
 								}
 							/>
 							<SectionCard
-								title="User Activity"
-								description="Track active users, session lengths, and feature adoption rates."
+								title={t("userActivity")}
+								description={t("userActivitySub")}
+								comingSoon={tCommon("comingSoon")}
 								icon={
 									<svg
 										className="w-5 h-5"

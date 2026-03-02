@@ -1,8 +1,11 @@
 "use client";
 
 import type { Source } from "@/types";
+import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { type KeyboardEvent, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -11,7 +14,9 @@ interface SearchResult extends Source {
 }
 
 interface SearchApiResponse {
-	results: SearchResult[];
+	answer: string;
+	sources: SearchResult[];
+	cached: boolean;
 }
 
 function SourceTypeIcon({ type }: { type?: string }) {
@@ -103,82 +108,156 @@ function ResultCard({ result }: { result: SearchResult }) {
 			href={result.url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
+			className="group flex flex-col gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all"
 		>
 			<div className="flex items-start gap-3">
-				<div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+				<div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 flex items-center justify-center">
 					<SourceTypeIcon type={result.sourceType} />
 				</div>
 				<div className="flex-1 min-w-0">
-					<h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 line-clamp-1 transition-colors">
+					<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 line-clamp-1 transition-colors">
 						{result.title}
 					</h3>
-					<p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+					<p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2">
 						{result.snippet}
 					</p>
 				</div>
 			</div>
 			<div className="flex items-center gap-2 mt-1">
 				{result.sourceType && (
-					<span className="text-xs text-slate-400 capitalize bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+					<span className="text-xs text-stone-400 dark:text-stone-500 capitalize bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-full px-2 py-0.5">
 						{result.sourceType}
 					</span>
 				)}
-				<span className="text-xs text-slate-400 ml-auto">{formattedDate}</span>
+				<span className="text-xs text-stone-400 dark:text-stone-500 ml-auto">{formattedDate}</span>
 			</div>
 		</a>
 	);
 }
 
-function ResultsSection({
-	results,
-}: {
-	results: SearchResult[];
-}) {
-	if (results.length > 0) {
-		return (
-			<div>
-				<p className="text-xs text-slate-400 mb-3">
-					{results.length} {results.length === 1 ? "result" : "results"} found
-				</p>
-				<div className="flex flex-col gap-3">
-					{results.map((result) => (
-						<ResultCard key={result.url} result={result} />
-					))}
-				</div>
-			</div>
-		);
-	}
-
+function AnswerCard({ answer }: { answer: string }) {
 	return (
-		<div className="flex flex-col items-center justify-center py-16 text-center">
-			<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-				<svg
-					className="w-8 h-8 text-slate-400"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					strokeWidth={1.5}
-					aria-hidden="true"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-					/>
-				</svg>
+		<div className="mb-6 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30 p-5">
+			<div className="flex items-center gap-2 mb-3">
+				<div className="w-6 h-6 rounded-full bg-indigo-700 flex items-center justify-center">
+					<svg
+						className="w-3 h-3 text-amber-300"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={1.75}
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+						/>
+					</svg>
+				</div>
+				<span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">AI Answer</span>
 			</div>
-			<p className="text-slate-700 font-medium">No results found</p>
-			<p className="text-slate-400 text-sm mt-1 max-w-xs">
-				Try different keywords or check your spelling.
-			</p>
+			<div className="text-sm text-stone-800 dark:text-stone-200 leading-relaxed">
+				<ReactMarkdown
+					remarkPlugins={[remarkGfm]}
+					components={{
+						p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+						strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+						ul: ({ children }) => <ul className="mb-2 last:mb-0 ml-4 list-disc space-y-1">{children}</ul>,
+						ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4 list-decimal space-y-1">{children}</ol>,
+						li: ({ children }) => <li>{children}</li>,
+						h1: ({ children }) => <h1 className="text-base font-bold mb-2 mt-3 first:mt-0">{children}</h1>,
+						h2: ({ children }) => <h2 className="text-sm font-bold mb-1.5 mt-2.5 first:mt-0">{children}</h2>,
+						h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">{children}</h3>,
+						code: ({ className, children, ...props }) => {
+							const isBlock = className?.includes("language-");
+							if (isBlock) {
+								return (
+									<code className="block bg-white dark:bg-stone-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre" {...props}>
+										{children}
+									</code>
+								);
+							}
+							return (
+								<code className="bg-white dark:bg-stone-900 rounded px-1.5 py-0.5 text-xs font-mono" {...props}>
+									{children}
+								</code>
+							);
+						},
+						pre: ({ children }) => <div className="my-2 last:mb-0">{children}</div>,
+						a: ({ href, children }) => (
+							<a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+								{children}
+							</a>
+						),
+					}}
+				>
+					{answer}
+				</ReactMarkdown>
+			</div>
+		</div>
+	);
+}
+
+function ResultsSection({
+	answer,
+	results,
+	t,
+}: {
+	answer: string;
+	results: SearchResult[];
+	t: ReturnType<typeof useTranslations<"search">>;
+}) {
+	return (
+		<div>
+			{answer && <AnswerCard answer={answer} />}
+
+			{results.length > 0 && (
+				<div>
+					<p className="text-xs text-stone-400 mb-3">
+						{t("resultsFound", { count: results.length })}
+					</p>
+					<div className="flex flex-col gap-3">
+						{results.map((result) => (
+							<ResultCard key={result.url} result={result} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{!answer && results.length === 0 && (
+				<div className="flex flex-col items-center justify-center py-16 text-center">
+					<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+						<svg
+							className="w-8 h-8 text-stone-400"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={1.5}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+							/>
+						</svg>
+					</div>
+					<p className="text-stone-700 dark:text-stone-200 font-medium">{t("noResults")}</p>
+					<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
+						{t("noResultsHint")}
+					</p>
+				</div>
+			)}
 		</div>
 	);
 }
 
 export default function SearchPage() {
 	const { data: session } = useSession();
+	const t = useTranslations("search");
 	const [query, setQuery] = useState("");
+	const [answer, setAnswer] = useState("");
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -187,8 +266,8 @@ export default function SearchPage() {
 	async function runSearch(searchQuery: string) {
 		if (!searchQuery.trim()) return;
 
-		const accessToken = (session as { accessToken?: string } | null)
-			?.accessToken;
+		const accessToken =
+			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
 
 		setIsLoading(true);
 		setError(null);
@@ -197,11 +276,8 @@ export default function SearchPage() {
 		try {
 			const headers: Record<string, string> = {
 				"Content-Type": "application/json",
+				Authorization: `Bearer ${accessToken}`,
 			};
-
-			if (accessToken) {
-				headers.Authorization = `Bearer ${accessToken}`;
-			}
 
 			const response = await fetch(`${API_BASE_URL}/api/v1/knowledge/query`, {
 				method: "POST",
@@ -216,11 +292,19 @@ export default function SearchPage() {
 			}
 
 			const data: SearchApiResponse = await response.json();
-			setResults(data.results ?? []);
+			setAnswer(data.answer ?? "");
+			setResults(data.sources ?? []);
 		} catch (err) {
-			const message =
-				err instanceof Error ? err.message : "An unexpected error occurred";
+			const networkError =
+				err instanceof TypeError &&
+				err.message.toLowerCase().includes("fetch");
+			const message = networkError
+				? "Cannot connect to API server. Make sure the backend is running on port 8000."
+				: err instanceof Error
+					? err.message
+					: "An unexpected error occurred";
 			setError(message);
+			setAnswer("");
 			setResults([]);
 		} finally {
 			setIsLoading(false);
@@ -236,10 +320,10 @@ export default function SearchPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-slate-200 bg-white px-6 py-4 flex-shrink-0">
-				<h1 className="text-lg font-semibold text-slate-900">Search</h1>
-				<p className="text-sm text-slate-500 mt-0.5">
-					Search across all company knowledge
+			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
+				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{t("pageTitle")}</h1>
+				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					{t("subtitle")}
 				</p>
 			</div>
 
@@ -250,7 +334,7 @@ export default function SearchPage() {
 						<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
 							{isLoading ? (
 								<svg
-									className="h-5 w-5 text-blue-500 animate-spin"
+									className="h-5 w-5 text-indigo-500 animate-spin"
 									fill="none"
 									viewBox="0 0 24 24"
 									aria-hidden="true"
@@ -271,7 +355,7 @@ export default function SearchPage() {
 								</svg>
 							) : (
 								<svg
-									className="h-5 w-5 text-slate-400"
+									className="h-5 w-5 text-stone-400"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -291,27 +375,27 @@ export default function SearchPage() {
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 							onKeyDown={handleKeyDown}
-							placeholder="Search documents, policies, wikis..."
+							placeholder={t("placeholder")}
 							disabled={isLoading}
-							className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
+							className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 py-3 pl-11 pr-4 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
 						/>
 						{query.trim() && (
 							<button
 								type="button"
 								onClick={() => runSearch(query)}
 								disabled={isLoading}
-								className="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50"
+								className="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600 hover:text-indigo-700 text-sm font-medium disabled:opacity-50"
 							>
-								Search
+								{t("button")}
 							</button>
 						)}
 					</div>
 
 					{/* Error state */}
 					{error && (
-						<div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
 							<svg
-								className="w-4 h-4 text-red-500 flex-shrink-0"
+								className="w-4 h-4 text-red-500 shrink-0"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -324,21 +408,21 @@ export default function SearchPage() {
 									d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
 								/>
 							</svg>
-							<p className="text-sm text-red-700">{error}</p>
+							<p className="text-sm text-red-700 dark:text-red-400">{error}</p>
 						</div>
 					)}
 
 					{/* Results after search */}
 					{hasSearched && !isLoading && !error && (
-						<ResultsSection results={results} />
+						<ResultsSection answer={answer} results={results} t={t} />
 					)}
 
 					{/* Initial empty state */}
 					{!hasSearched && (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
-							<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+							<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
 								<svg
-									className="w-8 h-8 text-slate-400"
+									className="w-8 h-8 text-stone-400"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -352,12 +436,11 @@ export default function SearchPage() {
 									/>
 								</svg>
 							</div>
-							<p className="text-slate-700 font-medium">
-								Search across all company knowledge
+							<p className="text-stone-700 dark:text-stone-200 font-medium">
+								{t("emptyTitle")}
 							</p>
-							<p className="text-slate-400 text-sm mt-1 max-w-xs">
-								Enter a query above to search documents, Notion pages,
-								Confluence articles, and more.
+							<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
+								{t("emptySubtitle")}
 							</p>
 						</div>
 					)}

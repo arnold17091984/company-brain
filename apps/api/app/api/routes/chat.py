@@ -1,6 +1,5 @@
 """Chat endpoints including SSE streaming."""
 
-import asyncio
 import json
 import logging
 import uuid
@@ -13,25 +12,19 @@ from app.models.schemas import (
     ChatRequest,
     ChatResponse,
     FeedbackRequest,
-    Source,
 )
+from app.services.llm.claude_service import ClaudeService, LLMError
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-# ---------------------------------------------------------------------------
-# Stub data
-# ---------------------------------------------------------------------------
-
-_STUB_SOURCES = [
-    Source(
-        title="IT Onboarding Guide",
-        url="https://notion.so/stub-page",
-        snippet="Welcome to the team! Here is everything you need to get started…",
-        updated_at="2026-01-15T00:00:00Z",
-    )
-]
+_SYSTEM_PROMPT = (
+    "You are Company Brain, an AI assistant for a 40-person Philippine IT company. "
+    "You help employees with company knowledge, policies, and processes. "
+    "Respond helpfully and concisely. "
+    "You can respond in English, Japanese, or Korean based on the user's language."
+)
 
 
 @router.post("", response_model=ChatResponse)
@@ -47,20 +40,31 @@ async def chat(
 
     Returns:
         ChatResponse: Assistant reply with sources and conversation ID.
+
+    Raises:
+        HTTPException: 503 if the LLM provider is unavailable.
     """
     logger.info("Chat message", extra={"user": current_user.email})
 
     conversation_id = request.conversation_id or str(uuid.uuid4())
+    messages = [
+        {"role": m.role, "content": m.content} for m in request.history
+    ]
+    messages.append({"role": "user", "content": request.message})
 
-    # TODO: wire in LangGraph agent and ChatSession persistence
-    stub_reply = (
-        f'[STUB] Hello {current_user.name}! You said: "{request.message}". '
-        "The real implementation will run through the LangGraph agent pipeline "
-        "with RAG retrieval and Claude as the generator."
-    )
+    service = ClaudeService()
+    try:
+        reply = await service.generate(messages, system_prompt=_SYSTEM_PROMPT)
+    except LLMError as exc:
+        logger.error("LLM error in chat endpoint: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LLM service is temporarily unavailable. Please try again.",
+        ) from exc
+
     return ChatResponse(
-        message=stub_reply,
-        sources=_STUB_SOURCES,
+        message=reply,
+        sources=[],
         conversation_id=conversation_id,
     )
 
@@ -73,7 +77,7 @@ async def chat_stream(
     """Stream an assistant reply token-by-token via Server-Sent Events.
 
     The client should open this endpoint with ``Accept: text/event-stream``.
-    Each SSE event carries a JSON payload with a ``delta`` field containing
+    Each SSE event carries a JSON payload with a ``content`` field containing
     the next token(s).  A final event with ``done: true`` signals completion.
 
     Args:
@@ -86,34 +90,34 @@ async def chat_stream(
     logger.info("Chat stream", extra={"user": current_user.email})
 
     conversation_id = request.conversation_id or str(uuid.uuid4())
-
-    stub_tokens = [
-        "[STUB] ",
-        "Streaming ",
-        "response ",
-        "for: ",
-        f'"{request.message}".',
-        " The real implementation ",
-        "will yield tokens ",
-        "from Claude via ",
-        "the Anthropic streaming API.",
+    messages = [
+        {"role": m.role, "content": m.content} for m in request.history
     ]
+    messages.append({"role": "user", "content": request.message})
 
     async def token_generator():
-        for token in stub_tokens:
-            payload = json.dumps({"delta": token, "done": False})
-            yield {"data": payload}
-            await asyncio.sleep(0.05)  # simulate network latency
+        service = ClaudeService()
+        try:
+            async for chunk in service.stream(messages, system_prompt=_SYSTEM_PROMPT):
+                payload = json.dumps({"content": chunk, "done": False})
+                yield {"data": payload}
 
-        final_payload = json.dumps(
-            {
-                "delta": "",
-                "done": True,
-                "conversation_id": conversation_id,
-                "sources": [s.model_dump() for s in _STUB_SOURCES],
-            }
-        )
-        yield {"data": final_payload}
+            final_payload = json.dumps(
+                {
+                    "content": "",
+                    "done": True,
+                    "conversation_id": conversation_id,
+                    "sources": [],
+                }
+            )
+            yield {"data": final_payload}
+
+        except LLMError as exc:
+            logger.error("LLM error in chat stream: %s", exc)
+            error_payload = json.dumps(
+                {"error": "LLM service is temporarily unavailable.", "done": True}
+            )
+            yield {"data": error_payload}
 
     return EventSourceResponse(token_generator())
 

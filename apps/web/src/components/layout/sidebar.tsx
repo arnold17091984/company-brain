@@ -1,18 +1,55 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createContext, useCallback, useContext, useState } from "react";
+
+// ─── Sidebar Context ────────────────────────────────────────
+
+interface SidebarContextValue {
+	isOpen: boolean;
+	open: () => void;
+	close: () => void;
+	toggle: () => void;
+}
+
+const SidebarContext = createContext<SidebarContextValue | undefined>(undefined);
+
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	const open = useCallback(() => setIsOpen(true), []);
+	const close = useCallback(() => setIsOpen(false), []);
+	const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
+
+	return (
+		<SidebarContext.Provider value={{ isOpen, open, close, toggle }}>
+			{children}
+		</SidebarContext.Provider>
+	);
+}
+
+export function useSidebar(): SidebarContextValue {
+	const ctx = useContext(SidebarContext);
+	if (!ctx) {
+		throw new Error("useSidebar must be used within a SidebarProvider");
+	}
+	return ctx;
+}
+
+// ─── Nav Items ──────────────────────────────────────────────
 
 interface NavItem {
-	label: string;
+	labelKey: string;
 	href: string;
 	icon: React.ReactNode;
 }
 
 const NAV_ITEMS: NavItem[] = [
 	{
-		label: "Chat",
+		labelKey: "chat",
 		href: "/chat",
 		icon: (
 			<svg
@@ -32,7 +69,7 @@ const NAV_ITEMS: NavItem[] = [
 		),
 	},
 	{
-		label: "Search",
+		labelKey: "search",
 		href: "/search",
 		icon: (
 			<svg
@@ -52,7 +89,27 @@ const NAV_ITEMS: NavItem[] = [
 		),
 	},
 	{
-		label: "Admin",
+		labelKey: "analytics",
+		href: "/analytics",
+		icon: (
+			<svg
+				className="w-5 h-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+				/>
+			</svg>
+		),
+	},
+	{
+		labelKey: "admin",
 		href: "/admin",
 		icon: (
 			<svg
@@ -78,20 +135,28 @@ const NAV_ITEMS: NavItem[] = [
 	},
 ];
 
-export function Sidebar() {
+// ─── Sidebar Inner Content ──────────────────────────────────
+
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	const pathname = usePathname();
 	const { data: session } = useSession();
+	const tNav = useTranslations("nav");
+	const tCommon = useTranslations("common");
 
 	const userName = session?.user?.name ?? "User";
 	const userEmail = session?.user?.email ?? "";
 
+	// Strip the locale prefix for active detection
+	// e.g. /en/chat → /chat, /ja/admin → /admin
+	const normalizedPath = pathname.replace(/^\/(en|ja|ko)/, "") || "/";
+
 	return (
-		<aside className="flex flex-col w-60 flex-shrink-0 bg-slate-900 text-slate-100">
+		<>
 			{/* Brand */}
-			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-slate-800">
-				<div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-indigo-800/40">
+				<div className="w-7 h-7 rounded-lg bg-indigo-700 flex items-center justify-center shrink-0">
 					<svg
-						className="w-4 h-4 text-white"
+						className="w-4 h-4 text-amber-300"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -105,39 +170,41 @@ export function Sidebar() {
 						/>
 					</svg>
 				</div>
-				<span className="text-sm font-semibold text-white">Company Brain</span>
+				<span className="text-sm font-semibold text-white">{tCommon("companyBrain")}</span>
 			</div>
 
 			{/* Navigation */}
 			<nav className="flex-1 px-3 py-4 space-y-1" aria-label="Main navigation">
 				{NAV_ITEMS.map((item) => {
 					const isActive =
-						pathname === item.href || pathname.startsWith(`${item.href}/`);
+						normalizedPath === item.href ||
+						normalizedPath.startsWith(`${item.href}/`);
 
 					return (
 						<Link
 							key={item.href}
 							href={item.href}
+							onClick={onNavigate}
 							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
 								isActive
-									? "bg-blue-600 text-white"
-									: "text-slate-400 hover:text-white hover:bg-slate-800"
+									? "bg-indigo-600 text-white shadow-sm shadow-indigo-900/30"
+									: "text-indigo-300 hover:text-white hover:bg-indigo-800/40"
 							}`}
 							aria-current={isActive ? "page" : undefined}
 						>
 							{item.icon}
-							{item.label}
+							{tNav(item.labelKey as Parameters<typeof tNav>[0])}
 						</Link>
 					);
 				})}
 			</nav>
 
 			{/* Footer / user area */}
-			<div className="border-t border-slate-800 px-3 py-4">
+			<div className="border-t border-indigo-800/40 px-3 py-4">
 				<div className="flex items-center gap-3 px-3 py-2 rounded-lg">
-					<div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+					<div className="w-7 h-7 rounded-full bg-indigo-800 flex items-center justify-center shrink-0">
 						<svg
-							className="w-4 h-4 text-slate-400"
+							className="w-4 h-4 text-indigo-300"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
@@ -152,16 +219,16 @@ export function Sidebar() {
 						</svg>
 					</div>
 					<div className="flex-1 min-w-0">
-						<p className="text-xs font-medium text-slate-300 truncate">
+						<p className="text-xs font-medium text-indigo-200 truncate">
 							{userName}
 						</p>
-						<p className="text-xs text-slate-500 truncate">{userEmail}</p>
+						<p className="text-xs text-indigo-400 truncate">{userEmail}</p>
 					</div>
 				</div>
 				<button
 					type="button"
 					onClick={() => signOut({ callbackUrl: "/login" })}
-					className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+					className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800/40 transition-colors"
 				>
 					<svg
 						className="w-4 h-4"
@@ -177,9 +244,66 @@ export function Sidebar() {
 							d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
 						/>
 					</svg>
-					Sign out
+					{tCommon("signOut")}
 				</button>
 			</div>
+		</>
+	);
+}
+
+// ─── Desktop Sidebar ────────────────────────────────────────
+
+export function Sidebar() {
+	return (
+		<aside className="hidden lg:flex flex-col w-60 shrink-0 bg-sidebar-gradient text-indigo-100">
+			<SidebarContent />
 		</aside>
+	);
+}
+
+// ─── Mobile Sidebar Overlay ─────────────────────────────────
+
+export function MobileSidebar() {
+	const { isOpen, close } = useSidebar();
+
+	if (!isOpen) return null;
+
+	return (
+		<>
+			{/* Backdrop */}
+			<div
+				className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+				onClick={close}
+				aria-hidden="true"
+			/>
+
+			{/* Drawer */}
+			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar-gradient text-indigo-100 lg:hidden animate-slide-in-left">
+				{/* Close button */}
+				<button
+					type="button"
+					onClick={close}
+					className="absolute top-3 right-3 p-1.5 rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-800/40 transition-colors"
+					aria-label="Close sidebar"
+				>
+					<svg
+						className="w-5 h-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={1.75}
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+
+				<SidebarContent onNavigate={close} />
+			</aside>
+		</>
 	);
 }

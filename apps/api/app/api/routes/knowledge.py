@@ -6,23 +6,18 @@ from fastapi import APIRouter, Depends
 
 from app.core.auth import User, get_current_user
 from app.models.schemas import QueryRequest, QueryResponse, Source
+from app.services.llm.claude_service import ClaudeService, LLMError
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
-# ---------------------------------------------------------------------------
-# Stub data – replace with real RAG pipeline calls
-# ---------------------------------------------------------------------------
-
-_STUB_SOURCES = [
-    Source(
-        title="Employee Handbook v3",
-        url="https://drive.google.com/file/d/stub",
-        snippet="All employees are expected to adhere to the code of conduct…",
-        updated_at="2025-11-01T00:00:00Z",
-    )
-]
+_SEARCH_SYSTEM_PROMPT = (
+    "You are Company Brain, an AI search engine for a 40-person Philippine IT company. "
+    "The user has entered a search query. Provide a concise, helpful answer. "
+    "Format your response in clear paragraphs. Keep it brief (2-4 paragraphs max). "
+    "Respond in the same language as the query."
+)
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -44,13 +39,19 @@ async def query_knowledge(
         extra={"user": current_user.email, "query": request.query[:120]},
     )
 
-    # TODO: wire in app.services.rag.pipeline.RAGPipeline
-    stub_answer = (
-        f'[STUB] This is a placeholder answer for: "{request.query}". '
-        "The real RAG pipeline will retrieve relevant chunks from Qdrant, "
-        "rerank with Cohere, and generate an answer with Claude."
-    )
-    return QueryResponse(answer=stub_answer, sources=_STUB_SOURCES, cached=False)
+    # TODO: wire in app.services.rag.pipeline.RAGPipeline for real retrieval
+    # For now, use Claude directly to generate an answer
+    messages = [{"role": "user", "content": request.query}]
+    service = ClaudeService()
+    try:
+        answer = await service.generate(messages, system_prompt=_SEARCH_SYSTEM_PROMPT)
+    except LLMError as exc:
+        logger.error("LLM error in knowledge query: %s", exc)
+        answer = (
+            "Sorry, I'm unable to search right now. Please try again in a moment."
+        )
+
+    return QueryResponse(answer=answer, sources=[], cached=False)
 
 
 @router.get("/sources", response_model=list[dict])

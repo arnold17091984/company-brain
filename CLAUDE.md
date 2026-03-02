@@ -124,6 +124,12 @@ See `.env.example` for all required variables. Copy to `.env` and fill in values
 5. **Document Results:** Add review section to `tasks/todo.md`
 6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
 
+## Agent Team Rules
+- Each teammate must own separate files — no two teammates edit the same file
+- Report progress via task list updates
+- Do NOT modify files outside your assigned scope
+- Coordinate via SendMessage, not by reading each other's files
+
 ## Core Principles
 
 - **Simplicity First:** Make every change as simple as possible. Impact minimal code.

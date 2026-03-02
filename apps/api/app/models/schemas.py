@@ -62,6 +62,11 @@ class ChatRequest(BaseModel):
         default=None,
         description="Omit to start a new conversation.",
     )
+    history: list[ChatMessage] = Field(
+        default_factory=list,
+        description="Previous turns for multi-turn context. Max 20 turns.",
+        max_length=20,
+    )
 
 
 class ChatResponse(BaseModel):

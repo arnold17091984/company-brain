@@ -1,0 +1,107 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
+interface StatCard {
+	labelKey: string;
+	value: string;
+	subKey: string;
+	subParams?: Record<string, string | number>;
+	iconPath: string;
+	iconBg: string;
+	iconColor: string;
+}
+
+const CARDS: StatCard[] = [
+	{
+		labelKey: "queriesTitle",
+		value: "248",
+		subKey: "queriesChange",
+		iconPath:
+			"M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z",
+		iconBg: "bg-indigo-50",
+		iconColor: "text-indigo-600",
+	},
+	{
+		labelKey: "activeUsersTitle",
+		value: "31 / 40",
+		subKey: "activeUsersSub",
+		subParams: { pct: 78 },
+		iconPath:
+			"M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
+		iconBg: "bg-green-50",
+		iconColor: "text-green-600",
+	},
+	{
+		labelKey: "knowledgeTitle",
+		value: "14",
+		subKey: "knowledgeSub",
+		iconPath:
+			"M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
+		iconBg: "bg-violet-50",
+		iconColor: "text-violet-600",
+	},
+	{
+		labelKey: "timeSavedTitle",
+		value: "62 hrs",
+		subKey: "timeSavedSub",
+		iconPath:
+			"M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z",
+		iconBg: "bg-amber-50",
+		iconColor: "text-amber-600",
+	},
+];
+
+export function OverviewCards() {
+	const t = useTranslations("analytics");
+
+	return (
+		<section>
+			<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-4">
+				{t("teamOverview")}
+			</h2>
+			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+				{CARDS.map((card) => (
+					<div
+						key={card.labelKey}
+						className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm"
+					>
+						<div className="flex items-start gap-3">
+							<div
+								className={`shrink-0 w-9 h-9 rounded-lg ${card.iconBg} ${card.iconColor} flex items-center justify-center`}
+							>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={1.75}
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d={card.iconPath}
+									/>
+								</svg>
+							</div>
+							<div className="flex-1 min-w-0">
+								<p className="text-xs text-stone-500 dark:text-stone-400 leading-tight">
+									{t(card.labelKey as Parameters<typeof t>[0])}
+								</p>
+								<p className="text-2xl font-bold text-stone-900 dark:text-stone-100 mt-1 leading-none">
+									{card.value}
+								</p>
+								<p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+									{card.subParams
+										? t(card.subKey as Parameters<typeof t>[0], card.subParams)
+										: t(card.subKey as Parameters<typeof t>[0])}
+								</p>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}

@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 
 /**
@@ -6,31 +6,6 @@ import Google from "next-auth/providers/google";
  * Falls back to localhost for local development.
  */
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-declare module "next-auth" {
-	interface Session {
-		accessToken?: string;
-		user: {
-			id: string;
-			email: string;
-			name: string;
-			image?: string | null;
-			department?: string;
-			departmentId?: string | null;
-			accessLevel?: string;
-		};
-	}
-}
-
-declare module "@auth/core/jwt" {
-	interface JWT {
-		accessToken?: string;
-		backendUserId?: string;
-		department?: string;
-		departmentId?: string | null;
-		accessLevel?: string;
-	}
-}
 
 /**
  * Exchange a Google ID token for an internal backend JWT.
@@ -73,11 +48,13 @@ async function exchangeTokenWithBackend(googleIdToken: string): Promise<{
 	}
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-	providers: [
+const providers: NextAuthConfig["providers"] = [];
+
+if (process.env.GOOGLE_CLIENT_ID) {
+	providers.push(
 		Google({
 			clientId: process.env.GOOGLE_CLIENT_ID,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 			authorization: {
 				params: {
 					prompt: "consent",
@@ -86,7 +63,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				},
 			},
 		}),
-	],
+	);
+}
+
+// Development-only credentials provider for local UI preview
+if (process.env.NODE_ENV === "development" && !process.env.GOOGLE_CLIENT_ID) {
+	const Credentials =
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		require("next-auth/providers/credentials").default;
+	providers.push(
+		Credentials({
+			name: "Dev Login",
+			credentials: {
+				email: { label: "Email", type: "email" },
+			},
+			async authorize(credentials: Record<string, string> | undefined) {
+				if (!credentials?.email) return null;
+				return {
+					id: "dev-user-1",
+					email: credentials.email,
+					name: credentials.email.split("@")[0],
+					image: null,
+				};
+			},
+		}),
+	);
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+	providers,
 	session: {
 		strategy: "jwt",
 		maxAge: 24 * 60 * 60, // 24 hours - matches backend JWT expiry

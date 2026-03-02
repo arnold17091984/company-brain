@@ -81,11 +81,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     _init_langfuse()
 
     # SQLAlchemy engine pool – connect eagerly to surface config errors early
-    from app.core.database import engine  # noqa: PLC0415
+    try:
+        from app.core.database import engine  # noqa: PLC0415
 
-    async with engine.begin() as conn:
-        await conn.run_sync(lambda _: None)  # ping
-    logger.info("PostgreSQL connection pool ready")
+        async with engine.begin() as conn:
+            await conn.run_sync(lambda _: None)  # ping
+        logger.info("PostgreSQL connection pool ready")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("PostgreSQL unavailable at startup: %s", exc)
 
     # Redis
     try:
