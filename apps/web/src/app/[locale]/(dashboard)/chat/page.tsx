@@ -4,10 +4,36 @@ import { MessageInput } from "@/components/chat/message-input";
 import { MessageList } from "@/components/chat/message-list";
 import { useChat } from "@/hooks/use-chat";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 export default function ChatPage() {
-	const { messages, sendMessage, isLoading, error, clearMessages } = useChat();
+	const {
+		messages,
+		sendMessage,
+		isLoading,
+		error,
+		startNewChat,
+		sessionId,
+		loadSession,
+	} = useChat();
 	const t = useTranslations("chat");
+	const searchParams = useSearchParams();
+	const sessionParam = searchParams.get("session");
+
+	// Track which session we've already loaded to avoid re-loading
+	const loadedSessionRef = useRef<string | null>(null);
+
+	useEffect(() => {
+		if (sessionParam && sessionParam !== loadedSessionRef.current && sessionParam !== sessionId) {
+			loadedSessionRef.current = sessionParam;
+			loadSession(sessionParam);
+		} else if (!sessionParam && loadedSessionRef.current) {
+			// Navigated to /chat without session param — start fresh
+			loadedSessionRef.current = null;
+			startNewChat();
+		}
+	}, [sessionParam, sessionId, loadSession, startNewChat]);
 
 	return (
 		<div className="flex flex-col h-full">
@@ -22,10 +48,10 @@ export default function ChatPage() {
 				{messages.length > 0 && (
 					<button
 						type="button"
-						onClick={clearMessages}
+						onClick={startNewChat}
 						className="text-xs text-stone-400 hover:text-stone-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-stone-100 dark:text-stone-500 dark:hover:text-stone-300 dark:hover:bg-stone-800"
 					>
-						{t("clearChat")}
+						{t("newChat")}
 					</button>
 				)}
 			</div>

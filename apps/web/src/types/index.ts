@@ -16,3 +16,10 @@ export interface ChatSession {
 	id: string;
 	messages: Message[];
 }
+
+export interface ChatSessionSummary {
+	id: string;
+	title: string;
+	updated_at: string;
+	message_count: number;
+}

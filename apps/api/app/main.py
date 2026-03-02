@@ -82,11 +82,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # SQLAlchemy engine pool – connect eagerly to surface config errors early
     try:
-        from app.core.database import engine  # noqa: PLC0415
+        from app.core.database import AsyncSessionLocal, engine  # noqa: PLC0415
 
         async with engine.begin() as conn:
             await conn.run_sync(lambda _: None)  # ping
         logger.info("PostgreSQL connection pool ready")
+
+        # Seed the dev user in development mode so the mock token works
+        # without a pre-populated database.
+        if settings.app_env == "development":
+            from app.core.seed import seed_dev_user  # noqa: PLC0415
+
+            async with AsyncSessionLocal() as seed_session:
+                await seed_dev_user(seed_session)
     except Exception as exc:  # noqa: BLE001
         logger.warning("PostgreSQL unavailable at startup: %s", exc)
 

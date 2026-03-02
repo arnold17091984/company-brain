@@ -1,5 +1,6 @@
 "use client";
 
+import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -135,12 +136,66 @@ const NAV_ITEMS: NavItem[] = [
 	},
 ];
 
+// ─── Recent Chats ────────────────────────────────────────────
+
+function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
+	const { sessions, isLoading } = useChatSessions();
+	const tChat = useTranslations("chat");
+	const pathname = usePathname();
+
+	if (isLoading && sessions.length === 0) {
+		return (
+			<div className="px-3 py-2">
+				<div className="h-3 w-24 bg-indigo-800/40 rounded animate-pulse" />
+			</div>
+		);
+	}
+
+	if (sessions.length === 0) {
+		return (
+			<div className="px-4 py-2">
+				<p className="text-xs text-indigo-500">{tChat("noChats")}</p>
+			</div>
+		);
+	}
+
+	// Check if we're on a chat page with a specific session
+	const urlParams = typeof window !== "undefined"
+		? new URLSearchParams(window.location.search)
+		: null;
+	const activeSessionId = urlParams?.get("session");
+
+	return (
+		<div className="space-y-0.5">
+			{sessions.slice(0, 10).map((s) => {
+				const isActive = activeSessionId === s.id;
+				return (
+					<Link
+						key={s.id}
+						href={`/chat?session=${s.id}`}
+						onClick={onNavigate}
+						className={`block px-3 py-1.5 rounded-md text-xs truncate transition-colors ${
+							isActive
+								? "bg-indigo-600/50 text-white"
+								: "text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800/30"
+						}`}
+						title={s.title || "Untitled"}
+					>
+						{s.title || "Untitled"}
+					</Link>
+				);
+			})}
+		</div>
+	);
+}
+
 // ─── Sidebar Inner Content ──────────────────────────────────
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	const pathname = usePathname();
 	const { data: session } = useSession();
 	const tNav = useTranslations("nav");
+	const tChat = useTranslations("chat");
 	const tCommon = useTranslations("common");
 
 	const userName = session?.user?.name ?? "User";
@@ -149,6 +204,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	// Strip the locale prefix for active detection
 	// e.g. /en/chat → /chat, /ja/admin → /admin
 	const normalizedPath = pathname.replace(/^\/(en|ja|ko)/, "") || "/";
+	const isOnChatPage = normalizedPath === "/chat" || normalizedPath.startsWith("/chat/");
 
 	return (
 		<>
@@ -174,7 +230,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 			</div>
 
 			{/* Navigation */}
-			<nav className="flex-1 px-3 py-4 space-y-1" aria-label="Main navigation">
+			<nav className="px-3 py-4 space-y-1" aria-label="Main navigation">
 				{NAV_ITEMS.map((item) => {
 					const isActive =
 						normalizedPath === item.href ||
@@ -198,6 +254,42 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 					);
 				})}
 			</nav>
+
+			{/* Recent Chats */}
+			{isOnChatPage && (
+				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-indigo-800/40">
+					<div className="flex items-center justify-between px-1 pt-3 pb-2">
+						<p className="text-xs font-medium text-indigo-400 uppercase tracking-wider">
+							{tChat("recentChats")}
+						</p>
+						<Link
+							href="/chat"
+							onClick={onNavigate}
+							className="text-xs text-indigo-400 hover:text-indigo-200 transition-colors"
+							title={tChat("newChat")}
+						>
+							<svg
+								className="w-4 h-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={1.75}
+								aria-hidden="true"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M12 4.5v15m7.5-7.5h-15"
+								/>
+							</svg>
+						</Link>
+					</div>
+					<RecentChats onNavigate={onNavigate} />
+				</div>
+			)}
+
+			{/* Spacer when not on chat page */}
+			{!isOnChatPage && <div className="flex-1" />}
 
 			{/* Footer / user area */}
 			<div className="border-t border-indigo-800/40 px-3 py-4">

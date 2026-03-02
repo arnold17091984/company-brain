@@ -20,12 +20,23 @@ interface SseEvent {
 	done?: boolean;
 }
 
+interface SessionMessageApi {
+	id: string;
+	role: "user" | "assistant";
+	content: string;
+	sources: Source[];
+	created_at: string;
+}
+
 interface UseChatReturn {
 	messages: Message[];
 	sendMessage: (text: string) => Promise<void>;
 	isLoading: boolean;
 	error: string | null;
 	clearMessages: () => void;
+	sessionId: string | null;
+	loadSession: (id: string) => Promise<void>;
+	startNewChat: () => void;
 }
 
 let messageCounter = 0;
@@ -45,18 +56,72 @@ export function useChat(): UseChatReturn {
 	const messagesRef = useRef<Message[]>([]);
 	messagesRef.current = messages;
 
+	const getAccessToken = useCallback(() => {
+		return (session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+	}, [session]);
+
 	const clearMessages = useCallback(() => {
 		setMessages([]);
 		setSessionId(null);
 		setError(null);
 	}, []);
 
+	const startNewChat = useCallback(() => {
+		setMessages([]);
+		setSessionId(null);
+		setError(null);
+	}, []);
+
+	const loadSession = useCallback(
+		async (id: string) => {
+			if (isLoading) return;
+
+			setIsLoading(true);
+			setError(null);
+
+			try {
+				const response = await fetch(
+					`${API_BASE_URL}/api/v1/chat/sessions/${id}`,
+					{
+						headers: {
+							Authorization: `Bearer ${getAccessToken()}`,
+						},
+					},
+				);
+
+				if (!response.ok) {
+					throw new Error(`Failed to load session: ${response.status}`);
+				}
+
+				const data: SessionMessageApi[] = await response.json();
+
+				const loaded: Message[] = data.map((m) => ({
+					id: m.id,
+					role: m.role,
+					content: m.content,
+					sources: m.sources.length > 0 ? m.sources : undefined,
+				}));
+
+				setMessages(loaded);
+				setSessionId(id);
+			} catch (err) {
+				const message =
+					err instanceof Error
+						? err.message
+						: "Failed to load conversation";
+				setError(message);
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[isLoading, getAccessToken],
+	);
+
 	const sendMessage = useCallback(
 		async (text: string) => {
 			if (!text.trim() || isLoading) return;
 
-			const accessToken =
-				(session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+			const accessToken = getAccessToken();
 
 			const userMessage: Message = {
 				id: generateId(),
@@ -209,8 +274,17 @@ export function useChat(): UseChatReturn {
 				setIsLoading(false);
 			}
 		},
-		[isLoading, session, sessionId],
+		[isLoading, sessionId, getAccessToken],
 	);
 
-	return { messages, sendMessage, isLoading, error, clearMessages };
+	return {
+		messages,
+		sendMessage,
+		isLoading,
+		error,
+		clearMessages,
+		sessionId,
+		loadSession,
+		startNewChat,
+	};
 }

@@ -83,3 +83,27 @@ class FeedbackRequest(BaseModel):
     conversation_id: str
     message_id: str
     rating: Literal["up", "down"]
+
+
+# ---------------------------------------------------------------------------
+# Chat history / session schemas
+# ---------------------------------------------------------------------------
+
+
+class ChatSessionSummary(BaseModel):
+    """Summary of a chat session shown in the session list."""
+
+    id: str
+    title: str
+    updated_at: str
+    message_count: int
+
+
+class ChatMessageDetail(BaseModel):
+    """Full detail of a single chat message."""
+
+    id: str
+    role: str
+    content: str
+    sources: list[Source]
+    created_at: str
