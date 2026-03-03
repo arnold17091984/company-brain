@@ -26,7 +26,9 @@ const intlMiddleware = createMiddleware({
  */
 function isPublicRoute(pathname: string): boolean {
 	// Match /login, /en/login, /ja/login, /ko/login
-	return /^\/(en|ja|ko)?\/?(login)?$/.test(pathname) && pathname.includes("login");
+	return (
+		/^\/(en|ja|ko)?\/?(login)?$/.test(pathname) && pathname.includes("login")
+	);
 }
 
 /**

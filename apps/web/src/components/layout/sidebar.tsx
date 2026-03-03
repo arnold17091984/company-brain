@@ -1,8 +1,8 @@
 "use client";
 
 import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useState } from "react";
@@ -16,7 +16,9 @@ interface SidebarContextValue {
 	toggle: () => void;
 }
 
-const SidebarContext = createContext<SidebarContextValue | undefined>(undefined);
+const SidebarContext = createContext<SidebarContextValue | undefined>(
+	undefined,
+);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +92,26 @@ const NAV_ITEMS: NavItem[] = [
 		),
 	},
 	{
+		labelKey: "documents",
+		href: "/documents",
+		icon: (
+			<svg
+				className="w-5 h-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+				/>
+			</svg>
+		),
+	},
+	{
 		labelKey: "analytics",
 		href: "/analytics",
 		icon: (
@@ -105,6 +127,26 @@ const NAV_ITEMS: NavItem[] = [
 					strokeLinecap="round"
 					strokeLinejoin="round"
 					d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+				/>
+			</svg>
+		),
+	},
+	{
+		labelKey: "agent",
+		href: "/agent",
+		icon: (
+			<svg
+				className="w-5 h-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21M6.75 8.25v7.5a.75.75 0 00.75.75h7.5a.75.75 0 00.75-.75v-7.5a.75.75 0 00-.75-.75H7.5a.75.75 0 00-.75.75z"
 				/>
 			</svg>
 		),
@@ -160,9 +202,10 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 	}
 
 	// Check if we're on a chat page with a specific session
-	const urlParams = typeof window !== "undefined"
-		? new URLSearchParams(window.location.search)
-		: null;
+	const urlParams =
+		typeof window !== "undefined"
+			? new URLSearchParams(window.location.search)
+			: null;
 	const activeSessionId = urlParams?.get("session");
 
 	return (
@@ -204,7 +247,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	// Strip the locale prefix for active detection
 	// e.g. /en/chat → /chat, /ja/admin → /admin
 	const normalizedPath = pathname.replace(/^\/(en|ja|ko)/, "") || "/";
-	const isOnChatPage = normalizedPath === "/chat" || normalizedPath.startsWith("/chat/");
+	const isOnChatPage =
+		normalizedPath === "/chat" || normalizedPath.startsWith("/chat/");
 
 	return (
 		<>
@@ -226,7 +270,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 						/>
 					</svg>
 				</div>
-				<span className="text-sm font-semibold text-white">{tCommon("companyBrain")}</span>
+				<span className="text-sm font-semibold text-white">
+					{tCommon("companyBrain")}
+				</span>
 			</div>
 
 			{/* Navigation */}
@@ -363,6 +409,7 @@ export function MobileSidebar() {
 	return (
 		<>
 			{/* Backdrop */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: Overlay dismisses sidebar; keyboard handled via close button */}
 			<div
 				className="fixed inset-0 z-40 bg-black/50 lg:hidden"
 				onClick={close}

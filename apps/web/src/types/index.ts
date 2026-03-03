@@ -3,6 +3,8 @@ export interface Source {
 	url: string;
 	snippet: string;
 	updatedAt: string;
+	score?: number;
+	sourceType?: string;
 }
 
 export interface Message {
@@ -10,6 +12,8 @@ export interface Message {
 	role: "user" | "assistant";
 	content: string;
 	sources?: Source[];
+	thinking?: string;
+	confidence?: number;
 }
 
 export interface ChatSession {
@@ -22,4 +26,43 @@ export interface ChatSessionSummary {
 	title: string;
 	updated_at: string;
 	message_count: number;
+}
+
+export type DocumentCategory =
+	| "general"
+	| "hr_evaluation"
+	| "hr_compensation"
+	| "hr_contract"
+	| "hr_attendance"
+	| "hr_skills"
+	| "hr_org"
+	| "hr_compliance";
+
+export type UserRole =
+	| "employee"
+	| "manager"
+	| "hr"
+	| "executive"
+	| "ceo"
+	| "admin";
+
+export interface ACLEntry {
+	granteeType: "user" | "role" | "department";
+	granteeId: string;
+	permission: "read" | "write";
+}
+
+export interface DocumentItem {
+	id: string;
+	title: string;
+	sourceType: string;
+	status: "processing" | "indexed" | "error";
+	accessLevel: string;
+	createdAt: string;
+	updatedAt: string;
+	indexedAt?: string;
+	fileSize?: number;
+	mimeType?: string;
+	category?: DocumentCategory;
+	relatedEmployeeId?: string;
 }

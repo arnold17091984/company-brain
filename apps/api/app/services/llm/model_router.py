@@ -27,6 +27,7 @@ _MODEL_REGISTRY: dict[str, ModelConfig] = {
         cost_per_1k_input=0.003,
         cost_per_1k_output=0.015,
         supports_streaming=True,
+        supports_thinking=True,
         context_window=200_000,
         tasks=["chat", "summarize", "extract", "rewrite", "reasoning"],
     ),
@@ -105,6 +106,18 @@ class ClaudeModelRouter:
 
         logger.debug("Router selected Sonnet (long query or history present)")
         return _SONNET_ID
+
+    def model_supports_thinking(self, model_id: str) -> bool:
+        """Check if a model supports extended thinking.
+
+        Args:
+            model_id: The Claude model identifier.
+
+        Returns:
+            True if the model supports extended thinking.
+        """
+        config = _MODEL_REGISTRY.get(model_id)
+        return config.supports_thinking if config else False
 
     def get_model_config(self, model_id: str) -> ModelConfig:
         """Look up the full configuration for a model.

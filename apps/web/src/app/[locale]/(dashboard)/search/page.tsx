@@ -1,8 +1,8 @@
 "use client";
 
 import type { Source } from "@/types";
-import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { type KeyboardEvent, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -129,7 +129,9 @@ function ResultCard({ result }: { result: SearchResult }) {
 						{result.sourceType}
 					</span>
 				)}
-				<span className="text-xs text-stone-400 dark:text-stone-500 ml-auto">{formattedDate}</span>
+				<span className="text-xs text-stone-400 dark:text-stone-500 ml-auto">
+					{formattedDate}
+				</span>
 			</div>
 		</a>
 	);
@@ -155,38 +157,75 @@ function AnswerCard({ answer }: { answer: string }) {
 						/>
 					</svg>
 				</div>
-				<span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">AI Answer</span>
+				<span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+					AI Answer
+				</span>
 			</div>
 			<div className="text-sm text-stone-800 dark:text-stone-200 leading-relaxed">
 				<ReactMarkdown
 					remarkPlugins={[remarkGfm]}
 					components={{
 						p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-						strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-						ul: ({ children }) => <ul className="mb-2 last:mb-0 ml-4 list-disc space-y-1">{children}</ul>,
-						ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4 list-decimal space-y-1">{children}</ol>,
+						strong: ({ children }) => (
+							<strong className="font-semibold">{children}</strong>
+						),
+						ul: ({ children }) => (
+							<ul className="mb-2 last:mb-0 ml-4 list-disc space-y-1">
+								{children}
+							</ul>
+						),
+						ol: ({ children }) => (
+							<ol className="mb-2 last:mb-0 ml-4 list-decimal space-y-1">
+								{children}
+							</ol>
+						),
 						li: ({ children }) => <li>{children}</li>,
-						h1: ({ children }) => <h1 className="text-base font-bold mb-2 mt-3 first:mt-0">{children}</h1>,
-						h2: ({ children }) => <h2 className="text-sm font-bold mb-1.5 mt-2.5 first:mt-0">{children}</h2>,
-						h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">{children}</h3>,
+						h1: ({ children }) => (
+							<h1 className="text-base font-bold mb-2 mt-3 first:mt-0">
+								{children}
+							</h1>
+						),
+						h2: ({ children }) => (
+							<h2 className="text-sm font-bold mb-1.5 mt-2.5 first:mt-0">
+								{children}
+							</h2>
+						),
+						h3: ({ children }) => (
+							<h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">
+								{children}
+							</h3>
+						),
 						code: ({ className, children, ...props }) => {
 							const isBlock = className?.includes("language-");
 							if (isBlock) {
 								return (
-									<code className="block bg-white dark:bg-stone-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre" {...props}>
+									<code
+										className="block bg-white dark:bg-stone-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
+										{...props}
+									>
 										{children}
 									</code>
 								);
 							}
 							return (
-								<code className="bg-white dark:bg-stone-900 rounded px-1.5 py-0.5 text-xs font-mono" {...props}>
+								<code
+									className="bg-white dark:bg-stone-900 rounded px-1.5 py-0.5 text-xs font-mono"
+									{...props}
+								>
 									{children}
 								</code>
 							);
 						},
-						pre: ({ children }) => <div className="my-2 last:mb-0">{children}</div>,
+						pre: ({ children }) => (
+							<div className="my-2 last:mb-0">{children}</div>
+						),
 						a: ({ href, children }) => (
-							<a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+							<a
+								href={href}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-indigo-600 dark:text-indigo-400 hover:underline"
+							>
 								{children}
 							</a>
 						),
@@ -243,7 +282,9 @@ function ResultsSection({
 							/>
 						</svg>
 					</div>
-					<p className="text-stone-700 dark:text-stone-200 font-medium">{t("noResults")}</p>
+					<p className="text-stone-700 dark:text-stone-200 font-medium">
+						{t("noResults")}
+					</p>
 					<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
 						{t("noResultsHint")}
 					</p>
@@ -296,8 +337,7 @@ export default function SearchPage() {
 			setResults(data.sources ?? []);
 		} catch (err) {
 			const networkError =
-				err instanceof TypeError &&
-				err.message.toLowerCase().includes("fetch");
+				err instanceof TypeError && err.message.toLowerCase().includes("fetch");
 			const message = networkError
 				? "Cannot connect to API server. Make sure the backend is running on port 8000."
 				: err instanceof Error
@@ -321,7 +361,9 @@ export default function SearchPage() {
 		<div className="flex flex-col h-full">
 			{/* Page header */}
 			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{t("pageTitle")}</h1>
+				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+					{t("pageTitle")}
+				</h1>
 				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
 					{t("subtitle")}
 				</p>

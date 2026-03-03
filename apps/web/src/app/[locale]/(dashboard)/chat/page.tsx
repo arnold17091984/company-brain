@@ -25,7 +25,11 @@ export default function ChatPage() {
 	const loadedSessionRef = useRef<string | null>(null);
 
 	useEffect(() => {
-		if (sessionParam && sessionParam !== loadedSessionRef.current && sessionParam !== sessionId) {
+		if (
+			sessionParam &&
+			sessionParam !== loadedSessionRef.current &&
+			sessionParam !== sessionId
+		) {
 			loadedSessionRef.current = sessionParam;
 			loadSession(sessionParam);
 		} else if (!sessionParam && loadedSessionRef.current) {
@@ -40,7 +44,9 @@ export default function ChatPage() {
 			{/* Page header */}
 			<div className="border-b border-stone-200/60 bg-white/80 dark:bg-stone-900/80 dark:border-stone-700/60 backdrop-blur-sm px-6 py-4 shrink-0 flex items-center justify-between">
 				<div>
-					<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{t("pageTitle")}</h1>
+					<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+						{t("pageTitle")}
+					</h1>
 					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
 						{t("subtitle")}
 					</p>
@@ -106,21 +112,49 @@ export default function ChatPage() {
 
 						{/* Suggestion cards */}
 						<div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-md">
-							<button type="button" className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40">
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">{t("suggestEmail")}</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t("suggestEmailDesc")}</p>
+							<button
+								type="button"
+								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+							>
+								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+									{t("suggestEmail")}
+								</p>
+								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+									{t("suggestEmailDesc")}
+								</p>
 							</button>
-							<button type="button" className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40">
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">{t("suggestPolicy")}</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t("suggestPolicyDesc")}</p>
+							<button
+								type="button"
+								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+							>
+								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+									{t("suggestPolicy")}
+								</p>
+								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+									{t("suggestPolicyDesc")}
+								</p>
 							</button>
-							<button type="button" className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40">
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">{t("suggestTranslate")}</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t("suggestTranslateDesc")}</p>
+							<button
+								type="button"
+								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+							>
+								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+									{t("suggestTranslate")}
+								</p>
+								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+									{t("suggestTranslateDesc")}
+								</p>
 							</button>
-							<button type="button" className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40">
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">{t("suggestCode")}</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t("suggestCodeDesc")}</p>
+							<button
+								type="button"
+								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+							>
+								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+									{t("suggestCode")}
+								</p>
+								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+									{t("suggestCodeDesc")}
+								</p>
 							</button>
 						</div>
 					</div>

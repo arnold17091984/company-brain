@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getTranslations("privacy");
@@ -36,7 +36,9 @@ export default async function PrivacyPage() {
 			items: [
 				{ text: "General business questions and process queries" },
 				{ text: "Publicly available information and industry research" },
-				{ text: "Template and format requests (e.g. email structure, report layout)" },
+				{
+					text: "Template and format requests (e.g. email structure, report layout)",
+				},
 				{ text: "Learning, training, and professional development questions" },
 			],
 			bg: "bg-green-50 dark:bg-green-950/40",
@@ -51,7 +53,9 @@ export default async function PrivacyPage() {
 			label: t("yellowLabel"),
 			tagline: t("yellowTagline"),
 			items: [
-				{ text: "Internal project names — use codenames or aliases (e.g. \"Project X\")" },
+				{
+					text: 'Internal project names — use codenames or aliases (e.g. "Project X")',
+				},
 				{ text: "General financial discussions — no specific figures" },
 				{ text: "Team performance topics — no individual names" },
 			],
@@ -69,7 +73,9 @@ export default async function PrivacyPage() {
 			items: [
 				{ text: "Client names or identifiers covered by NDA" },
 				{ text: "Exact financial figures: revenue, salary, contract amounts" },
-				{ text: "Personal employee data: performance evaluations, medical records, disciplinary records" },
+				{
+					text: "Personal employee data: performance evaluations, medical records, disciplinary records",
+				},
 				{ text: "Passwords, API keys, tokens, or credentials of any kind" },
 				{ text: "Verbatim legal documents or court-sensitive materials" },
 			],
@@ -115,7 +121,6 @@ export default async function PrivacyPage() {
 
 			<div className="flex-1 overflow-y-auto p-6 print:p-8">
 				<div className="max-w-3xl mx-auto space-y-10">
-
 					{/* Introduction */}
 					<section className="bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5">
 						<p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
@@ -145,9 +150,7 @@ export default async function PrivacyPage() {
 										<span
 											className={`w-3 h-3 rounded-full shrink-0 ${section.dot}`}
 										/>
-										<h3
-											className={`text-sm font-bold ${section.labelColor}`}
-										>
+										<h3 className={`text-sm font-bold ${section.labelColor}`}>
 											{section.label}
 										</h3>
 									</div>
@@ -229,7 +232,9 @@ export default async function PrivacyPage() {
 												d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
 											/>
 										</svg>
-										<span className="text-stone-700 dark:text-stone-300 font-medium">{t("yourInput")}</span>
+										<span className="text-stone-700 dark:text-stone-300 font-medium">
+											{t("yourInput")}
+										</span>
 									</div>
 									<span className="text-stone-400 dark:text-stone-500">→</span>
 									<div className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-2">
@@ -247,7 +252,9 @@ export default async function PrivacyPage() {
 												d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z"
 											/>
 										</svg>
-										<span className="text-indigo-700 dark:text-indigo-300 font-medium">{t("companyApi")}</span>
+										<span className="text-indigo-700 dark:text-indigo-300 font-medium">
+											{t("companyApi")}
+										</span>
 									</div>
 									<span className="text-stone-400 dark:text-stone-500">→</span>
 									<div className="flex items-center gap-1.5 bg-violet-50 dark:bg-violet-950/50 border border-violet-200 dark:border-violet-800 rounded-lg px-3 py-2">

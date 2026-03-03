@@ -62,6 +62,7 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
     access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
+    role: Mapped[str] = mapped_column(String(50), nullable=False, default="employee")
     google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -93,8 +94,12 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
+    category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
     department_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
+    related_employee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     # Arbitrary connector-specific metadata (MIME type, author, channel…)
     metadata_: Mapped[dict[str, Any]] = mapped_column(
@@ -114,6 +119,9 @@ class Document(Base):
     # Relationships
     department_rel: Mapped["Department | None"] = relationship(
         "Department", back_populates="documents"
+    )
+    acl_entries: Mapped[list["DocumentACL"]] = relationship(
+        "DocumentACL", back_populates="document", cascade="all, delete-orphan"
     )
 
 
@@ -214,3 +222,32 @@ class AuditLog(Base):
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="audit_logs")
+
+
+class DocumentACL(Base):
+    """Fine-grained access-control entry for a single document.
+
+    A document may have zero or more ACL entries.  If it has none, access
+    falls back to the existing ``access_level`` / department logic.
+    """
+
+    __tablename__ = "document_acl"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # "user" | "role" | "department"
+    grantee_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    # user UUID string | role name | department UUID string
+    grantee_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    # "read" | "write"
+    permission: Mapped[str] = mapped_column(String(10), nullable=False, default="read")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relationships
+    document: Mapped["Document"] = relationship("Document", back_populates="acl_entries")

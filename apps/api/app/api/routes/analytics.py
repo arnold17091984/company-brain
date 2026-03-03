@@ -3,16 +3,27 @@
 from __future__ import annotations
 
 import logging
+import re
+from collections import Counter
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import User, get_current_user
 from app.core.database import get_db
-from app.models.database import ChatMessage, ChatSession, Department, Document, User as DBUser
+from app.models.database import AuditLog, ChatMessage, ChatSession, Department, Document
+from app.models.database import User as DBUser
+from app.models.schemas import (
+    ConnectorStatus,
+    DocumentRecommendation,
+    LogEntry,
+    LogListResponse,
+    QuestionCluster,
+)
+from app.services.types import ConnectorType
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +106,16 @@ async def get_overview(
     docs_this_week_result = await db.execute(docs_this_week_stmt)
     documents_this_week: int = docs_this_week_result.scalar_one() or 0
 
+    # Total registered users
+    total_users_stmt = select(func.count(DBUser.id))
+    total_users_result = await db.execute(total_users_stmt)
+    total_users: int = total_users_result.scalar_one() or 0
+
     return {
         "queries_today": queries_today,
         "active_users_today": active_users_today,
         "documents_this_week": documents_this_week,
+        "total_users": total_users,
         "snapshot_at": now.isoformat(),
     }
 
@@ -146,10 +163,7 @@ async def get_department_activity(
     result = await db.execute(stmt)
     rows = result.all()
 
-    return [
-        {"department": row.department, "query_count": row.query_count}
-        for row in rows
-    ]
+    return [{"department": row.department, "query_count": row.query_count} for row in rows]
 
 
 @router.get("/usage")
@@ -209,3 +223,423 @@ async def get_usage_stats(
         )
 
     return daily_stats
+
+
+# ---------------------------------------------------------------------------
+# Helpers for Phase 3 endpoints
+# ---------------------------------------------------------------------------
+
+# Common English stop-words that carry no topical signal.
+_STOP_WORDS: frozenset[str] = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "shall",
+        "can",
+        "need",
+        "dare",
+        "ought",
+        "used",
+        "to",
+        "of",
+        "in",
+        "on",
+        "at",
+        "by",
+        "for",
+        "with",
+        "about",
+        "against",
+        "between",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "from",
+        "up",
+        "down",
+        "out",
+        "off",
+        "over",
+        "under",
+        "again",
+        "then",
+        "once",
+        "and",
+        "but",
+        "or",
+        "nor",
+        "so",
+        "yet",
+        "both",
+        "either",
+        "neither",
+        "not",
+        "only",
+        "own",
+        "same",
+        "than",
+        "too",
+        "very",
+        "just",
+        "i",
+        "me",
+        "my",
+        "we",
+        "our",
+        "you",
+        "your",
+        "he",
+        "she",
+        "it",
+        "they",
+        "them",
+        "their",
+        "what",
+        "which",
+        "who",
+        "whom",
+        "this",
+        "that",
+        "these",
+        "those",
+        "how",
+        "when",
+        "where",
+        "why",
+        "all",
+        "each",
+        "every",
+        "no",
+        "any",
+        "more",
+        "most",
+        "other",
+        "such",
+        "if",
+    }
+)
+
+# Phrases that indicate a zero-result / no-answer assistant reply.
+_NO_ANSWER_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"not found in", re.IGNORECASE),
+    re.compile(r"not find", re.IGNORECASE),
+    re.compile(r"couldn.t find", re.IGNORECASE),
+    re.compile(r"could not find", re.IGNORECASE),
+    re.compile(r"no information", re.IGNORECASE),
+    re.compile(r"no relevant", re.IGNORECASE),
+    re.compile(r"don.t have information", re.IGNORECASE),
+    re.compile(r"do not have information", re.IGNORECASE),
+    re.compile(r"knowledge base does not", re.IGNORECASE),
+    re.compile(r"answer was not found", re.IGNORECASE),
+    re.compile(r"unable to find", re.IGNORECASE),
+    re.compile(r"not available", re.IGNORECASE),
+)
+
+_MIN_KEYWORD_LEN = 3
+_TOP_N = 10
+
+
+def _extract_keywords(text: str) -> list[str]:
+    """Return meaningful words from *text* after stripping stop-words.
+
+    Args:
+        text: Raw text from a chat message or query string.
+
+    Returns:
+        List of lower-cased alphabetic tokens that are not stop-words and
+        are at least ``_MIN_KEYWORD_LEN`` characters long.
+    """
+    tokens = re.findall(r"[a-zA-Z]+", text.lower())
+    return [t for t in tokens if t not in _STOP_WORDS and len(t) >= _MIN_KEYWORD_LEN]
+
+
+def _is_no_answer_reply(content: str) -> bool:
+    """Return True when an assistant message indicates no useful result was found.
+
+    Args:
+        content: The assistant message text to evaluate.
+
+    Returns:
+        ``True`` when the content matches any of the no-answer heuristic patterns.
+    """
+    return any(pat.search(content) for pat in _NO_ANSWER_PATTERNS)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/clusters", response_model=list[QuestionCluster])
+async def get_question_clusters(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[QuestionCluster]:
+    """Return clusters of similar questions from the last 7 days of chat history.
+
+    Groups user messages by their most frequent non-stop keyword to produce
+    topic clusters without requiring an ML pipeline.  Returns the top 10
+    clusters ordered by descending message count.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+
+    Returns:
+        list[QuestionCluster]: Top clusters with label, count and up to 3
+        representative sample queries.
+    """
+    logger.info("Question clusters requested", extra={"user": current_user.email})
+
+    window_start = _start_of_day(datetime.now(tz=UTC) - timedelta(days=6))
+    stmt = select(ChatMessage.content).where(
+        ChatMessage.role == "user",
+        ChatMessage.created_at >= window_start,
+    )
+    result = await db.execute(stmt)
+    messages: list[str] = [row[0] for row in result.all()]
+
+    if not messages:
+        return []
+
+    # Map each message to its single most-representative keyword.
+    keyword_to_queries: dict[str, list[str]] = {}
+    for msg in messages:
+        keywords = _extract_keywords(msg)
+        if not keywords:
+            continue
+        # Use the most common keyword in the message as the cluster label.
+        keyword_counter: Counter[str] = Counter(keywords)
+        top_keyword = keyword_counter.most_common(1)[0][0]
+        keyword_to_queries.setdefault(top_keyword, []).append(msg)
+
+    # Build top-N clusters sorted by message count descending.
+    sorted_clusters = sorted(keyword_to_queries.items(), key=lambda kv: len(kv[1]), reverse=True)
+
+    clusters: list[QuestionCluster] = []
+    for label, queries in sorted_clusters[:_TOP_N]:
+        clusters.append(
+            QuestionCluster(
+                label=label,
+                count=len(queries),
+                sample_queries=queries[:3],
+            )
+        )
+
+    return clusters
+
+
+@router.get("/recommendations", response_model=list[DocumentRecommendation])
+async def get_recommendations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[DocumentRecommendation]:
+    """Return document gap recommendations derived from unanswered queries.
+
+    Identifies assistant messages that matched no-answer heuristics and maps
+    them back to the preceding user message.  Groups unanswered queries by
+    keyword to surface content gaps, assigning priority based on query volume.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+
+    Returns:
+        list[DocumentRecommendation]: Top content gaps ordered by descending
+        query count with high/medium/low priority labels.
+    """
+    logger.info("Recommendations requested", extra={"user": current_user.email})
+
+    window_start = _start_of_day(datetime.now(tz=UTC) - timedelta(days=6))
+
+    # Fetch all messages from the window ordered by session and creation time.
+    stmt = (
+        select(ChatMessage.session_id, ChatMessage.role, ChatMessage.content)
+        .where(ChatMessage.created_at >= window_start)
+        .order_by(ChatMessage.session_id, ChatMessage.created_at)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # Pair each assistant no-answer reply with the previous user message.
+    unanswered_queries: list[str] = []
+    last_user_msg: dict[Any, str] = {}
+    for session_id, role, content in rows:
+        if role == "user":
+            last_user_msg[session_id] = content
+        elif role == "assistant" and _is_no_answer_reply(content):
+            prior = last_user_msg.get(session_id)
+            if prior:
+                unanswered_queries.append(prior)
+
+    if not unanswered_queries:
+        return []
+
+    # Cluster by dominant keyword.
+    keyword_counts: Counter[str] = Counter()
+    for query in unanswered_queries:
+        keywords = _extract_keywords(query)
+        if keywords:
+            keyword_counter: Counter[str] = Counter(keywords)
+            top_keyword = keyword_counter.most_common(1)[0][0]
+            keyword_counts[top_keyword] += 1
+
+    recommendations: list[DocumentRecommendation] = []
+    for topic, count in keyword_counts.most_common(_TOP_N):
+        if count >= 5:
+            priority = "high"
+        elif count >= 2:
+            priority = "medium"
+        else:
+            priority = "low"
+        recommendations.append(
+            DocumentRecommendation(topic=topic, query_count=count, priority=priority)
+        )
+
+    return recommendations
+
+
+@router.get("/ingestion-status", response_model=list[ConnectorStatus])
+async def get_ingestion_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ConnectorStatus]:
+    """Return the sync status and document counts for each connector.
+
+    Queries the ``documents`` table grouped by ``source_type`` — mirroring
+    the ``/knowledge/sources`` logic — and merges the result with the static
+    connector registry so every connector always appears in the response.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+
+    Returns:
+        list[ConnectorStatus]: One entry per connector with status, document
+        count and the ISO-8601 timestamp of the most recent index operation.
+    """
+    logger.info("Ingestion status requested", extra={"user": current_user.email})
+
+    stmt = select(
+        Document.source_type,
+        func.count(Document.id).label("document_count"),
+        func.max(Document.indexed_at).label("last_synced_at"),
+    ).group_by(Document.source_type)
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    db_data: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        db_data[row.source_type] = {
+            "document_count": row.document_count,
+            "last_synced": row.last_synced_at.isoformat() if row.last_synced_at else None,
+        }
+
+    connectors = [ConnectorType.GOOGLE_DRIVE, ConnectorType.TELEGRAM, ConnectorType.NOTION]
+    statuses: list[ConnectorStatus] = []
+    for connector in connectors:
+        row_data = db_data.get(connector, {})
+        doc_count: int = row_data.get("document_count", 0)
+        statuses.append(
+            ConnectorStatus(
+                connector=connector,
+                status="active" if doc_count > 0 else "inactive",
+                document_count=doc_count,
+                last_synced=row_data.get("last_synced"),
+                error=None,
+            )
+        )
+
+    return statuses
+
+
+@router.get("/logs", response_model=LogListResponse)
+async def get_logs(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(default=1, ge=1, description="Page number (1-indexed)."),
+    page_size: int = Query(default=50, ge=1, le=200, description="Rows per page."),
+) -> LogListResponse:
+    """Return paginated agent execution logs from the AuditLog table.
+
+    Joins ``AuditLog`` with ``User`` to resolve the email address of the
+    acting user.  Results are ordered newest-first.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+        page: 1-indexed page number (default 1).
+        page_size: Number of rows per page (default 50, max 200).
+
+    Returns:
+        LogListResponse: Paginated log entries with total row count.
+    """
+    logger.info("Agent logs requested", extra={"user": current_user.email, "page": page})
+
+    offset = (page - 1) * page_size
+
+    # Total row count
+    count_stmt = select(func.count(AuditLog.id))
+    count_result = await db.execute(count_stmt)
+    total: int = count_result.scalar_one() or 0
+
+    # Paginated rows joined to users for the email
+    rows_stmt = (
+        select(
+            AuditLog.id,
+            DBUser.email.label("user_email"),
+            AuditLog.action,
+            AuditLog.query,
+            AuditLog.created_at,
+            AuditLog.metadata_,
+        )
+        .join(DBUser, AuditLog.user_id == DBUser.id)
+        .order_by(AuditLog.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    rows_result = await db.execute(rows_stmt)
+    rows = rows_result.all()
+
+    log_entries: list[LogEntry] = [
+        LogEntry(
+            id=str(row.id),
+            user_email=row.user_email,
+            action=row.action,
+            query=row.query,
+            created_at=row.created_at.isoformat(),
+            metadata=row.metadata_ or {},
+        )
+        for row in rows
+    ]
+
+    return LogListResponse(
+        logs=log_entries,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )

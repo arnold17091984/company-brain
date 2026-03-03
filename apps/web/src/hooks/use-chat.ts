@@ -12,12 +12,33 @@ interface ChatApiResponse {
 	sources?: Source[];
 }
 
+interface SseSourceRaw {
+	title: string;
+	url: string;
+	snippet: string;
+	updated_at: string;
+	score?: number;
+	source_type?: string;
+}
+
 interface SseEvent {
 	type?: string;
 	content?: string;
 	conversation_id?: string;
-	sources?: Source[];
+	sources?: SseSourceRaw[];
 	done?: boolean;
+	confidence?: number;
+}
+
+function mapSources(raw: SseSourceRaw[]): Source[] {
+	return raw.map((s) => ({
+		title: s.title,
+		url: s.url,
+		snippet: s.snippet,
+		updatedAt: s.updated_at,
+		score: s.score,
+		sourceType: s.source_type,
+	}));
 }
 
 interface SessionMessageApi {
@@ -57,7 +78,9 @@ export function useChat(): UseChatReturn {
 	messagesRef.current = messages;
 
 	const getAccessToken = useCallback(() => {
-		return (session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+		return (
+			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
+		);
 	}, [session]);
 
 	const clearMessages = useCallback(() => {
@@ -106,9 +129,7 @@ export function useChat(): UseChatReturn {
 				setSessionId(id);
 			} catch (err) {
 				const message =
-					err instanceof Error
-						? err.message
-						: "Failed to load conversation";
+					err instanceof Error ? err.message : "Failed to load conversation";
 				setError(message);
 			} finally {
 				setIsLoading(false);
@@ -177,6 +198,7 @@ export function useChat(): UseChatReturn {
 					const reader = response.body.getReader();
 					const decoder = new TextDecoder();
 					let accumulatedContent = "";
+					let accumulatedThinking = "";
 					let buffer = "";
 
 					while (true) {
@@ -203,7 +225,17 @@ export function useChat(): UseChatReturn {
 										setSessionId(parsed.conversation_id);
 									}
 
-									if (parsed.content) {
+									if (parsed.type === "thinking" && parsed.content) {
+										accumulatedThinking += parsed.content;
+										const snapshot = accumulatedThinking;
+										setMessages((prev) =>
+											prev.map((m) =>
+												m.id === assistantMessageId
+													? { ...m, thinking: snapshot }
+													: m,
+											),
+										);
+									} else if (parsed.content) {
 										accumulatedContent += parsed.content;
 										const snapshot = accumulatedContent;
 										setMessages((prev) =>
@@ -215,13 +247,23 @@ export function useChat(): UseChatReturn {
 										);
 									}
 
-									if (parsed.done && parsed.sources) {
-										const sources = parsed.sources;
-										setMessages((prev) =>
-											prev.map((m) =>
-												m.id === assistantMessageId ? { ...m, sources } : m,
-											),
-										);
+									if (parsed.done) {
+										const updates: Partial<Message> = {};
+										if (parsed.sources) {
+											updates.sources = mapSources(parsed.sources);
+										}
+										if (parsed.confidence !== undefined) {
+											updates.confidence = parsed.confidence;
+										}
+										if (Object.keys(updates).length > 0) {
+											setMessages((prev) =>
+												prev.map((m) =>
+													m.id === assistantMessageId
+														? { ...m, ...updates }
+														: m,
+												),
+											);
+										}
 									}
 								} catch {
 									// Non-JSON SSE data — treat as plain text chunk

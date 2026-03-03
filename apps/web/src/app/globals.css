@@ -46,8 +46,10 @@
 
 	/* Shadows — soft, warm */
 	--shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.04);
-	--shadow-md: 0 4px 12px -2px rgb(28 25 23 / 0.06), 0 2px 4px -2px rgb(28 25 23 / 0.04);
-	--shadow-lg: 0 8px 24px -4px rgb(28 25 23 / 0.08), 0 4px 8px -4px rgb(28 25 23 / 0.04);
+	--shadow-md: 0 4px 12px -2px rgb(28 25 23 / 0.06), 0 2px 4px -2px
+		rgb(28 25 23 / 0.04);
+	--shadow-lg: 0 8px 24px -4px rgb(28 25 23 / 0.08), 0 4px 8px -4px
+		rgb(28 25 23 / 0.04);
 	--shadow-glow: 0 0 20px rgb(67 56 202 / 0.15);
 }
 
@@ -90,7 +92,12 @@ html {
 /* ─── Gradients ────────────────────────────────────────────── */
 
 .bg-warm-gradient {
-	background: linear-gradient(135deg, var(--color-bg-subtle) 0%, #f0edf9 50%, var(--color-bg-subtle) 100%);
+	background: linear-gradient(
+		135deg,
+		var(--color-bg-subtle) 0%,
+		#f0edf9 50%,
+		var(--color-bg-subtle) 100%
+	);
 }
 
 .bg-sidebar-gradient {
@@ -102,7 +109,11 @@ html {
 }
 
 .bg-hero-gradient {
-	background: radial-gradient(ellipse at 50% 0%, rgb(99 102 241 / 0.08) 0%, transparent 60%), var(--color-bg-subtle);
+	background: radial-gradient(
+			ellipse at 50% 0%,
+			rgb(99 102 241 / 0.08) 0%,
+			transparent 60%
+		), var(--color-bg-subtle);
 }
 
 /* ─── Glass Morphism ───────────────────────────────────────── */
@@ -122,29 +133,50 @@ html {
 /* ─── CJK Font Stack ───────────────────────────────────────── */
 
 :root {
-	--font-sans: var(--font-inter), var(--font-noto-jp), var(--font-noto-kr), ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-inter), var(--font-noto-jp), var(--font-noto-kr),
+		ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ─── Animations ───────────────────────────────────────────── */
 
 @keyframes slide-in-left {
-	from { transform: translateX(-100%); }
-	to { transform: translateX(0); }
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(0);
+	}
 }
 
 @keyframes fade-in {
-	from { opacity: 0; transform: translateY(8px); }
-	to { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes fade-in-scale {
-	from { opacity: 0; transform: scale(0.95); }
-	to { opacity: 1; transform: scale(1); }
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 @keyframes shimmer {
-	from { background-position: -200% 0; }
-	to { background-position: 200% 0; }
+	from {
+		background-position: -200% 0;
+	}
+	to {
+		background-position: 200% 0;
+	}
 }
 
 .animate-fade-in {
@@ -160,13 +192,20 @@ html {
 }
 
 .skeleton {
-	background: linear-gradient(90deg, var(--color-bg-muted) 25%, var(--color-bg-subtle) 50%, var(--color-bg-muted) 75%);
+	background: linear-gradient(
+		90deg,
+		var(--color-bg-muted) 25%,
+		var(--color-bg-subtle) 50%,
+		var(--color-bg-muted) 75%
+	);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	*, *::before, *::after {
+	*,
+	*::before,
+	*::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;

@@ -83,42 +83,195 @@ class QdrantRetrieverService:
 
         return self._to_chunks(results.points)
 
-    def _build_access_filter(self, user: User) -> Filter | None:
-        if user.access_level == "all":
+    def _build_access_filter(self, user: User) -> Filter | None:  # noqa: PLR0911
+        """Build a Qdrant filter that enforces role-based and ACL access control.
+
+        The filter is layered: first role-based rules determine broad HR access,
+        then user/ACL fields narrow results for lower-privilege roles.
+
+        Args:
+            user: The authenticated user whose ``role``, ``id``, and
+                ``department_id`` drive the filter logic.
+
+        Returns:
+            A :class:`qdrant_client.models.Filter` or ``None`` when the user
+            has unrestricted access (``ceo`` role).
+        """
+        role = user.role
+
+        # CEO: full access, no filter
+        if role == "ceo":
             return None
 
-        if user.access_level == "department":
-            conditions: list[Any] = [
-                FieldCondition(
-                    key="access_level",
-                    match=MatchValue(value="public"),
-                ),
+        # Admin: exclude all HR categories
+        if role == "admin":
+            hr_categories = [
+                "hr_evaluation",
+                "hr_compensation",
+                "hr_contract",
+                "hr_attendance",
+                "hr_skills",
+                "hr_org",
+                "hr_compliance",
             ]
+            must_not_conditions: list[Any] = [
+                FieldCondition(key="category", match=MatchValue(value=cat)) for cat in hr_categories
+            ]
+            return Filter(must_not=must_not_conditions)
+
+        # Executive: all docs except those ACL-restricted to ceo-only
+        # (Qdrant cannot perform subquery joins, so we allow access to docs
+        # whose acl_roles includes "executive" or "ceo", or acl_user_ids
+        # includes this user, or have no ACL restrictions at all)
+        if role == "executive":
+            return Filter(
+                should=[
+                    # No acl_roles set (general document)
+                    Filter(
+                        must_not=[
+                            FieldCondition(
+                                key="acl_roles",
+                                match=MatchValue(value="ceo"),
+                            )
+                        ]
+                    ),
+                    # Explicitly granted to executive role
+                    FieldCondition(
+                        key="acl_roles",
+                        match=MatchValue(value="executive"),
+                    ),
+                    # Explicitly granted to this user
+                    FieldCondition(
+                        key="acl_user_ids",
+                        match=MatchValue(value=user.id),
+                    ),
+                ]
+            )
+
+        # HR role: all docs except hr_compensation unless explicitly granted
+        if role == "hr":
+            return Filter(
+                should=[
+                    # Non-compensation docs
+                    Filter(
+                        must_not=[
+                            FieldCondition(
+                                key="category",
+                                match=MatchValue(value="hr_compensation"),
+                            )
+                        ]
+                    ),
+                    # Compensation docs explicitly granted to hr role
+                    Filter(
+                        must=[
+                            FieldCondition(
+                                key="category",
+                                match=MatchValue(value="hr_compensation"),
+                            ),
+                            FieldCondition(
+                                key="acl_roles",
+                                match=MatchValue(value="hr"),
+                            ),
+                        ]
+                    ),
+                    # Compensation docs explicitly granted to this user
+                    Filter(
+                        must=[
+                            FieldCondition(
+                                key="category",
+                                match=MatchValue(value="hr_compensation"),
+                            ),
+                            FieldCondition(
+                                key="acl_user_ids",
+                                match=MatchValue(value=user.id),
+                            ),
+                        ]
+                    ),
+                ]
+            )
+
+        # Manager: own department HR docs + general + ACL-granted
+        if role == "manager":
+            hr_categories = [
+                "hr_evaluation",
+                "hr_compensation",
+                "hr_contract",
+                "hr_attendance",
+                "hr_skills",
+                "hr_org",
+                "hr_compliance",
+            ]
+            non_hr_condition = Filter(
+                must_not=[
+                    FieldCondition(key="category", match=MatchValue(value=cat))
+                    for cat in hr_categories
+                ]
+            )
+            should_conditions: list[Any] = [non_hr_condition]
             if user.department_id:
-                conditions.append(
+                should_conditions.append(
+                    FieldCondition(
+                        key="department_id",
+                        match=MatchValue(value=user.department_id),
+                    )
+                )
+            should_conditions.append(
+                FieldCondition(
+                    key="acl_roles",
+                    match=MatchValue(value="manager"),
+                )
+            )
+            should_conditions.append(
+                FieldCondition(
+                    key="acl_user_ids",
+                    match=MatchValue(value=user.id),
+                )
+            )
+            return Filter(should=should_conditions)
+
+        # Employee (default): own docs only (related_employee_id match or in ACL)
+        employee_conditions: list[Any] = [
+            FieldCondition(
+                key="acl_user_ids",
+                match=MatchValue(value=user.id),
+            ),
+            FieldCondition(
+                key="related_employee_id",
+                match=MatchValue(value=user.id),
+            ),
+        ]
+        # Also allow non-HR documents based on legacy access_level scoping
+        hr_categories_list = [
+            "hr_evaluation",
+            "hr_compensation",
+            "hr_contract",
+            "hr_attendance",
+            "hr_skills",
+            "hr_org",
+            "hr_compliance",
+        ]
+        non_hr_filter = Filter(
+            must_not=[
+                FieldCondition(key="category", match=MatchValue(value=cat))
+                for cat in hr_categories_list
+            ]
+        )
+        if user.access_level == "department" and user.department_id:
+            non_hr_filter = Filter(
+                must=[
+                    Filter(
+                        must_not=[
+                            FieldCondition(key="category", match=MatchValue(value=cat))
+                            for cat in hr_categories_list
+                        ]
+                    ),
                     FieldCondition(
                         key="department_id",
                         match=MatchValue(value=user.department_id),
                     ),
-                )
-            return Filter(should=conditions)
-
-        # restricted: only docs shared with the user or
-        # matching department
-        conditions_restricted: list[Any] = [
-            FieldCondition(
-                key="shared_with",
-                match=MatchValue(value=user.id),
-            ),
-        ]
-        if user.department_id:
-            conditions_restricted.append(
-                FieldCondition(
-                    key="department_id",
-                    match=MatchValue(value=user.department_id),
-                ),
+                ]
             )
-        return Filter(should=conditions_restricted)
+        return Filter(should=[non_hr_filter, *employee_conditions])
 
     def _to_chunks(
         self,

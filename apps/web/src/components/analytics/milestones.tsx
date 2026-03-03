@@ -88,17 +88,25 @@ export function Milestones() {
 							</div>
 
 							{/* Content */}
-							<div className={`pb-7 ${idx === MILESTONES.length - 1 ? "pb-0" : ""}`}>
+							<div
+								className={`pb-7 ${idx === MILESTONES.length - 1 ? "pb-0" : ""}`}
+							>
 								<div className="flex flex-wrap items-center gap-2 mb-1">
 									<span
 										className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border ${m.badgeColor}`}
 									>
 										{m.team}
 									</span>
-									<span className="text-xs text-stone-400 dark:text-stone-500">{m.date}</span>
+									<span className="text-xs text-stone-400 dark:text-stone-500">
+										{m.date}
+									</span>
 								</div>
-								<p className="text-sm font-semibold text-stone-900 dark:text-stone-100">{m.title}</p>
-								<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">{m.description}</p>
+								<p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+									{m.title}
+								</p>
+								<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+									{m.description}
+								</p>
 							</div>
 						</li>
 					))}

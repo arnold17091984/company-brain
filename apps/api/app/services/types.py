@@ -36,6 +36,30 @@ class ChunkType(StrEnum):
     IMAGE_CAPTION = "image_caption"
 
 
+class DocumentCategory(StrEnum):
+    """Category of a document, used for HR access-control scoping."""
+
+    GENERAL = "general"
+    HR_EVALUATION = "hr_evaluation"
+    HR_COMPENSATION = "hr_compensation"
+    HR_CONTRACT = "hr_contract"
+    HR_ATTENDANCE = "hr_attendance"
+    HR_SKILLS = "hr_skills"
+    HR_ORG = "hr_org"
+    HR_COMPLIANCE = "hr_compliance"
+
+
+class UserRole(StrEnum):
+    """Role of a user, used for HR access-control scoping."""
+
+    EMPLOYEE = "employee"
+    MANAGER = "manager"
+    HR = "hr"
+    EXECUTIVE = "executive"
+    CEO = "ceo"
+    ADMIN = "admin"
+
+
 # ---------------------------------------------------------------------------
 # RAG value objects
 # ---------------------------------------------------------------------------
@@ -206,6 +230,10 @@ class ModelConfig(BaseModel):
         description="Cost in USD per 1,000 output tokens.",
     )
     supports_streaming: bool = Field(default=True)
+    supports_thinking: bool = Field(
+        default=False,
+        description="Whether the model supports extended thinking.",
+    )
     context_window: int = Field(
         default=200_000,
         description="Maximum context window in tokens.",

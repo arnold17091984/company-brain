@@ -44,3 +44,10 @@ htmlcov/
 
 # Logs
 *.log
+
+# Screenshots & Playwright artifacts
+*.png
+.playwright-mcp/
+
+# TypeScript build info
+*.tsbuildinfo

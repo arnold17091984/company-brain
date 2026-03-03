@@ -26,7 +26,7 @@ from app.models.schemas import (
 from app.services import chat_service
 from app.services.llm.claude_service import ClaudeService, LLMError
 from app.services.llm.model_router import ClaudeModelRouter
-from app.services.security.data_classifier import classify_input, RiskLevel
+from app.services.security.data_classifier import RiskLevel, classify_input
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +121,8 @@ def _chunks_to_sources(chunks: list[Any]) -> list[Source]:
             url=chunk.metadata.get("url", ""),
             snippet=chunk.content[:_MAX_SNIPPET_LEN],
             updated_at=str(chunk.metadata.get("updated_at", "")),
+            score=round(chunk.score, 3) if hasattr(chunk, "score") else None,
+            source_type=chunk.metadata.get("source_type"),
         )
         for chunk in chunks
     ]
@@ -179,9 +181,7 @@ async def chat(
     else:
         session_id = await chat_service.create_session(db, current_user.id)
         # Use history from request body for brand-new sessions
-        context_messages = [
-            {"role": m.role, "content": m.content} for m in body.history
-        ]
+        context_messages = [{"role": m.role, "content": m.content} for m in body.history]
 
     # ── Persist the incoming user message ────────────────────────────────
     await chat_service.add_message(db, session_id, "user", body.message)
@@ -213,14 +213,17 @@ async def chat(
     # ── Select model via router ──────────────────────────────────────────
     router_instance = ClaudeModelRouter()
     model_id = router_instance.select_model_for_query(
-        body.message, has_history=bool(context_messages),
+        body.message,
+        has_history=bool(context_messages),
     )
 
     # ── Call the LLM ─────────────────────────────────────────────────────
     service = ClaudeService()
     try:
         reply = await service.generate(
-            llm_messages, system_prompt=system_prompt, model=model_id,
+            llm_messages,
+            system_prompt=system_prompt,
+            model=model_id,
         )
     except LLMError as exc:
         logger.error("LLM error in chat endpoint: %s", exc)
@@ -285,9 +288,7 @@ async def chat_stream(
             # Return an error event rather than a 404 so the SSE client can
             # handle it uniformly without needing to inspect the HTTP status.
             async def _not_found_generator():
-                error_payload = json.dumps(
-                    {"error": "Conversation not found.", "done": True}
-                )
+                error_payload = json.dumps({"error": "Conversation not found.", "done": True})
                 yield {"data": error_payload}
 
             return EventSourceResponse(_not_found_generator())
@@ -296,9 +297,7 @@ async def chat_stream(
         )
     else:
         session_id = await chat_service.create_session(db, current_user.id)
-        context_messages = [
-            {"role": m.role, "content": m.content} for m in body.history
-        ]
+        context_messages = [{"role": m.role, "content": m.content} for m in body.history]
 
     # ── Persist the incoming user message ────────────────────────────────
     await chat_service.add_message(db, session_id, "user", body.message)
@@ -318,14 +317,18 @@ async def chat_stream(
     # ── Sensitive data check ────────────────────────────────────────────
     classification = classify_input(body.message)
     if classification.risk_level == RiskLevel.HIGH and classification.warning_message:
+
         async def _warning_generator():
-            payload = json.dumps({
-                "content": classification.warning_message,
-                "done": True,
-                "conversation_id": session_id,
-                "sources": [],
-            })
+            payload = json.dumps(
+                {
+                    "content": classification.warning_message,
+                    "done": True,
+                    "conversation_id": session_id,
+                    "sources": [],
+                }
+            )
             yield {"data": payload}
+
         return EventSourceResponse(_warning_generator())
 
     # ── Build messages list for the LLM ──────────────────────────────────
@@ -334,7 +337,8 @@ async def chat_stream(
     # ── Select model via router ──────────────────────────────────────────
     router_instance = ClaudeModelRouter()
     model_id = router_instance.select_model_for_query(
-        body.message, has_history=bool(context_messages),
+        body.message,
+        has_history=bool(context_messages),
     )
 
     # Capture locals for use inside the generator closure
@@ -345,35 +349,73 @@ async def chat_stream(
             "url": chunk.metadata.get("url", ""),
             "snippet": chunk.content[:_MAX_SNIPPET_LEN],
             "updated_at": str(chunk.metadata.get("updated_at", "")),
+            "score": round(chunk.score, 3) if hasattr(chunk, "score") else None,
+            "source_type": chunk.metadata.get("source_type"),
         }
         for chunk in chunks
     ]
 
     _model_id = model_id
+    _use_thinking = router_instance.model_supports_thinking(_model_id)
+
+    # Compute confidence from RAG chunk scores (mean of top scores)
+    _confidence: float | None = None
+    if chunks:
+        scores = [c.score for c in chunks if hasattr(c, "score")]
+        if scores:
+            _confidence = round(min(sum(scores[:3]) / len(scores[:3]), 1.0), 3)
 
     async def token_generator():
         accumulated: list[str] = []
         service = ClaudeService()
         try:
-            async for chunk in service.stream(llm_messages, system_prompt=system_prompt, model=_model_id):
-                accumulated.append(chunk)
-                payload = json.dumps({"content": chunk, "done": False})
-                yield {"data": payload}
+            if _use_thinking:
+                stream = service.stream_with_thinking(
+                    llm_messages,
+                    system_prompt=system_prompt,
+                    model=_model_id,
+                )
+                async for event in stream:
+                    payload = json.dumps(
+                        {
+                            "type": event["type"],
+                            "content": event["content"],
+                            "done": False,
+                        }
+                    )
+                    yield {"data": payload}
+                    if event["type"] == "text":
+                        accumulated.append(event["content"])
+            else:
+                stream = service.stream(
+                    llm_messages,
+                    system_prompt=system_prompt,
+                    model=_model_id,
+                )
+                async for chunk in stream:
+                    accumulated.append(chunk)
+                    payload = json.dumps(
+                        {
+                            "content": chunk,
+                            "done": False,
+                        }
+                    )
+                    yield {"data": payload}
 
             # ── Persist the complete assistant reply ──────────────────────
             full_reply = "".join(accumulated)
             await chat_service.add_message(db, _session_id, "assistant", full_reply)
             await db.commit()
 
-            final_payload = json.dumps(
-                {
-                    "content": "",
-                    "done": True,
-                    "conversation_id": _session_id,
-                    "sources": _sources_payload,
-                }
-            )
-            yield {"data": final_payload}
+            final: dict = {
+                "content": "",
+                "done": True,
+                "conversation_id": _session_id,
+                "sources": _sources_payload,
+            }
+            if _confidence is not None:
+                final["confidence"] = _confidence
+            yield {"data": json.dumps(final)}
 
         except LLMError as exc:
             logger.error("LLM error in chat stream: %s", exc)

@@ -1,6 +1,6 @@
 import { signIn } from "@/lib/auth";
-import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 const isDev =
 	process.env.NODE_ENV === "development" && !process.env.GOOGLE_CLIENT_ID;
@@ -41,9 +41,7 @@ export default async function LoginPage() {
 					<h1 className="text-2xl font-bold text-stone-900 tracking-tight">
 						{tc("companyBrain")}
 					</h1>
-					<p className="text-stone-500 text-sm mt-1.5">
-						{t("brandTagline")}
-					</p>
+					<p className="text-stone-500 text-sm mt-1.5">{t("brandTagline")}</p>
 				</div>
 
 				{/* Card */}
@@ -51,9 +49,7 @@ export default async function LoginPage() {
 					<h2 className="text-lg font-semibold text-stone-800 mb-1">
 						{t("heading")}
 					</h2>
-					<p className="text-stone-500 text-sm mb-6">
-						{t("subtitle")}
-					</p>
+					<p className="text-stone-500 text-sm mb-6">{t("subtitle")}</p>
 
 					{isDev ? (
 						<form

@@ -183,3 +183,59 @@ class ClaudeService:
             raise LLMError(f"API error {exc.status_code} during streaming") from exc
         except anthropic.APIConnectionError as exc:
             raise LLMError("Connection error during streaming") from exc
+
+    async def stream_with_thinking(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        model: str | None = None,
+        max_tokens: int = 16000,
+        system_prompt: str | None = None,
+        thinking_budget: int = 8000,
+    ) -> AsyncIterator[dict[str, str]]:
+        """Stream response with extended thinking from Claude.
+
+        Extended thinking lets the model reason before answering. The
+        stream yields typed dicts so callers can distinguish thinking
+        tokens from response tokens.
+
+        Args:
+            messages: Conversation history.
+            model: Override the default model ID.
+            max_tokens: Maximum output tokens (includes thinking budget).
+            system_prompt: Optional system instruction.
+            thinking_budget: Token budget for internal reasoning.
+
+        Yields:
+            ``{"type": "thinking", "content": "..."}`` for reasoning tokens
+            and ``{"type": "text", "content": "..."}`` for answer tokens.
+
+        Raises:
+            LLMError: On provider errors.
+        """
+        resolved_model = model or self._default_model
+        kwargs: dict = {
+            "model": resolved_model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "thinking": {
+                "type": "enabled",
+                "budget_tokens": thinking_budget,
+            },
+        }
+        if system_prompt:
+            kwargs["system"] = system_prompt
+
+        try:
+            async with self._client.messages.stream(**kwargs) as stream_ctx:
+                async for event in stream_ctx:
+                    if event.type == "thinking":
+                        yield {"type": "thinking", "content": event.thinking}
+                    elif event.type == "text":
+                        yield {"type": "text", "content": event.text}
+        except anthropic.RateLimitError as exc:
+            raise LLMError("Rate limit exceeded during streaming") from exc
+        except anthropic.APIStatusError as exc:
+            raise LLMError(f"API error {exc.status_code} during streaming") from exc
+        except anthropic.APIConnectionError as exc:
+            raise LLMError("Connection error during streaming") from exc

@@ -177,9 +177,7 @@ class TestAuthToken:
         with patch(
             "app.api.routes.auth.verify_google_token",
             new=AsyncMock(
-                side_effect=FastAPIHTTPException(
-                    status_code=401, detail="Invalid token format"
-                )
+                side_effect=FastAPIHTTPException(status_code=401, detail="Invalid token format")
             ),
         ):
             async with await _client() as client:
@@ -269,15 +267,19 @@ class TestChat:
             ]
         )
 
-        with patch(
-            "app.api.routes.chat.chat_service.create_session",
-            new=AsyncMock(return_value=session_id),
-        ), patch(
-            "app.api.routes.chat.chat_service.add_message",
-            new=AsyncMock(return_value=str(uuid.uuid4())),
-        ), patch(
-            "app.api.routes.chat.ClaudeService.generate",
-            new=AsyncMock(return_value="Hello from the mock LLM!"),
+        with (
+            patch(
+                "app.api.routes.chat.chat_service.create_session",
+                new=AsyncMock(return_value=session_id),
+            ),
+            patch(
+                "app.api.routes.chat.chat_service.add_message",
+                new=AsyncMock(return_value=str(uuid.uuid4())),
+            ),
+            patch(
+                "app.api.routes.chat.ClaudeService.generate",
+                new=AsyncMock(return_value="Hello from the mock LLM!"),
+            ),
         ):
             async with await _client(db) as client:
                 response = await client.post(
@@ -297,15 +299,19 @@ class TestChat:
         new_session_id = str(uuid.uuid4())
         create_session_mock = AsyncMock(return_value=new_session_id)
 
-        with patch(
-            "app.api.routes.chat.chat_service.create_session",
-            new=create_session_mock,
-        ), patch(
-            "app.api.routes.chat.chat_service.add_message",
-            new=AsyncMock(return_value=str(uuid.uuid4())),
-        ), patch(
-            "app.api.routes.chat.ClaudeService.generate",
-            new=AsyncMock(return_value="Hi there!"),
+        with (
+            patch(
+                "app.api.routes.chat.chat_service.create_session",
+                new=create_session_mock,
+            ),
+            patch(
+                "app.api.routes.chat.chat_service.add_message",
+                new=AsyncMock(return_value=str(uuid.uuid4())),
+            ),
+            patch(
+                "app.api.routes.chat.ClaudeService.generate",
+                new=AsyncMock(return_value="Hi there!"),
+            ),
         ):
             async with await _client() as client:
                 response = await client.post(
@@ -322,18 +328,23 @@ class TestChat:
         """When a valid conversation_id is supplied the session is reused."""
         existing_id = str(uuid.uuid4())
 
-        with patch(
-            "app.api.routes.chat.chat_service.session_belongs_to_user",
-            new=AsyncMock(return_value=True),
-        ), patch(
-            "app.api.routes.chat.chat_service.get_session_context_messages",
-            new=AsyncMock(return_value=[]),
-        ), patch(
-            "app.api.routes.chat.chat_service.add_message",
-            new=AsyncMock(return_value=str(uuid.uuid4())),
-        ), patch(
-            "app.api.routes.chat.ClaudeService.generate",
-            new=AsyncMock(return_value="Continued response"),
+        with (
+            patch(
+                "app.api.routes.chat.chat_service.session_belongs_to_user",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "app.api.routes.chat.chat_service.get_session_context_messages",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "app.api.routes.chat.chat_service.add_message",
+                new=AsyncMock(return_value=str(uuid.uuid4())),
+            ),
+            patch(
+                "app.api.routes.chat.ClaudeService.generate",
+                new=AsyncMock(return_value="Continued response"),
+            ),
         ):
             async with await _client() as client:
                 response = await client.post(
@@ -370,15 +381,19 @@ class TestChat:
         """LLMError propagates as a 503 Service Unavailable response."""
         from app.services.llm.claude_service import LLMError  # noqa: PLC0415
 
-        with patch(
-            "app.api.routes.chat.chat_service.create_session",
-            new=AsyncMock(return_value=str(uuid.uuid4())),
-        ), patch(
-            "app.api.routes.chat.chat_service.add_message",
-            new=AsyncMock(return_value=str(uuid.uuid4())),
-        ), patch(
-            "app.api.routes.chat.ClaudeService.generate",
-            new=AsyncMock(side_effect=LLMError("Upstream error")),
+        with (
+            patch(
+                "app.api.routes.chat.chat_service.create_session",
+                new=AsyncMock(return_value=str(uuid.uuid4())),
+            ),
+            patch(
+                "app.api.routes.chat.chat_service.add_message",
+                new=AsyncMock(return_value=str(uuid.uuid4())),
+            ),
+            patch(
+                "app.api.routes.chat.ClaudeService.generate",
+                new=AsyncMock(side_effect=LLMError("Upstream error")),
+            ),
         ):
             async with await _client() as client:
                 response = await client.post(
@@ -575,17 +590,22 @@ class TestKnowledgeQuery:
         mock_retriever = AsyncMock()
         mock_retriever.retrieve = AsyncMock(return_value=[fake_chunk])
 
-        with patch(
-            "app.core.config.settings.together_ai_api_key",
-            "fake-together-key",
-        ), patch(
-            "app.services.rag.embedder.TogetherEmbeddingService",
-        ) as _embedder_cls, patch(
-            "app.services.rag.retriever.QdrantRetrieverService",
-            return_value=mock_retriever,
-        ), patch(
-            "app.api.routes.knowledge.ClaudeService.generate",
-            new=AsyncMock(return_value="Based on [1], you get 15 days of annual leave."),
+        with (
+            patch(
+                "app.core.config.settings.together_ai_api_key",
+                "fake-together-key",
+            ),
+            patch(
+                "app.services.rag.embedder.TogetherEmbeddingService",
+            ) as _embedder_cls,
+            patch(
+                "app.services.rag.retriever.QdrantRetrieverService",
+                return_value=mock_retriever,
+            ),
+            patch(
+                "app.api.routes.knowledge.ClaudeService.generate",
+                new=AsyncMock(return_value="Based on [1], you get 15 days of annual leave."),
+            ),
         ):
             async with await _client() as client:
                 response = await client.post(
@@ -730,9 +750,9 @@ class TestAnalyticsOverview:
         # Three sequential scalar results: queries_today, active_users, docs_this_week
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=42),   # queries_today
-                _FakeResult(scalar=10),   # active_users_today
-                _FakeResult(scalar=5),    # documents_this_week
+                _FakeResult(scalar=42),  # queries_today
+                _FakeResult(scalar=10),  # active_users_today
+                _FakeResult(scalar=5),  # documents_this_week
             ]
         )
 
@@ -745,7 +765,7 @@ class TestAnalyticsOverview:
         assert response.status_code == 200
 
     async def test_overview_response_shape(self) -> None:
-        """The overview contains queries_today, active_users_today, documents_this_week, snapshot_at."""
+        """The overview has queries_today, active_users_today, docs_this_week, snapshot_at."""
         db = _FakeSession(
             execute_results=[
                 _FakeResult(scalar=42),
@@ -791,9 +811,9 @@ class TestAnalyticsOverview:
         """The response values must reflect what the database returns."""
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=99),   # queries_today
-                _FakeResult(scalar=7),    # active_users_today
-                _FakeResult(scalar=3),    # documents_this_week
+                _FakeResult(scalar=99),  # queries_today
+                _FakeResult(scalar=7),  # active_users_today
+                _FakeResult(scalar=3),  # documents_this_week
             ]
         )
 

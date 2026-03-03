@@ -42,6 +42,7 @@ class User(BaseModel):
     department: str
     department_id: str | None = None
     access_level: AccessLevel
+    role: str = "employee"
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +56,7 @@ _MOCK_USER = User(
     department="engineering",
     department_id=None,
     access_level="all",
+    role="admin",
 )
 
 _DEV_TOKEN = "dev-token"
@@ -246,6 +248,7 @@ def create_internal_jwt(user: User) -> str:
         "department": user.department,
         "department_id": user.department_id,
         "access_level": user.access_level,
+        "role": user.role,
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expiration_minutes),
         "iss": "company-brain",
@@ -373,6 +376,7 @@ async def get_or_create_user(
         department=department_name,
         department_id=department_id_str,
         access_level=db_user.access_level,  # type: ignore[arg-type]
+        role=db_user.role,
     )
 
 
@@ -427,6 +431,7 @@ async def get_current_user(
             department=str(claims.get("department", "")),
             department_id=claims.get("department_id"),  # type: ignore[arg-type]
             access_level=claims.get("access_level", "restricted"),  # type: ignore[arg-type]
+            role=str(claims.get("role", "employee")),
         )
     except HTTPException:
         pass  # Not an internal JWT, try Google token

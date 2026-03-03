@@ -1,9 +1,9 @@
 "use client";
 
-import { useTheme } from "@/components/providers/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar";
+import { useTheme } from "@/components/providers/theme-provider";
 import { useLocale } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 // ─── Hamburger Button ───────────────────────────────────────
@@ -118,7 +118,10 @@ function LanguageSwitcher() {
 		[pathname, router],
 	);
 
-	const currentLabel = LOCALE_LABELS[locale] ?? { short: locale.toUpperCase(), long: locale };
+	const currentLabel = LOCALE_LABELS[locale] ?? {
+		short: locale.toUpperCase(),
+		long: locale,
+	};
 
 	return (
 		<div className="relative">
@@ -154,29 +157,29 @@ function LanguageSwitcher() {
 					strokeWidth={2}
 					aria-hidden="true"
 				>
-					<path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M19 9l-7 7-7-7"
+					/>
 				</svg>
 			</button>
 
 			{isOpen && (
 				<>
 					{/* Click-away overlay */}
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: Overlay dismisses dropdown; keyboard handled on button via Escape */}
 					<div
 						className="fixed inset-0 z-10"
 						onClick={() => setIsOpen(false)}
 						aria-hidden="true"
 					/>
 					<ul
-						role="listbox"
 						aria-label="Select language"
 						className="absolute right-0 top-full mt-1.5 z-20 min-w-30 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg shadow-stone-900/10 py-1 overflow-hidden"
 					>
 						{Object.entries(LOCALE_LABELS).map(([code, labels]) => (
-							<li
-								key={code}
-								role="option"
-								aria-selected={code === locale}
-							>
+							<li key={code}>
 								<button
 									type="button"
 									onClick={() => switchLocale(code)}

@@ -245,11 +245,11 @@ class TestHonorificNameDetection:
     @pytest.mark.parametrize(
         "text",
         [
-            "田中様にご連絡ください。",   # 様 (sama)
-            "山田さんがいます。",          # さん (san)
-            "鈴木氏のプレゼンです。",      # 氏 (shi)
-            "김씨가 도착했습니다.",        # 씨 (ssi, Korean)
-            "박님이 요청했습니다.",        # 님 (nim, Korean)
+            "田中様にご連絡ください。",  # 様 (sama)
+            "山田さんがいます。",  # さん (san)
+            "鈴木氏のプレゼンです。",  # 氏 (shi)
+            "김씨가 도착했습니다.",  # 씨 (ssi, Korean)
+            "박님이 요청했습니다.",  # 님 (nim, Korean)
         ],
     )
     def test_honorific_name_is_medium_risk(self, text: str) -> None:
@@ -342,9 +342,7 @@ class TestMultipleCategories:
         assert result.risk_level == RiskLevel.HIGH
 
     def test_all_three_high_risk_categories_in_one_message(self) -> None:
-        text = (
-            "NDA protected. Card 4111111111111111. API_KEY=abc123."
-        )
+        text = "NDA protected. Card 4111111111111111. API_KEY=abc123."
         result = classify_input(text)
         cats = _categories(result)
         assert DetectedCategory.CONFIDENTIALITY_MARKER in cats

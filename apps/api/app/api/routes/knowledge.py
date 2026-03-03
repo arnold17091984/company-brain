@@ -15,7 +15,7 @@ from app.core.database import get_db
 from app.models.database import Document
 from app.models.schemas import QueryRequest, QueryResponse, Source
 from app.services.llm.claude_service import ClaudeService, LLMError
-from app.services.security.data_classifier import classify_input, RiskLevel
+from app.services.security.data_classifier import RiskLevel, classify_input
 from app.services.types import ConnectorType
 
 logger = logging.getLogger(__name__)
@@ -53,8 +53,12 @@ def _build_rag_prompt(query: str, chunks: list[Any]) -> str:
         A single prompt string with numbered document excerpts followed by
         the user's question.
     """
-    doc_lines: list[str] = ["Answer the user's question based on the following company documents."]
-    doc_lines.append("Cite sources by number. If the documents don't contain relevant info, say so.")
+    doc_lines: list[str] = [
+        "Answer the user's question based on the following company documents.",
+    ]
+    doc_lines.append(
+        "Cite sources by number. If the documents don't contain relevant info, say so."
+    )
     doc_lines.append("")
     doc_lines.append("Documents:")
 
@@ -230,14 +234,11 @@ async def list_sources(
     logger.info("List sources", extra={"user": current_user.email})
 
     # Query Document table: count and latest indexed_at per source_type
-    stmt = (
-        select(
-            Document.source_type,
-            func.count(Document.id).label("document_count"),
-            func.max(Document.indexed_at).label("last_synced_at"),
-        )
-        .group_by(Document.source_type)
-    )
+    stmt = select(
+        Document.source_type,
+        func.count(Document.id).label("document_count"),
+        func.max(Document.indexed_at).label("last_synced_at"),
+    ).group_by(Document.source_type)
     result = await db.execute(stmt)
     rows = result.all()
 
@@ -321,9 +322,7 @@ async def trigger_ingest(
 
     # Send the Inngest event (requires event key to be configured)
     if not settings.inngest_event_key:
-        logger.warning(
-            "Inngest event key not configured – returning no-op acknowledgement"
-        )
+        logger.warning("Inngest event key not configured – returning no-op acknowledgement")
         return {
             "queued": False,
             "connector_type": validated_connector.value,
@@ -333,6 +332,7 @@ async def trigger_ingest(
 
     try:
         import inngest as inngest_lib  # noqa: PLC0415
+
         from app.workers.ingestion_worker import inngest_client  # noqa: PLC0415
 
         await inngest_client.send(

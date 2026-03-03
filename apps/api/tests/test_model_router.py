@@ -19,10 +19,10 @@ from __future__ import annotations
 import pytest
 
 from app.services.llm.model_router import (
-    ClaudeModelRouter,
     _HAIKU_ID,
     _SIMPLE_QUERY_CHAR_LIMIT,
     _SONNET_ID,
+    ClaudeModelRouter,
 )
 from app.services.types import ModelConfig
 
@@ -30,9 +30,9 @@ from app.services.types import ModelConfig
 # Constants re-exported for test readability
 # ---------------------------------------------------------------------------
 
-_SHORT_QUERY = "x" * (_SIMPLE_QUERY_CHAR_LIMIT - 1)    # one char below the limit
-_EXACT_LIMIT_QUERY = "x" * _SIMPLE_QUERY_CHAR_LIMIT     # at the limit (not < limit)
-_LONG_QUERY = "x" * (_SIMPLE_QUERY_CHAR_LIMIT + 1)     # one char above the limit
+_SHORT_QUERY = "x" * (_SIMPLE_QUERY_CHAR_LIMIT - 1)  # one char below the limit
+_EXACT_LIMIT_QUERY = "x" * _SIMPLE_QUERY_CHAR_LIMIT  # at the limit (not < limit)
+_LONG_QUERY = "x" * (_SIMPLE_QUERY_CHAR_LIMIT + 1)  # one char above the limit
 
 
 # ---------------------------------------------------------------------------
@@ -101,18 +101,14 @@ class TestSelectModelMediumComplexity:
     def test_classify_medium_returns_haiku(self, router: ClaudeModelRouter) -> None:
         assert router.select_model("classify", complexity="medium") == _HAIKU_ID
 
-    def test_classify_default_complexity_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_classify_default_complexity_returns_haiku(self, router: ClaudeModelRouter) -> None:
         # "medium" is the default, so omitting complexity must behave the same
         assert router.select_model("classify") == _HAIKU_ID
 
     def test_chat_medium_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         assert router.select_model("chat", complexity="medium") == _SONNET_ID
 
-    def test_chat_default_complexity_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_chat_default_complexity_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         assert router.select_model("chat") == _SONNET_ID
 
     def test_summarize_medium_returns_sonnet(self, router: ClaudeModelRouter) -> None:
@@ -127,9 +123,7 @@ class TestSelectModelMediumComplexity:
     def test_reasoning_medium_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         assert router.select_model("reasoning", complexity="medium") == _SONNET_ID
 
-    def test_unknown_task_medium_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_unknown_task_medium_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         # Unknown non-classify task falls through to Sonnet at medium complexity
         assert router.select_model("custom_task", complexity="medium") == _SONNET_ID
 
@@ -142,71 +136,42 @@ class TestSelectModelMediumComplexity:
 class TestSelectModelForQuery:
     # Short query, no history -> Haiku
 
-    def test_short_query_no_history_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_short_query_no_history_returns_haiku(self, router: ClaudeModelRouter) -> None:
         assert router.select_model_for_query(_SHORT_QUERY, has_history=False) == _HAIKU_ID
 
-    def test_short_query_no_history_default_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_short_query_no_history_default_returns_haiku(self, router: ClaudeModelRouter) -> None:
         # has_history defaults to False
         assert router.select_model_for_query(_SHORT_QUERY) == _HAIKU_ID
 
-    def test_single_char_query_no_history_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_single_char_query_no_history_returns_haiku(self, router: ClaudeModelRouter) -> None:
         assert router.select_model_for_query("hi", has_history=False) == _HAIKU_ID
 
     # At / above the boundary -> Sonnet
 
-    def test_exact_limit_query_no_history_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_exact_limit_query_no_history_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         # len(query) == _SIMPLE_QUERY_CHAR_LIMIT is NOT < limit -> Sonnet
-        assert (
-            router.select_model_for_query(_EXACT_LIMIT_QUERY, has_history=False)
-            == _SONNET_ID
-        )
+        assert router.select_model_for_query(_EXACT_LIMIT_QUERY, has_history=False) == _SONNET_ID
 
-    def test_long_query_no_history_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
-        assert (
-            router.select_model_for_query(_LONG_QUERY, has_history=False) == _SONNET_ID
-        )
+    def test_long_query_no_history_returns_sonnet(self, router: ClaudeModelRouter) -> None:
+        assert router.select_model_for_query(_LONG_QUERY, has_history=False) == _SONNET_ID
 
     # History present -> Sonnet regardless of length
 
-    def test_short_query_with_history_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
-        assert (
-            router.select_model_for_query(_SHORT_QUERY, has_history=True) == _SONNET_ID
-        )
+    def test_short_query_with_history_returns_sonnet(self, router: ClaudeModelRouter) -> None:
+        assert router.select_model_for_query(_SHORT_QUERY, has_history=True) == _SONNET_ID
 
-    def test_long_query_with_history_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
-        assert (
-            router.select_model_for_query(_LONG_QUERY, has_history=True) == _SONNET_ID
-        )
+    def test_long_query_with_history_returns_sonnet(self, router: ClaudeModelRouter) -> None:
+        assert router.select_model_for_query(_LONG_QUERY, has_history=True) == _SONNET_ID
 
-    def test_empty_query_no_history_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_empty_query_no_history_returns_haiku(self, router: ClaudeModelRouter) -> None:
         # Empty string has length 0, which is < limit -> Haiku
         assert router.select_model_for_query("", has_history=False) == _HAIKU_ID
 
-    def test_empty_query_with_history_returns_sonnet(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_empty_query_with_history_returns_sonnet(self, router: ClaudeModelRouter) -> None:
         # Even a zero-length query escalates to Sonnet when history is present
         assert router.select_model_for_query("", has_history=True) == _SONNET_ID
 
-    def test_realistic_short_query_returns_haiku(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_realistic_short_query_returns_haiku(self, router: ClaudeModelRouter) -> None:
         assert router.select_model_for_query("What is the leave policy?") == _HAIKU_ID
 
     def test_realistic_long_query_with_history_returns_sonnet(
@@ -217,9 +182,7 @@ class TestSelectModelForQuery:
             "three years and summarise the key changes in leave entitlements, remote "
             "work eligibility, and performance review cycles?"
         )
-        assert (
-            router.select_model_for_query(long_query, has_history=True) == _SONNET_ID
-        )
+        assert router.select_model_for_query(long_query, has_history=True) == _SONNET_ID
 
 
 # ---------------------------------------------------------------------------
@@ -228,15 +191,11 @@ class TestSelectModelForQuery:
 
 
 class TestGetModelConfigValid:
-    def test_sonnet_config_returns_model_config_type(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_sonnet_config_returns_model_config_type(self, router: ClaudeModelRouter) -> None:
         config = router.get_model_config(_SONNET_ID)
         assert isinstance(config, ModelConfig)
 
-    def test_haiku_config_returns_model_config_type(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_haiku_config_returns_model_config_type(self, router: ClaudeModelRouter) -> None:
         config = router.get_model_config(_HAIKU_ID)
         assert isinstance(config, ModelConfig)
 
@@ -335,9 +294,7 @@ class TestGetModelConfigValid:
 
 
 class TestGetModelConfigInvalid:
-    def test_unknown_model_id_raises_key_error(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_unknown_model_id_raises_key_error(self, router: ClaudeModelRouter) -> None:
         with pytest.raises(KeyError):
             router.get_model_config("claude-nonexistent-99")
 
@@ -350,9 +307,7 @@ class TestGetModelConfigInvalid:
         with pytest.raises(KeyError, match=unknown):
             router.get_model_config(unknown)
 
-    def test_error_message_lists_registered_models(
-        self, router: ClaudeModelRouter
-    ) -> None:
+    def test_error_message_lists_registered_models(self, router: ClaudeModelRouter) -> None:
         with pytest.raises(KeyError, match="Registered"):
             router.get_model_config("bad-model-id")
 
