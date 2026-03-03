@@ -25,6 +25,7 @@ class ConnectorType(StrEnum):
     GOOGLE_DRIVE = "google_drive"
     TELEGRAM = "telegram"
     NOTION = "notion"
+    CHAT_LEARNED = "chat_learned"
 
 
 class ChunkType(StrEnum):

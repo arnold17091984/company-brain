@@ -348,16 +348,21 @@ async def get_or_create_user(
             await db.flush()
             logger.info("Linked Google ID to existing user: %s", email)
         else:
-            # Create brand new user
+            # Create brand new user — auto-promote if email is in ADMIN_EMAILS
+            is_admin = email.lower() in settings.admin_email_set
             db_user = DBUser(
                 email=email,
                 name=name,
                 google_id=google_id,
-                access_level="restricted",
+                role="admin" if is_admin else "employee",
+                access_level="all" if is_admin else "restricted",
             )
             db.add(db_user)
             await db.flush()
-            logger.info("Created new user: %s", email)
+            if is_admin:
+                logger.info("Created new ADMIN user (ADMIN_EMAILS match): %s", email)
+            else:
+                logger.info("Created new user: %s", email)
 
     # Build the department name from the relationship if available
     department_name = ""
@@ -440,3 +445,33 @@ async def get_current_user(
     google_claims = await verify_google_token(token)
     user = await get_or_create_user(db, google_claims)
     return user
+
+
+# ---------------------------------------------------------------------------
+# Admin-only dependency
+# ---------------------------------------------------------------------------
+
+
+async def get_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """FastAPI dependency that enforces admin role.
+
+    Calls ``get_current_user`` internally, then checks if the user
+    has the ``"admin"`` role.  Returns 403 otherwise.
+
+    Args:
+        current_user: The already-authenticated user.
+
+    Returns:
+        User: The authenticated admin user.
+
+    Raises:
+        HTTPException: 403 when the user is not an admin.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

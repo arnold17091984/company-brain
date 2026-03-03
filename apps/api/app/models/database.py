@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -251,3 +251,240 @@ class DocumentACL(Base):
 
     # Relationships
     document: Mapped["Document"] = relationship("Document", back_populates="acl_entries")
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: AI Template Market
+# ---------------------------------------------------------------------------
+
+
+class PromptTemplate(Base):
+    """User-created prompt template shared in the marketplace."""
+
+    __tablename__ = "prompt_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(String(1000), nullable=False, default="")
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+    vote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    copy_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Relationships
+    user: Mapped["User"] = relationship("User")
+    votes: Mapped[list["PromptTemplateVote"]] = relationship(
+        "PromptTemplateVote", back_populates="template", cascade="all, delete-orphan"
+    )
+
+
+class PromptTemplateVote(Base):
+    """A single like/vote on a prompt template (one per user per template)."""
+
+    __tablename__ = "prompt_template_votes"
+    __table_args__ = (
+        UniqueConstraint("template_id", "user_id", name="uq_template_vote_user"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    template_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("prompt_templates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relationships
+    template: Mapped["PromptTemplate"] = relationship("PromptTemplate", back_populates="votes")
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: AI Recipe Book
+# ---------------------------------------------------------------------------
+
+
+class AIRecipe(Base):
+    """Department-specific AI usage recipe for onboarding and knowledge sharing."""
+
+    __tablename__ = "ai_recipes"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    prompt_template: Mapped[str] = mapped_column(String, nullable=False, default="")
+    example_query: Mapped[str] = mapped_column(String, nullable=False, default="")
+    example_response: Mapped[str] = mapped_column(String, nullable=False, default="")
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="general")
+    effectiveness_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default=dict
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Relationships
+    department: Mapped["Department | None"] = relationship("Department")
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: AI Safety Monitor
+# ---------------------------------------------------------------------------
+
+
+class SafetyViolation(Base):
+    """Record of a detected safety violation during chat processing."""
+
+    __tablename__ = "safety_violations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=False
+    )
+    session_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("chat_sessions.id", ondelete="SET NULL"), nullable=True
+    )
+    violation_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(20), nullable=False)
+    detected_categories: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, default=list)
+    context_snippet: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    action_taken: Mapped[str] = mapped_column(String(20), nullable=False)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="chat")
+    metadata_: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default=dict
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: ROI Analytics
+# ---------------------------------------------------------------------------
+
+
+class UsageMetricsDaily(Base):
+    """Daily aggregated usage metrics per user."""
+
+    __tablename__ = "usage_metrics_daily"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_usage_metrics_user_date"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
+    date: Mapped[datetime] = mapped_column(Date, nullable=False)
+    query_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    avg_latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    feedback_up: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    feedback_down: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Relationships
+    user: Mapped["User"] = relationship("User")
+
+
+class KPIRecord(Base):
+    """Monthly KPI record for correlating AI usage with business outcomes."""
+
+    __tablename__ = "kpi_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+    )
+    period: Mapped[str] = mapped_column(String(10), nullable=False)  # "2026-03"
+    kpi_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    actual_value: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    achievement_pct: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+    # Relationships
+    user: Mapped["User"] = relationship("User")
+
+
+class MonthlyROIReport(Base):
+    """Auto-generated monthly ROI report."""
+
+    __tablename__ = "monthly_roi_reports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    period: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)  # "2026-03"
+    total_queries: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    active_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    avg_satisfaction_pct: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    estimated_hours_saved: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    estimated_cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    department_breakdown: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict
+    )
+    kpi_correlation: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict
+    )
+    report_markdown: Mapped[str] = mapped_column(String, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feature 4.3: Admin Settings Persistence
+# ---------------------------------------------------------------------------
+
+
+class SystemSetting(Base):
+    """Key-value store for persistent system configuration."""
+
+    __tablename__ = "system_settings"
+
+    key: Mapped[str] = mapped_column(String(255), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )

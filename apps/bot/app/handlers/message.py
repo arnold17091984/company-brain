@@ -217,7 +217,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             try:
                 stream = await client.stream_chat(
                     message=query,
-                    user_id=str(update.effective_user.id),
                     conversation_id=conversation_id,
                     language=lang,
                 )
@@ -242,7 +241,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 # Fall back to standard chat call.
                 response = await client.chat(
                     message=query,
-                    user_id=str(update.effective_user.id),
                     conversation_id=conversation_id,
                     language=lang,
                 )
@@ -285,6 +283,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Persist conversation context for multi-turn follow-ups.
     if context.user_data is not None and new_conversation_id:
         context.user_data["conversation_id"] = new_conversation_id
+    if context.user_data is not None and sources:
+        context.user_data["last_sources"] = [
+            {"title": getattr(s, "title", ""), "url": getattr(s, "url", ""), "snippet": getattr(s, "snippet", "")}
+            for s in sources
+        ]
 
     if not accumulated:
         with contextlib.suppress(BadRequest):

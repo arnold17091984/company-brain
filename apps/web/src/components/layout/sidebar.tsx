@@ -132,6 +132,46 @@ const NAV_ITEMS: NavItem[] = [
 		),
 	},
 	{
+		labelKey: "templates",
+		href: "/templates",
+		icon: (
+			<svg
+				className="w-5 h-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"
+				/>
+			</svg>
+		),
+	},
+	{
+		labelKey: "recipes",
+		href: "/recipes",
+		icon: (
+			<svg
+				className="w-5 h-5"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+				/>
+			</svg>
+		),
+	},
+	{
 		labelKey: "agent",
 		href: "/agent",
 		icon: (
@@ -289,8 +329,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 							onClick={onNavigate}
 							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
 								isActive
-									? "bg-indigo-600 text-white shadow-sm shadow-indigo-900/30"
-									: "text-indigo-300 hover:text-white hover:bg-indigo-800/40"
+									? "bg-indigo-600 text-white shadow-sm shadow-indigo-900/30 border-l-[3px] border-white/40"
+									: "text-indigo-300 hover:text-white hover:bg-indigo-800/40 border-l-[3px] border-transparent"
 							}`}
 							aria-current={isActive ? "page" : undefined}
 						>
@@ -422,7 +462,7 @@ export function MobileSidebar() {
 				<button
 					type="button"
 					onClick={close}
-					className="absolute top-3 right-3 p-1.5 rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-800/40 transition-colors"
+					className="absolute top-3 right-3 p-1.5 rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-800/40 focus-visible:ring-2 focus-visible:ring-white transition-colors"
 					aria-label="Close sidebar"
 				>
 					<svg

@@ -77,6 +77,7 @@ class ChatResponse(BaseModel):
     message: str
     sources: list[Source]
     conversation_id: str
+    confidence: float | None = None
 
 
 class FeedbackRequest(BaseModel):
@@ -166,6 +167,15 @@ class DocumentUploadResponse(BaseModel):
     status: str
 
 
+class DocumentUpdate(BaseModel):
+    """Request to update document metadata."""
+
+    title: str | None = None
+    category: str | None = None
+    access_level: str | None = None
+    related_employee_id: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Analytics Phase 3 – AI Agent Dashboard
 # ---------------------------------------------------------------------------
@@ -241,6 +251,66 @@ class UserSummary(BaseModel):
     created_at: str
 
 
+# ---------------------------------------------------------------------------
+# User Management
+# ---------------------------------------------------------------------------
+
+UserRole = Literal["admin", "ceo", "executive", "hr", "manager", "employee"]
+AccessLevel = Literal["all", "department", "restricted"]
+
+
+class UserUpdate(BaseModel):
+    """Request to update user role, department, or access level."""
+
+    role: UserRole | None = None
+    department_id: str | None = None
+    access_level: AccessLevel | None = None
+    name: str | None = None
+
+
+class UserDetailResponse(BaseModel):
+    """Detailed user response with department info."""
+
+    id: str
+    email: str
+    name: str
+    role: str
+    department_id: str | None = None
+    department_name: str | None = None
+    access_level: str
+    created_at: str
+    updated_at: str
+
+
+# ---------------------------------------------------------------------------
+# Department Management
+# ---------------------------------------------------------------------------
+
+
+class DepartmentCreate(BaseModel):
+    """Request to create a new department."""
+
+    name: str = Field(..., min_length=1, max_length=255)
+    slug: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-z0-9_-]+$")
+
+
+class DepartmentUpdate(BaseModel):
+    """Request to update an existing department."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    slug: str | None = Field(default=None, min_length=1, max_length=100, pattern=r"^[a-z0-9_-]+$")
+
+
+class DepartmentResponse(BaseModel):
+    """Response for a single department."""
+
+    id: str
+    name: str
+    slug: str
+    user_count: int = 0
+    created_at: str
+
+
 class PerformanceMetrics(BaseModel):
     """Aggregated performance metrics for the admin dashboard."""
 
@@ -256,3 +326,280 @@ class HealthCheck(BaseModel):
     service: str
     status: str  # "healthy" | "degraded" | "down"
     latency_ms: float
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: AI Template Market
+# ---------------------------------------------------------------------------
+
+
+class PromptTemplateCreate(BaseModel):
+    """Request to create a new prompt template."""
+
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="", max_length=1000)
+    content: str = Field(..., min_length=1)
+    category: Literal[
+        "cs", "marketing", "development", "accounting", "general_affairs", "general"
+    ] = "general"
+
+
+class PromptTemplateUpdate(BaseModel):
+    """Request to update an existing prompt template."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    content: str | None = Field(default=None, min_length=1)
+    category: Literal[
+        "cs", "marketing", "development", "accounting", "general_affairs", "general"
+    ] | None = None
+
+
+class PromptTemplateResponse(BaseModel):
+    """Response for a single prompt template."""
+
+    id: str
+    user_id: str
+    user_name: str = ""
+    title: str
+    description: str
+    content: str
+    category: str
+    vote_count: int
+    copy_count: int
+    voted_by_me: bool = False
+    created_at: str
+    updated_at: str
+
+
+class PromptTemplateListResponse(BaseModel):
+    """Paginated template list."""
+
+    templates: list[PromptTemplateResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+# ---------------------------------------------------------------------------
+# Knowledge Promotion (Chat → Knowledge Base)
+# ---------------------------------------------------------------------------
+
+
+class KnowledgePromoteRequest(BaseModel):
+    """Request to promote a chat Q&A into the knowledge base."""
+
+    message_id: str = Field(..., description="ID of the assistant message to promote")
+    title: str | None = Field(default=None, max_length=255)
+    category: str = "general"
+    department_id: str | None = None
+    access_level: Literal["all", "department", "restricted"] = "all"
+
+
+class KnowledgePromoteResponse(BaseModel):
+    """Response after promoting a chat Q&A to the knowledge base."""
+
+    document_id: str
+    title: str
+    status: str
+    chunks_count: int
+
+
+class PromotableQA(BaseModel):
+    """A thumbs-up rated Q&A eligible for knowledge promotion."""
+
+    message_id: str
+    question: str
+    answer: str
+    upvote_count: int
+    session_id: str
+    user_email: str
+    created_at: str
+    already_promoted: bool = False
+
+
+class PromotableQAListResponse(BaseModel):
+    """Paginated list of promotable Q&A pairs."""
+
+    items: list[PromotableQA]
+    total: int
+    page: int
+    page_size: int
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: AI Recipe Book
+# ---------------------------------------------------------------------------
+
+
+class AIRecipeCreate(BaseModel):
+    """Request to create a new AI recipe (admin only)."""
+
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="", max_length=2000)
+    prompt_template: str = ""
+    example_query: str = ""
+    example_response: str = ""
+    department_id: str | None = None
+    category: str = "general"
+    status: Literal["draft", "published", "archived"] = "draft"
+
+
+class AIRecipeUpdate(BaseModel):
+    """Request to update an existing AI recipe."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=2000)
+    prompt_template: str | None = None
+    example_query: str | None = None
+    example_response: str | None = None
+    department_id: str | None = None
+    category: str | None = None
+    effectiveness_score: float | None = None
+    status: Literal["draft", "published", "archived"] | None = None
+
+
+class AIRecipeResponse(BaseModel):
+    """Response for a single AI recipe."""
+
+    id: str
+    title: str
+    description: str
+    prompt_template: str
+    example_query: str
+    example_response: str
+    department_id: str | None = None
+    department_name: str | None = None
+    category: str
+    effectiveness_score: float
+    usage_count: int
+    source: str
+    status: str
+    created_at: str
+    updated_at: str
+
+
+class AIRecipeListResponse(BaseModel):
+    """Paginated recipe list."""
+
+    recipes: list[AIRecipeResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: AI Safety Monitor
+# ---------------------------------------------------------------------------
+
+
+class SafetyViolationResponse(BaseModel):
+    """Response for a single safety violation."""
+
+    id: str
+    user_id: str
+    user_email: str = ""
+    session_id: str | None = None
+    violation_type: str
+    risk_level: str
+    detected_categories: list[str]
+    context_snippet: str
+    action_taken: str
+    source: str
+    created_at: str
+    resolved_at: str | None = None
+    resolved_by: str | None = None
+
+
+class SafetyViolationListResponse(BaseModel):
+    """Paginated safety violation list."""
+
+    violations: list[SafetyViolationResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class SafetyStats(BaseModel):
+    """Aggregated safety statistics for the admin dashboard."""
+
+    total_violations: int
+    violations_today: int
+    blocked_count: int
+    masked_count: int
+    warned_count: int
+    top_violation_types: list[dict]
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: ROI Analytics
+# ---------------------------------------------------------------------------
+
+
+class UsageMetricResponse(BaseModel):
+    """Usage metrics for a single user on a single day."""
+
+    user_id: str
+    user_name: str = ""
+    user_email: str = ""
+    department_name: str | None = None
+    date: str
+    query_count: int
+    total_input_tokens: int
+    total_output_tokens: int
+    avg_latency_ms: float
+    feedback_up: int
+    feedback_down: int
+
+
+class CorrelationDataPoint(BaseModel):
+    """A single data point for the AI usage vs KPI scatter plot."""
+
+    user_id: str
+    user_name: str = ""
+    department_name: str | None = None
+    query_count: int
+    total_tokens: int
+    kpi_achievement_pct: float
+
+
+class KPIRecordCreate(BaseModel):
+    """Request to manually input a KPI record."""
+
+    user_id: str
+    department_id: str | None = None
+    period: str = Field(..., pattern=r"^\d{4}-\d{2}$")
+    kpi_name: str = Field(..., min_length=1, max_length=255)
+    target_value: float
+    actual_value: float
+
+
+class KPIRecordResponse(BaseModel):
+    """Response for a single KPI record."""
+
+    id: str
+    user_id: str
+    user_name: str = ""
+    department_id: str | None = None
+    period: str
+    kpi_name: str
+    target_value: float
+    actual_value: float
+    achievement_pct: float
+
+
+class ROIReportResponse(BaseModel):
+    """Response for a monthly ROI report."""
+
+    id: str
+    period: str
+    total_queries: int
+    total_tokens: int
+    active_users: int
+    avg_satisfaction_pct: float
+    estimated_hours_saved: float
+    estimated_cost_usd: float
+    department_breakdown: dict
+    kpi_correlation: dict
+    report_markdown: str
+    created_at: str

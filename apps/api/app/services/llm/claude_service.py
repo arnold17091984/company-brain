@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 
 import anthropic
 from anthropic import AsyncAnthropic
@@ -16,6 +18,25 @@ from anthropic import AsyncAnthropic
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class LLMResponse:
+    """Extended response from the LLM including usage metrics."""
+
+    text: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    latency_ms: float = 0.0
+
+
+@dataclass
+class StreamMetrics:
+    """Accumulated metrics collected during streaming."""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    latency_ms: float = 0.0
 
 _DEFAULT_SONNET = "claude-sonnet-4-6"
 _DEFAULT_HAIKU = "claude-haiku-4-5-20251001"
@@ -106,7 +127,7 @@ class ClaudeService:
         temperature: float = 0.3,
         max_tokens: int = 4096,
         system_prompt: str | None = None,
-    ) -> str:
+    ) -> LLMResponse:
         """Generate a complete response from Claude.
 
         Args:
@@ -117,7 +138,7 @@ class ClaudeService:
             system_prompt: Optional system instruction.
 
         Returns:
-            The generated text response.
+            LLMResponse with text, token counts, and latency.
 
         Raises:
             LLMError: On provider errors after retries.
@@ -135,9 +156,18 @@ class ClaudeService:
         def _factory():
             return self._client.messages.create(**kwargs)
 
+        start = time.monotonic()
         result = await _retry_call(_factory)
+        latency_ms = (time.monotonic() - start) * 1000
+
         text_blocks = [block.text for block in result.content if hasattr(block, "text")]
-        return "".join(text_blocks)
+        usage = getattr(result, "usage", None)
+        return LLMResponse(
+            text="".join(text_blocks),
+            input_tokens=getattr(usage, "input_tokens", 0) if usage else 0,
+            output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
+            latency_ms=round(latency_ms, 1),
+        )
 
     async def stream(
         self,
@@ -147,6 +177,7 @@ class ClaudeService:
         temperature: float = 0.3,
         max_tokens: int = 4096,
         system_prompt: str | None = None,
+        metrics: StreamMetrics | None = None,
     ) -> AsyncIterator[str]:
         """Stream response tokens from Claude.
 
@@ -156,6 +187,7 @@ class ClaudeService:
             temperature: Sampling temperature.
             max_tokens: Maximum output tokens.
             system_prompt: Optional system instruction.
+            metrics: Optional mutable object to collect token/latency stats.
 
         Yields:
             Individual text chunks as they arrive from the API.
@@ -173,10 +205,19 @@ class ClaudeService:
         if system_prompt:
             kwargs["system"] = system_prompt
 
+        start = time.monotonic()
         try:
             async with self._client.messages.stream(**kwargs) as stream_ctx:
                 async for chunk in stream_ctx.text_stream:
                     yield chunk
+                # Collect usage after stream completes
+                if metrics is not None:
+                    final_message = await stream_ctx.get_final_message()
+                    usage = getattr(final_message, "usage", None)
+                    if usage:
+                        metrics.input_tokens = getattr(usage, "input_tokens", 0)
+                        metrics.output_tokens = getattr(usage, "output_tokens", 0)
+                    metrics.latency_ms = round((time.monotonic() - start) * 1000, 1)
         except anthropic.RateLimitError as exc:
             raise LLMError("Rate limit exceeded during streaming") from exc
         except anthropic.APIStatusError as exc:

@@ -114,6 +114,7 @@ export default function ChatPage() {
 						<div className="grid grid-cols-2 gap-3 mt-8 w-full max-w-md">
 							<button
 								type="button"
+								onClick={() => sendMessage(t("suggestEmailDesc"))}
 								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
 							>
 								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
@@ -125,6 +126,7 @@ export default function ChatPage() {
 							</button>
 							<button
 								type="button"
+								onClick={() => sendMessage(t("suggestPolicyDesc"))}
 								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
 							>
 								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
@@ -136,6 +138,7 @@ export default function ChatPage() {
 							</button>
 							<button
 								type="button"
+								onClick={() => sendMessage(t("suggestTranslateDesc"))}
 								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
 							>
 								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
@@ -147,6 +150,7 @@ export default function ChatPage() {
 							</button>
 							<button
 								type="button"
+								onClick={() => sendMessage(t("suggestCodeDesc"))}
 								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
 							>
 								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">

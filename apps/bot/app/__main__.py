@@ -9,7 +9,7 @@ import logging
 import signal
 import sys
 
-from telegram.ext import Application, ApplicationBuilder
+from telegram.ext import Application, ApplicationBuilder, PicklePersistence
 
 from app.config import settings
 from app.handlers import register_handlers
@@ -50,8 +50,12 @@ def _build_application() -> Application:  # type: ignore[type-arg]
     Returns:
         Fully configured ``Application`` with all handlers registered.
     """
+    persistence = PicklePersistence(filepath="bot_data.pickle")
     app: Application = (  # type: ignore[type-arg]
-        ApplicationBuilder().token(settings.telegram_bot_token).build()
+        ApplicationBuilder()
+        .token(settings.telegram_bot_token)
+        .persistence(persistence)
+        .build()
     )
     register_handlers(app)
     return app

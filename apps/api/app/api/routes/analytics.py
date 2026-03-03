@@ -4,24 +4,31 @@ from __future__ import annotations
 
 import logging
 import re
+import uuid
 from collections import Counter
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import User, get_current_user
 from app.core.database import get_db
 from app.models.database import AuditLog, ChatMessage, ChatSession, Department, Document
+from app.models.database import KPIRecord, MonthlyROIReport, UsageMetricsDaily
 from app.models.database import User as DBUser
 from app.models.schemas import (
     ConnectorStatus,
+    CorrelationDataPoint,
     DocumentRecommendation,
+    KPIRecordCreate,
+    KPIRecordResponse,
     LogEntry,
     LogListResponse,
     QuestionCluster,
+    ROIReportResponse,
+    UsageMetricResponse,
 )
 from app.services.types import ConnectorType
 
@@ -643,3 +650,454 @@ async def get_logs(
         page=page,
         page_size=page_size,
     )
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: ROI Analytics endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/usage-metrics", response_model=list[UsageMetricResponse])
+async def get_usage_metrics(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    period: str | None = Query(
+        default=None,
+        description="ISO period string e.g. '2026-03'. Omit for all time.",
+        pattern=r"^\d{4}-\d{2}$",
+    ),
+    department_id: str | None = Query(
+        default=None,
+        description="Filter by department UUID.",
+    ),
+) -> list[UsageMetricResponse]:
+    """Return per-user daily usage metrics from the usage_metrics_daily table.
+
+    Optionally filtered by period (YYYY-MM) and/or department.  The response
+    joins ``User`` and ``Department`` to resolve human-readable names.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+        period: Optional month filter in ``YYYY-MM`` format.
+        department_id: Optional department UUID to filter results.
+
+    Returns:
+        list[UsageMetricResponse]: Rows ordered newest-first.
+    """
+    logger.info(
+        "Usage metrics requested",
+        extra={"user": current_user.email, "period": period, "department_id": department_id},
+    )
+
+    stmt = (
+        select(
+            UsageMetricsDaily,
+            DBUser.name.label("user_name"),
+            DBUser.email.label("user_email"),
+            Department.name.label("department_name"),
+        )
+        .join(DBUser, UsageMetricsDaily.user_id == DBUser.id)
+        .outerjoin(Department, UsageMetricsDaily.department_id == Department.id)
+    )
+
+    if period:
+        # Parse "2026-03" into first and last day of that month
+        try:
+            year_str, month_str = period.split("-")
+            year, month = int(year_str), int(month_str)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="period must be in YYYY-MM format",
+            )
+        from calendar import monthrange
+
+        first_day = date(year, month, 1)
+        last_day = date(year, month, monthrange(year, month)[1])
+        stmt = stmt.where(
+            UsageMetricsDaily.date >= first_day,
+            UsageMetricsDaily.date <= last_day,
+        )
+
+    if department_id:
+        try:
+            dept_uuid = uuid.UUID(department_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="department_id must be a valid UUID",
+            )
+        stmt = stmt.where(UsageMetricsDaily.department_id == dept_uuid)
+
+    stmt = stmt.order_by(UsageMetricsDaily.date.desc())
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return [
+        UsageMetricResponse(
+            user_id=str(row.UsageMetricsDaily.user_id),
+            user_name=row.user_name or "",
+            user_email=row.user_email or "",
+            department_name=row.department_name,
+            date=row.UsageMetricsDaily.date.isoformat(),
+            query_count=row.UsageMetricsDaily.query_count,
+            total_input_tokens=row.UsageMetricsDaily.total_input_tokens,
+            total_output_tokens=row.UsageMetricsDaily.total_output_tokens,
+            avg_latency_ms=row.UsageMetricsDaily.avg_latency_ms,
+            feedback_up=row.UsageMetricsDaily.feedback_up,
+            feedback_down=row.UsageMetricsDaily.feedback_down,
+        )
+        for row in rows
+    ]
+
+
+@router.get("/correlation", response_model=list[CorrelationDataPoint])
+async def get_correlation(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    period: str = Query(
+        ...,
+        description="ISO period string e.g. '2026-03'.",
+        pattern=r"^\d{4}-\d{2}$",
+    ),
+) -> list[CorrelationDataPoint]:
+    """Return AI usage vs KPI scatter data for the given period.
+
+    Sums ``usage_metrics_daily`` per user for the period, then joins with
+    ``kpi_records`` to produce one data point per user who has both usage and
+    KPI data.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+        period: Month filter in ``YYYY-MM`` format (required).
+
+    Returns:
+        list[CorrelationDataPoint]: One scatter point per matched user.
+    """
+    logger.info(
+        "Correlation data requested", extra={"user": current_user.email, "period": period}
+    )
+
+    try:
+        year_str, month_str = period.split("-")
+        year, month = int(year_str), int(month_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="period must be in YYYY-MM format",
+        )
+
+    from calendar import monthrange
+
+    first_day = date(year, month, 1)
+    last_day = date(year, month, monthrange(year, month)[1])
+
+    # Aggregate usage per user for the period
+    usage_stmt = (
+        select(
+            UsageMetricsDaily.user_id,
+            func.sum(UsageMetricsDaily.query_count).label("query_count"),
+            func.sum(
+                UsageMetricsDaily.total_input_tokens + UsageMetricsDaily.total_output_tokens
+            ).label("total_tokens"),
+        )
+        .where(
+            UsageMetricsDaily.date >= first_day,
+            UsageMetricsDaily.date <= last_day,
+        )
+        .group_by(UsageMetricsDaily.user_id)
+    )
+    usage_result = await db.execute(usage_stmt)
+    usage_rows = usage_result.all()
+
+    if not usage_rows:
+        return []
+
+    # Build a user_id -> (query_count, total_tokens) lookup
+    usage_map: dict[str, dict[str, int]] = {
+        str(r.user_id): {
+            "query_count": int(r.query_count),
+            "total_tokens": int(r.total_tokens),
+        }
+        for r in usage_rows
+    }
+
+    # Fetch KPI records for the period and average achievement per user
+    kpi_stmt = (
+        select(
+            KPIRecord.user_id,
+            func.avg(KPIRecord.achievement_pct).label("avg_achievement"),
+        )
+        .where(KPIRecord.period == period)
+        .group_by(KPIRecord.user_id)
+    )
+    kpi_result = await db.execute(kpi_stmt)
+    kpi_rows = kpi_result.all()
+
+    if not kpi_rows:
+        return []
+
+    # Join with user info and build response
+    points: list[CorrelationDataPoint] = []
+    for kpi_row in kpi_rows:
+        uid = str(kpi_row.user_id)
+        if uid not in usage_map:
+            # No usage data for this user in the period – skip
+            continue
+
+        # Fetch user name and department
+        user_stmt = (
+            select(DBUser.name, Department.name.label("dept_name"))
+            .outerjoin(Department, DBUser.department_id == Department.id)
+            .where(DBUser.id == kpi_row.user_id)
+        )
+        user_result = await db.execute(user_stmt)
+        user_row = user_result.one_or_none()
+        user_name = user_row.name if user_row else uid
+        department_name: str | None = user_row.dept_name if user_row else None
+
+        usage = usage_map[uid]
+        points.append(
+            CorrelationDataPoint(
+                user_id=uid,
+                user_name=user_name,
+                department_name=department_name,
+                query_count=usage["query_count"],
+                total_tokens=usage["total_tokens"],
+                kpi_achievement_pct=round(float(kpi_row.avg_achievement), 1),
+            )
+        )
+
+    return points
+
+
+@router.get("/roi-reports", response_model=list[ROIReportResponse])
+async def get_roi_reports(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ROIReportResponse]:
+    """Return all monthly ROI reports ordered by period descending.
+
+    Args:
+        current_user: Injected authenticated user.
+        db: Injected database session.
+
+    Returns:
+        list[ROIReportResponse]: All available monthly ROI reports,
+        newest period first.
+    """
+    logger.info("ROI reports requested", extra={"user": current_user.email})
+
+    stmt = select(MonthlyROIReport).order_by(MonthlyROIReport.period.desc())
+    result = await db.execute(stmt)
+    reports = result.scalars().all()
+
+    return [
+        ROIReportResponse(
+            id=str(report.id),
+            period=report.period,
+            total_queries=report.total_queries,
+            total_tokens=report.total_tokens,
+            active_users=report.active_users,
+            avg_satisfaction_pct=report.avg_satisfaction_pct,
+            estimated_hours_saved=report.estimated_hours_saved,
+            estimated_cost_usd=report.estimated_cost_usd,
+            department_breakdown=report.department_breakdown,
+            kpi_correlation=report.kpi_correlation,
+            report_markdown=report.report_markdown,
+            created_at=report.created_at.isoformat(),
+        )
+        for report in reports
+    ]
+
+
+@router.post("/kpi", response_model=KPIRecordResponse, status_code=status.HTTP_201_CREATED)
+async def create_kpi_record(
+    body: KPIRecordCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KPIRecordResponse:
+    """Manually input a KPI record for a user.
+
+    Calculates ``achievement_pct`` as ``(actual_value / target_value) * 100``
+    when ``target_value > 0``, otherwise defaults to ``0.0``.
+
+    Args:
+        body: KPI record creation payload.
+        current_user: Injected authenticated user.
+        db: Injected database session.
+
+    Returns:
+        KPIRecordResponse: The newly created KPI record.
+    """
+    logger.info(
+        "KPI record creation requested",
+        extra={"user": current_user.email, "period": body.period, "kpi_name": body.kpi_name},
+    )
+
+    # Validate user_id
+    try:
+        user_uuid = uuid.UUID(body.user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="user_id must be a valid UUID",
+        )
+
+    dept_uuid: uuid.UUID | None = None
+    if body.department_id:
+        try:
+            dept_uuid = uuid.UUID(body.department_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="department_id must be a valid UUID",
+            )
+
+    # Calculate achievement percentage
+    if body.target_value > 0:
+        achievement_pct = round(body.actual_value / body.target_value * 100, 2)
+    else:
+        achievement_pct = 0.0
+
+    kpi_record = KPIRecord(
+        user_id=user_uuid,
+        department_id=dept_uuid,
+        period=body.period,
+        kpi_name=body.kpi_name,
+        target_value=body.target_value,
+        actual_value=body.actual_value,
+        achievement_pct=achievement_pct,
+    )
+    db.add(kpi_record)
+    await db.flush()  # populate kpi_record.id before committing
+
+    # Resolve user name for response
+    user_name_result = await db.execute(
+        select(DBUser.name).where(DBUser.id == user_uuid)
+    )
+    user_name_row = user_name_result.one_or_none()
+    user_name = user_name_row.name if user_name_row else ""
+
+    await db.commit()
+
+    logger.info(
+        "KPI record created for user %s, period %s, achievement %.1f%%",
+        body.user_id,
+        body.period,
+        achievement_pct,
+    )
+
+    return KPIRecordResponse(
+        id=str(kpi_record.id),
+        user_id=str(kpi_record.user_id),
+        user_name=user_name,
+        department_id=str(kpi_record.department_id) if kpi_record.department_id else None,
+        period=kpi_record.period,
+        kpi_name=kpi_record.kpi_name,
+        target_value=kpi_record.target_value,
+        actual_value=kpi_record.actual_value,
+        achievement_pct=kpi_record.achievement_pct,
+    )
+
+
+@router.put("/kpi/{kpi_id}", response_model=KPIRecordResponse)
+async def update_kpi_record(
+    kpi_id: str,
+    body: KPIRecordCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> KPIRecordResponse:
+    """Update an existing KPI record."""
+    try:
+        kid = uuid.UUID(kpi_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="kpi_id must be a valid UUID",
+        )
+
+    result = await db.execute(select(KPIRecord).where(KPIRecord.id == kid))
+    kpi = result.scalar_one_or_none()
+    if kpi is None:
+        raise HTTPException(status_code=404, detail="KPI record not found.")
+
+    # Validate user_id
+    try:
+        user_uuid = uuid.UUID(body.user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="user_id must be a valid UUID",
+        )
+
+    dept_uuid: uuid.UUID | None = None
+    if body.department_id:
+        try:
+            dept_uuid = uuid.UUID(body.department_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="department_id must be a valid UUID",
+            )
+
+    if body.target_value > 0:
+        achievement_pct = round(body.actual_value / body.target_value * 100, 2)
+    else:
+        achievement_pct = 0.0
+
+    kpi.user_id = user_uuid
+    kpi.department_id = dept_uuid
+    kpi.period = body.period
+    kpi.kpi_name = body.kpi_name
+    kpi.target_value = body.target_value
+    kpi.actual_value = body.actual_value
+    kpi.achievement_pct = achievement_pct
+
+    await db.flush()
+
+    user_name_result = await db.execute(select(DBUser.name).where(DBUser.id == user_uuid))
+    user_name_row = user_name_result.one_or_none()
+    user_name = user_name_row.name if user_name_row else ""
+
+    await db.commit()
+
+    return KPIRecordResponse(
+        id=str(kpi.id),
+        user_id=str(kpi.user_id),
+        user_name=user_name,
+        department_id=str(kpi.department_id) if kpi.department_id else None,
+        period=kpi.period,
+        kpi_name=kpi.kpi_name,
+        target_value=kpi.target_value,
+        actual_value=kpi.actual_value,
+        achievement_pct=kpi.achievement_pct,
+    )
+
+
+@router.delete("/kpi/{kpi_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_kpi_record(
+    kpi_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete a KPI record."""
+    try:
+        kid = uuid.UUID(kpi_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="kpi_id must be a valid UUID",
+        )
+
+    result = await db.execute(select(KPIRecord).where(KPIRecord.id == kid))
+    kpi = result.scalar_one_or_none()
+    if kpi is None:
+        raise HTTPException(status_code=404, detail="KPI record not found.")
+
+    await db.delete(kpi)
+    await db.commit()
+    logger.info("KPI record %s deleted by %s", kpi_id, current_user.email)

@@ -12,6 +12,7 @@ declare module "next-auth" {
 			department?: string;
 			departmentId?: string | null;
 			accessLevel?: string;
+			role?: string;
 		};
 	}
 }
@@ -23,5 +24,6 @@ declare module "next-auth/jwt" {
 		department?: string;
 		departmentId?: string | null;
 		accessLevel?: string;
+		role?: string;
 	}
 }

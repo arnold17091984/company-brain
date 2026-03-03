@@ -62,9 +62,18 @@ class Settings(BaseSettings):
     app_env: Literal["development", "staging", "production"] = "development"
     debug: bool = False
 
+    # ── Admin ─────────────────────────────────────────────────────────────────
+    # Comma-separated emails that are auto-promoted to admin on first login
+    admin_emails: str = ""
+
     # ── CORS ───────────────────────────────────────────────────────────────────
     # Comma-separated list of allowed origins, e.g. "http://localhost:3000,https://app.example.com"
     cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+
+    @property
+    def admin_email_set(self) -> set[str]:
+        """Return ADMIN_EMAILS as a lowercase set."""
+        return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
 
     @property
     def allowed_origins(self) -> list[str]:

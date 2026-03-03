@@ -17,6 +17,7 @@ async function exchangeTokenWithBackend(googleIdToken: string): Promise<{
 	department: string;
 	departmentId: string | null;
 	accessLevel: string;
+	role: string;
 } | null> {
 	try {
 		const response = await fetch(`${API_BASE_URL}/api/v1/auth/token`, {
@@ -41,6 +42,7 @@ async function exchangeTokenWithBackend(googleIdToken: string): Promise<{
 			department: data.user.department ?? "",
 			departmentId: data.user.department_id ?? null,
 			accessLevel: data.user.access_level ?? "restricted",
+			role: data.user.role ?? "employee",
 		};
 	} catch (error) {
 		console.error("Backend token exchange error:", error);
@@ -107,6 +109,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					token.department = backendAuth.department;
 					token.departmentId = backendAuth.departmentId;
 					token.accessLevel = backendAuth.accessLevel;
+					token.role = backendAuth.role;
 				}
 			}
 			return token;
@@ -127,6 +130,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			}
 			if (token.accessLevel) {
 				session.user.accessLevel = token.accessLevel;
+			}
+			if (token.role) {
+				session.user.role = token.role;
 			}
 			return session;
 		},

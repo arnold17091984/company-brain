@@ -166,6 +166,46 @@ class DataClassification(BaseModel):
     warning_message: str | None = Field(default=None)
 
 
+def mask_pii(text: str) -> tuple[str, list[DetectedCategory]]:
+    """Replace detected PII patterns with labelled placeholders.
+
+    Args:
+        text: The raw input text.
+
+    Returns:
+        A tuple of (masked_text, list_of_detected_categories).
+        If no PII is found, returns the original text unchanged.
+    """
+    masked = text
+    found: list[DetectedCategory] = []
+    counters: dict[str, int] = {}
+
+    # Only mask medium-risk PII (emails, phones, names, amounts).
+    # High-risk items (credit cards, credentials) should be blocked, not masked.
+    pii_categories = {
+        DetectedCategory.EMAIL,
+        DetectedCategory.PHONE,
+        DetectedCategory.HONORIFIC_NAME,
+        DetectedCategory.CURRENCY_AMOUNT,
+    }
+
+    for category, risk, pattern in _PATTERNS:
+        if category not in pii_categories:
+            continue
+        matches = list(pattern.finditer(masked))
+        if matches:
+            found.append(category)
+            label = category.value.upper()
+            # Replace in reverse to preserve indices
+            for match in reversed(matches):
+                counter = counters.get(label, 0) + 1
+                counters[label] = counter
+                placeholder = f"[{label}_{counter}]"
+                masked = masked[: match.start()] + placeholder + masked[match.end() :]
+
+    return masked, found
+
+
 def classify_input(text: str) -> DataClassification:
     """Classify user input for sensitive data patterns.
 

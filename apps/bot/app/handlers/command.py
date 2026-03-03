@@ -108,7 +108,6 @@ async def handle_ask(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         ) as client:
             response = await client.query(
                 text=question,
-                user_id=str(update.effective_user.id),
                 language=lang,
             )
     except APIError as exc:
@@ -125,6 +124,15 @@ async def handle_ask(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
+
+    # Save conversation context for follow-up queries
+    if context.user_data is not None and hasattr(response, "conversation_id") and response.conversation_id:
+        context.user_data["conversation_id"] = response.conversation_id
+    if context.user_data is not None and response.sources:
+        context.user_data["last_sources"] = [
+            {"title": s.title, "url": s.url, "snippet": s.snippet}
+            for s in response.sources
+        ]
 
     text, reply_markup = format_answer(response.answer, response.sources)
     await update.message.reply_text(
@@ -167,7 +175,6 @@ async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             # For /search we surface the sources list directly.
             response = await client.query(
                 text=query,
-                user_id=str(update.effective_user.id),
                 language=lang,
             )
     except APIError as exc:
@@ -184,6 +191,13 @@ async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
+
+    # Save sources for later reference
+    if context.user_data is not None and response.sources:
+        context.user_data["last_sources"] = [
+            {"title": s.title, "url": s.url, "snippet": s.snippet}
+            for s in response.sources
+        ]
 
     if not response.sources:
         await update.message.reply_text(
@@ -269,7 +283,6 @@ async def handle_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             settings.api_base_url, auth_token=settings.api_auth_token
         ) as client:
             data = await client.get_history(
-                user_id=str(update.effective_user.id),
                 conversation_id=conversation_id,
             )
     except APIError as exc:

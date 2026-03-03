@@ -14,7 +14,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.core.auth import User, get_current_user
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.database import Feedback
+from app.models.database import AuditLog, Feedback
 from app.models.schemas import (
     ChatMessageDetail,
     ChatRequest,
@@ -24,9 +24,10 @@ from app.models.schemas import (
     Source,
 )
 from app.services import chat_service
-from app.services.llm.claude_service import ClaudeService, LLMError
+from app.services.llm.claude_service import ClaudeService, LLMError, StreamMetrics
 from app.services.llm.model_router import ClaudeModelRouter
 from app.services.security.data_classifier import RiskLevel, classify_input
+from app.services.security.safety_guard import SafetyGuard
 
 logger = logging.getLogger(__name__)
 
@@ -198,17 +199,23 @@ async def chat(
     if chunks:
         system_prompt = _SYSTEM_PROMPT + _build_context_block(chunks)
 
-    # ── Sensitive data check ────────────────────────────────────────────
-    classification = classify_input(body.message)
-    if classification.risk_level == RiskLevel.HIGH and classification.warning_message:
+    # ── Safety pre-check ────────────────────────────────────────────────
+    safety = SafetyGuard(db)
+    pre_result = await safety.pre_check(
+        text=body.message,
+        user_id=current_user.id,
+        session_id=session_id,
+    )
+    if pre_result.blocked:
         return ChatResponse(
-            message=classification.warning_message,
+            message=pre_result.warning_message or "Message blocked for safety reasons.",
             sources=[],
             conversation_id=session_id,
         )
 
     # ── Build messages list for the LLM ──────────────────────────────────
-    llm_messages = context_messages + [{"role": "user", "content": body.message}]
+    user_text = pre_result.masked_text or body.message
+    llm_messages = context_messages + [{"role": "user", "content": user_text}]
 
     # ── Select model via router ──────────────────────────────────────────
     router_instance = ClaudeModelRouter()
@@ -220,7 +227,7 @@ async def chat(
     # ── Call the LLM ─────────────────────────────────────────────────────
     service = ClaudeService()
     try:
-        reply = await service.generate(
+        llm_response = await service.generate(
             llm_messages,
             system_prompt=system_prompt,
             model=model_id,
@@ -232,15 +239,50 @@ async def chat(
             detail="LLM service is temporarily unavailable. Please try again.",
         ) from exc
 
+    reply = llm_response.text
+
+    # ── Safety post-check on LLM response ─────────────────────────────
+    post_result = await safety.post_check(
+        text=reply,
+        user_id=current_user.id,
+        session_id=session_id,
+    )
+    if post_result.masked_text:
+        reply = post_result.masked_text
+
     # ── Persist the assistant response ───────────────────────────────────
     await chat_service.add_message(db, session_id, "assistant", reply)
 
+    # ── Record AuditLog with token/latency metrics ───────────────────────
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="chat",
+        query=body.message[:500],
+        metadata_={
+            "model": model_id,
+            "input_tokens": llm_response.input_tokens,
+            "output_tokens": llm_response.output_tokens,
+            "latency_ms": llm_response.latency_ms,
+            "session_id": session_id,
+        },
+    )
+    db.add(audit)
+    await db.commit()
+
     sources = _chunks_to_sources(chunks)
+
+    # Compute confidence from RAG chunk scores (same as streaming)
+    confidence: float | None = None
+    if chunks:
+        scores = [c.score for c in chunks if hasattr(c, "score")]
+        if scores:
+            confidence = round(min(sum(scores[:3]) / len(scores[:3]), 1.0), 3)
 
     return ChatResponse(
         message=reply,
         sources=sources,
         conversation_id=session_id,
+        confidence=confidence,
     )
 
 
@@ -314,14 +356,19 @@ async def chat_stream(
     if chunks:
         system_prompt = _SYSTEM_PROMPT + _build_context_block(chunks)
 
-    # ── Sensitive data check ────────────────────────────────────────────
-    classification = classify_input(body.message)
-    if classification.risk_level == RiskLevel.HIGH and classification.warning_message:
+    # ── Safety pre-check ────────────────────────────────────────────────
+    safety = SafetyGuard(db)
+    pre_result = await safety.pre_check(
+        text=body.message,
+        user_id=current_user.id,
+        session_id=session_id,
+    )
+    if pre_result.blocked:
 
         async def _warning_generator():
             payload = json.dumps(
                 {
-                    "content": classification.warning_message,
+                    "content": pre_result.warning_message or "Message blocked for safety reasons.",
                     "done": True,
                     "conversation_id": session_id,
                     "sources": [],
@@ -332,7 +379,8 @@ async def chat_stream(
         return EventSourceResponse(_warning_generator())
 
     # ── Build messages list for the LLM ──────────────────────────────────
-    llm_messages = context_messages + [{"role": "user", "content": body.message}]
+    user_text = pre_result.masked_text or body.message
+    llm_messages = context_messages + [{"role": "user", "content": user_text}]
 
     # ── Select model via router ──────────────────────────────────────────
     router_instance = ClaudeModelRouter()
@@ -368,6 +416,7 @@ async def chat_stream(
     async def token_generator():
         accumulated: list[str] = []
         service = ClaudeService()
+        _metrics = StreamMetrics()
         try:
             if _use_thinking:
                 stream = service.stream_with_thinking(
@@ -391,6 +440,7 @@ async def chat_stream(
                     llm_messages,
                     system_prompt=system_prompt,
                     model=_model_id,
+                    metrics=_metrics,
                 )
                 async for chunk in stream:
                     accumulated.append(chunk)
@@ -402,9 +452,34 @@ async def chat_stream(
                     )
                     yield {"data": payload}
 
-            # ── Persist the complete assistant reply ──────────────────────
+            # ── Safety post-check on accumulated response ─────────────
             full_reply = "".join(accumulated)
+            _post_safety = SafetyGuard(db)
+            post_result = await _post_safety.post_check(
+                text=full_reply,
+                user_id=current_user.id,
+                session_id=_session_id,
+            )
+            if post_result.masked_text:
+                full_reply = post_result.masked_text
+
+            # ── Persist the complete assistant reply ──────────────────────
             await chat_service.add_message(db, _session_id, "assistant", full_reply)
+
+            # ── Record AuditLog with token/latency metrics ───────────────
+            audit = AuditLog(
+                user_id=current_user.id,
+                action="chat_stream",
+                query=body.message[:500],
+                metadata_={
+                    "model": _model_id,
+                    "input_tokens": _metrics.input_tokens,
+                    "output_tokens": _metrics.output_tokens,
+                    "latency_ms": _metrics.latency_ms,
+                    "session_id": _session_id,
+                },
+            )
+            db.add(audit)
             await db.commit()
 
             final: dict = {
@@ -565,4 +640,15 @@ async def submit_feedback(
         rating=request.rating,
     )
     db.add(feedback)
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="chat_feedback",
+        metadata_={
+            "conversation_id": request.conversation_id,
+            "message_id": request.message_id,
+            "rating": request.rating,
+        },
+    )
+    db.add(audit)
     await db.commit()

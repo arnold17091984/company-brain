@@ -18,6 +18,7 @@ from app.models.schemas import (
     ACLEntry,
     DocumentListResponse,
     DocumentSummary,
+    DocumentUpdate,
     DocumentUploadResponse,
 )
 
@@ -394,6 +395,151 @@ async def get_document(
     return _to_summary(doc)
 
 
+@router.patch("/{document_id}", response_model=DocumentSummary)
+async def update_document(
+    document_id: str,
+    body: DocumentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> DocumentSummary:
+    """Update document metadata (title, category, access_level, related_employee_id)."""
+    try:
+        doc_uuid = uuid.UUID(document_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document ID format: {document_id!r}",
+        ) from None
+
+    stmt = select(Document).where(Document.id == doc_uuid)
+    result = await db.execute(stmt)
+    doc = result.scalar_one_or_none()
+
+    if doc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document {document_id!r} not found",
+        )
+
+    if body.title is not None:
+        doc.title = body.title
+    if body.category is not None:
+        if body.category not in _VALID_CATEGORIES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid category {body.category!r}. Valid: {sorted(_VALID_CATEGORIES)}",
+            )
+        doc.category = body.category
+    if body.access_level is not None:
+        doc.access_level = body.access_level
+    if body.related_employee_id is not None:
+        try:
+            doc.related_employee_id = uuid.UUID(body.related_employee_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid related_employee_id format: {body.related_employee_id!r}",
+            ) from None
+
+    await db.flush()
+    await db.commit()
+
+    logger.info("Document %s updated by %s", document_id, current_user.email)
+    return _to_summary(doc)
+
+
+@router.get("/{document_id}/acl", response_model=list[ACLEntry])
+async def list_document_acl(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ACLEntry]:
+    """List ACL entries for a document."""
+    try:
+        doc_uuid = uuid.UUID(document_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document ID format: {document_id!r}",
+        ) from None
+
+    stmt = select(DocumentACL).where(DocumentACL.document_id == doc_uuid)
+    result = await db.execute(stmt)
+    acls = result.scalars().all()
+
+    return [
+        ACLEntry(
+            grantee_type=acl.grantee_type,
+            grantee_id=acl.grantee_id,
+            permission=acl.permission,
+        )
+        for acl in acls
+    ]
+
+
+@router.post("/{document_id}/acl", response_model=ACLEntry, status_code=status.HTTP_201_CREATED)
+async def add_document_acl(
+    document_id: str,
+    body: ACLEntry,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ACLEntry:
+    """Add an ACL entry to a document."""
+    try:
+        doc_uuid = uuid.UUID(document_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document ID format: {document_id!r}",
+        ) from None
+
+    # Verify document exists
+    doc_result = await db.execute(select(Document).where(Document.id == doc_uuid))
+    if doc_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    acl_row = DocumentACL(
+        document_id=doc_uuid,
+        grantee_type=body.grantee_type,
+        grantee_id=body.grantee_id,
+        permission=body.permission,
+    )
+    db.add(acl_row)
+    await db.commit()
+
+    return body
+
+
+@router.delete("/{document_id}/acl/{acl_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document_acl(
+    document_id: str,
+    acl_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete an ACL entry from a document."""
+    try:
+        doc_uuid = uuid.UUID(document_id)
+        acl_uuid = uuid.UUID(acl_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid UUID format",
+        ) from None
+
+    stmt = select(DocumentACL).where(
+        DocumentACL.id == acl_uuid,
+        DocumentACL.document_id == doc_uuid,
+    )
+    result = await db.execute(stmt)
+    acl_row = result.scalar_one_or_none()
+    if acl_row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ACL entry not found")
+
+    await db.delete(acl_row)
+    await db.commit()
+
+
 @router.delete("/{document_id}", response_model=dict)
 async def delete_document(
     document_id: str,
@@ -440,8 +586,16 @@ async def delete_document(
             detail=f"Document {document_id!r} not found",
         )
 
-    await db.delete(doc)
-    await db.commit()
+    try:
+        await db.delete(doc)
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        logger.error("Failed to delete document %s: %s", document_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete document",
+        ) from exc
 
     logger.info("Document deleted", extra={"document_id": document_id, "user": current_user.email})
     return {"deleted": True}
