@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     together_ai_api_key: str = ""
     cohere_api_key: str = ""
+    gemini_api_key: str = ""
 
     # ── Google integration ─────────────────────────────────────────────────────
     google_client_id: str = ""
