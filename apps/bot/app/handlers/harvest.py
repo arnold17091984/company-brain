@@ -131,13 +131,39 @@ async def harvest_check(update: Update, context: ContextTypes.DEFAULT_TYPE) -> b
     if user_data.get("harvest_active"):
         return True
 
-    # Check API for active sessions. The bot auth token must have sufficient
-    # privileges (admin/service account) to list sessions.
+    # Look up the system user for this Telegram account.
     try:
         async with CompanyBrainClient(
             settings.api_base_url, auth_token=settings.api_auth_token
         ) as client:
-            sessions = await client.get_harvest_sessions()
+            system_user = await client.get_user_by_telegram_id(update.effective_user.id)
+    except APIError as exc:
+        logger.error(
+            "API error looking up Telegram user %s: %s",
+            update.effective_user.id,
+            exc,
+        )
+        return False
+    except Exception as exc:
+        logger.exception(
+            "Unexpected error looking up Telegram user %s: %s",
+            update.effective_user.id,
+            exc,
+        )
+        return False
+
+    if system_user is None:
+        # Telegram user not linked to any system account — skip harvest.
+        return False
+
+    system_user_id: str = system_user["id"]
+
+    # Check API for active sessions filtered to this user.
+    try:
+        async with CompanyBrainClient(
+            settings.api_base_url, auth_token=settings.api_auth_token
+        ) as client:
+            sessions = await client.get_harvest_sessions(target_user_id=system_user_id)
     except APIError as exc:
         logger.error(
             "API error checking harvest sessions for user %s: %s",
@@ -153,7 +179,7 @@ async def harvest_check(update: Update, context: ContextTypes.DEFAULT_TYPE) -> b
         )
         return False
 
-    # Filter to active sessions only. The API may return all statuses.
+    # Filter to active sessions only.
     active_sessions = [s for s in sessions if s.get("status") == "active"]
     if not active_sessions:
         return False

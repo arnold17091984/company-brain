@@ -351,6 +351,25 @@ class CompanyBrainClient:
             path += f"?target_user_id={target_user_id}"
         return await self._get_list(path)
 
+    async def get_user_by_telegram_id(self, telegram_id: int) -> dict[str, Any] | None:
+        """Look up a system user by their Telegram ID.
+
+        Args:
+            telegram_id: Telegram user ID to look up.
+
+        Returns:
+            User detail dict if found, None if no user is linked.
+
+        Raises:
+            APIError: On unexpected API errors (not 404).
+        """
+        try:
+            return await self._get(f"/api/v1/admin/users/by-telegram/{telegram_id}")
+        except APIError as exc:
+            if exc.status_code == 404:
+                return None
+            raise
+
     async def get_harvest_session_detail(self, session_id: str) -> dict[str, Any]:
         """Get full session detail with questions.
 
