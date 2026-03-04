@@ -1,4 +1,4 @@
-"""Tests for app.services.llm.model_router.ClaudeModelRouter.
+"""Tests for app.services.llm.model_router.MultiModelRouter (formerly ClaudeModelRouter).
 
 Covers:
 - select_model with complexity="low" always returns Haiku
@@ -12,6 +12,9 @@ Covers:
 - get_model_config returns correct ModelConfig for valid Sonnet and Haiku IDs
 - get_model_config raises KeyError for an unknown model ID
 - ModelConfig field values match the expected registry entries
+- select_model_for_role returns correct model per user role
+- Full 5-model registry completeness
+- Backward compatibility alias ClaudeModelRouter = MultiModelRouter
 """
 
 from __future__ import annotations
@@ -19,10 +22,14 @@ from __future__ import annotations
 import pytest
 
 from app.services.llm.model_router import (
+    _GEMINI_FLASH_ID,
+    _GEMINI_FLASH_LITE_ID,
+    _GPT4O_MINI_ID,
     _HAIKU_ID,
     _SIMPLE_QUERY_CHAR_LIMIT,
     _SONNET_ID,
     ClaudeModelRouter,
+    MultiModelRouter,
 )
 from app.services.types import ModelConfig
 
@@ -41,9 +48,9 @@ _LONG_QUERY = "x" * (_SIMPLE_QUERY_CHAR_LIMIT + 1)  # one char above the limit
 
 
 @pytest.fixture()
-def router() -> ClaudeModelRouter:
-    """Return a fresh ClaudeModelRouter instance for each test."""
-    return ClaudeModelRouter()
+def router() -> MultiModelRouter:
+    """Return a fresh MultiModelRouter instance for each test."""
+    return MultiModelRouter()
 
 
 # ---------------------------------------------------------------------------
@@ -225,17 +232,17 @@ class TestGetModelConfigValid:
         config = router.get_model_config(_SONNET_ID)
         assert "chat" in config.tasks
 
-    def test_sonnet_includes_reasoning_task(self, router: ClaudeModelRouter) -> None:
+    def test_sonnet_includes_analysis_task(self, router: MultiModelRouter) -> None:
         config = router.get_model_config(_SONNET_ID)
-        assert "reasoning" in config.tasks
+        assert "analysis" in config.tasks
 
-    def test_sonnet_cost_per_1k_input(self, router: ClaudeModelRouter) -> None:
+    def test_sonnet_cost_per_1k_input(self, router: MultiModelRouter) -> None:
         config = router.get_model_config(_SONNET_ID)
-        assert config.cost_per_1k_input == pytest.approx(0.003)
+        assert config.cost_per_1k_input == pytest.approx(3.0)
 
-    def test_sonnet_cost_per_1k_output(self, router: ClaudeModelRouter) -> None:
+    def test_sonnet_cost_per_1k_output(self, router: MultiModelRouter) -> None:
         config = router.get_model_config(_SONNET_ID)
-        assert config.cost_per_1k_output == pytest.approx(0.015)
+        assert config.cost_per_1k_output == pytest.approx(15.0)
 
     # Haiku field assertions
 
@@ -267,13 +274,13 @@ class TestGetModelConfigValid:
         config = router.get_model_config(_HAIKU_ID)
         assert "chat" in config.tasks
 
-    def test_haiku_cost_per_1k_input(self, router: ClaudeModelRouter) -> None:
+    def test_haiku_cost_per_1k_input(self, router: MultiModelRouter) -> None:
         config = router.get_model_config(_HAIKU_ID)
-        assert config.cost_per_1k_input == pytest.approx(0.00025)
+        assert config.cost_per_1k_input == pytest.approx(0.8)
 
-    def test_haiku_cost_per_1k_output(self, router: ClaudeModelRouter) -> None:
+    def test_haiku_cost_per_1k_output(self, router: MultiModelRouter) -> None:
         config = router.get_model_config(_HAIKU_ID)
-        assert config.cost_per_1k_output == pytest.approx(0.00125)
+        assert config.cost_per_1k_output == pytest.approx(4.0)
 
     # Relative cost relationship
 
@@ -330,3 +337,106 @@ class TestRouterInstanceIsolation:
         # Calling once with high complexity must not affect the next call
         router.select_model("chat", complexity="high")
         assert router.select_model("chat", complexity="low") == _HAIKU_ID
+
+
+# ---------------------------------------------------------------------------
+# select_model_for_role
+# ---------------------------------------------------------------------------
+
+
+class TestSelectModelForRole:
+    """Role-based routing via select_model_for_role()."""
+
+    def test_ceo_gets_sonnet(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("ceo")
+        assert config.model_id == _SONNET_ID
+        assert config.provider == "anthropic"
+
+    def test_executive_gets_sonnet(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("executive")
+        assert config.model_id == _SONNET_ID
+
+    def test_hr_gets_sonnet(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("hr")
+        assert config.model_id == _SONNET_ID
+
+    def test_manager_gets_sonnet(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("manager")
+        assert config.model_id == _SONNET_ID
+
+    def test_employee_gets_gemini_flash(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("employee")
+        assert config.model_id == _GEMINI_FLASH_ID
+        assert config.provider == "google"
+
+    def test_admin_gets_haiku(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("admin")
+        assert config.model_id == _HAIKU_ID
+        assert config.provider == "anthropic"
+
+    def test_unknown_role_defaults_to_gemini_flash(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("intern")
+        assert config.model_id == _GEMINI_FLASH_ID
+
+    def test_returns_model_config_type(self, router: MultiModelRouter) -> None:
+        config = router.select_model_for_role("ceo")
+        assert isinstance(config, ModelConfig)
+
+
+# ---------------------------------------------------------------------------
+# Full 5-model registry
+# ---------------------------------------------------------------------------
+
+
+class TestModelRegistry:
+    """Registry completeness for all 5 providers."""
+
+    def test_registry_has_five_models(self, router: MultiModelRouter) -> None:
+        for mid in [_SONNET_ID, _HAIKU_ID, _GEMINI_FLASH_ID, _GEMINI_FLASH_LITE_ID, _GPT4O_MINI_ID]:
+            assert isinstance(router.get_model_config(mid), ModelConfig)
+
+    def test_gemini_flash_provider(self, router: MultiModelRouter) -> None:
+        config = router.get_model_config(_GEMINI_FLASH_ID)
+        assert config.provider == "google"
+
+    def test_gemini_flash_lite_provider(self, router: MultiModelRouter) -> None:
+        config = router.get_model_config(_GEMINI_FLASH_LITE_ID)
+        assert config.provider == "google"
+
+    def test_gpt4o_mini_provider(self, router: MultiModelRouter) -> None:
+        config = router.get_model_config(_GPT4O_MINI_ID)
+        assert config.provider == "openai"
+
+    def test_gemini_flash_context_window(self, router: MultiModelRouter) -> None:
+        config = router.get_model_config(_GEMINI_FLASH_ID)
+        assert config.context_window == 1_000_000
+
+    def test_gpt4o_mini_context_window(self, router: MultiModelRouter) -> None:
+        config = router.get_model_config(_GPT4O_MINI_ID)
+        assert config.context_window == 128_000
+
+    def test_sonnet_supports_thinking(self, router: MultiModelRouter) -> None:
+        assert router.model_supports_thinking(_SONNET_ID) is True
+
+    def test_haiku_does_not_support_thinking(self, router: MultiModelRouter) -> None:
+        assert router.model_supports_thinking(_HAIKU_ID) is False
+
+    def test_gemini_does_not_support_thinking(self, router: MultiModelRouter) -> None:
+        assert router.model_supports_thinking(_GEMINI_FLASH_ID) is False
+
+    def test_unknown_model_does_not_support_thinking(self, router: MultiModelRouter) -> None:
+        assert router.model_supports_thinking("nonexistent") is False
+
+
+# ---------------------------------------------------------------------------
+# Backward compatibility alias
+# ---------------------------------------------------------------------------
+
+
+class TestMultiModelRouterAlias:
+    """Backward compatibility with ClaudeModelRouter alias."""
+
+    def test_alias_is_same_class(self) -> None:
+        from app.services.llm.model_router import ClaudeModelRouter, MultiModelRouter
+
+        assert ClaudeModelRouter is MultiModelRouter
