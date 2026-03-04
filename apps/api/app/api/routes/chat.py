@@ -24,9 +24,9 @@ from app.models.schemas import (
     Source,
 )
 from app.services import chat_service
-from app.services.llm.claude_service import ClaudeService, LLMError, StreamMetrics
-from app.services.llm.model_router import ClaudeModelRouter
-from app.services.security.data_classifier import RiskLevel, classify_input
+from app.services.llm.claude_service import ClaudeService, LLMError
+from app.services.llm.model_router import MultiModelRouter
+from app.services.llm.provider import ProviderFactory, StreamMetrics
 from app.services.security.safety_guard import SafetyGuard
 
 logger = logging.getLogger(__name__)
@@ -218,16 +218,14 @@ async def chat(
     llm_messages = context_messages + [{"role": "user", "content": user_text}]
 
     # ── Select model via router ──────────────────────────────────────────
-    router_instance = ClaudeModelRouter()
-    model_id = router_instance.select_model_for_query(
-        body.message,
-        has_history=bool(context_messages),
-    )
+    router_instance = MultiModelRouter()
+    model_config = router_instance.select_model_for_role(current_user.role)
+    model_id = model_config.model_id
 
     # ── Call the LLM ─────────────────────────────────────────────────────
-    service = ClaudeService()
+    provider = ProviderFactory.get(model_config.provider)
     try:
-        llm_response = await service.generate(
+        llm_response = await provider.generate(
             llm_messages,
             system_prompt=system_prompt,
             model=model_id,
@@ -260,6 +258,7 @@ async def chat(
         query=body.message[:500],
         metadata_={
             "model": model_id,
+            "provider": model_config.provider,
             "input_tokens": llm_response.input_tokens,
             "output_tokens": llm_response.output_tokens,
             "latency_ms": llm_response.latency_ms,
@@ -383,11 +382,9 @@ async def chat_stream(
     llm_messages = context_messages + [{"role": "user", "content": user_text}]
 
     # ── Select model via router ──────────────────────────────────────────
-    router_instance = ClaudeModelRouter()
-    model_id = router_instance.select_model_for_query(
-        body.message,
-        has_history=bool(context_messages),
-    )
+    router_instance = MultiModelRouter()
+    model_config = router_instance.select_model_for_role(current_user.role)
+    model_id = model_config.model_id
 
     # Capture locals for use inside the generator closure
     _session_id = session_id
@@ -404,7 +401,8 @@ async def chat_stream(
     ]
 
     _model_id = model_id
-    _use_thinking = router_instance.model_supports_thinking(_model_id)
+    _model_config = model_config
+    _use_thinking = model_config.supports_thinking
 
     # Compute confidence from RAG chunk scores (mean of top scores)
     _confidence: float | None = None
@@ -415,11 +413,12 @@ async def chat_stream(
 
     async def token_generator():
         accumulated: list[str] = []
-        service = ClaudeService()
+        provider = ProviderFactory.get(_model_config.provider)
         _metrics = StreamMetrics()
         try:
             if _use_thinking:
-                stream = service.stream_with_thinking(
+                claude_service = ClaudeService()
+                stream = claude_service.stream_with_thinking(
                     llm_messages,
                     system_prompt=system_prompt,
                     model=_model_id,
@@ -436,7 +435,7 @@ async def chat_stream(
                     if event["type"] == "text":
                         accumulated.append(event["content"])
             else:
-                stream = service.stream(
+                stream = provider.stream(
                     llm_messages,
                     system_prompt=system_prompt,
                     model=_model_id,
@@ -473,6 +472,7 @@ async def chat_stream(
                 query=body.message[:500],
                 metadata_={
                     "model": _model_id,
+                    "provider": _model_config.provider,
                     "input_tokens": _metrics.input_tokens,
                     "output_tokens": _metrics.output_tokens,
                     "latency_ms": _metrics.latency_ms,
@@ -487,6 +487,8 @@ async def chat_stream(
                 "done": True,
                 "conversation_id": _session_id,
                 "sources": _sources_payload,
+                "model": _model_id,
+                "provider": _model_config.provider,
             }
             if _confidence is not None:
                 final["confidence"] = _confidence

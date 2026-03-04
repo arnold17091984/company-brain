@@ -130,6 +130,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     logger.info("Company Brain API startup complete")
 
+    # ── LLM Providers ──────────────────────────────────────────────────────
+    from app.services.llm.claude_service import ClaudeService  # noqa: PLC0415
+    from app.services.llm.provider import ProviderFactory  # noqa: PLC0415
+
+    ProviderFactory.register(ClaudeService())
+    if settings.gemini_api_key:
+        from app.services.llm.gemini_service import GeminiService  # noqa: PLC0415
+
+        ProviderFactory.register(GeminiService())
+    if settings.openai_api_key:
+        from app.services.llm.openai_service import OpenAIService  # noqa: PLC0415
+
+        ProviderFactory.register(OpenAIService())
+    logger.info("LLM providers registered: %s", ProviderFactory.available())
+
     yield
 
     # ── Shutdown ─────────────────────────────────────────────────────────────
