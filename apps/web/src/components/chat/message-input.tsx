@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 interface MessageInputProps {
 	onSend?: (content: string) => void;
@@ -16,24 +16,32 @@ export function MessageInput({
 }: MessageInputProps) {
 	const t = useTranslations("chat");
 	const [value, setValue] = useState("");
+	const [isRecording, setIsRecording] = useState(false);
+	const [isVoiceSupported, setIsVoiceSupported] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const recognitionRef = useRef<SpeechRecognition | null>(null);
 
 	const resolvedPlaceholder = placeholder ?? t("placeholder");
 	const canSend = value.trim().length > 0 && !disabled;
+
+	useEffect(() => {
+		const SpeechRecognition =
+			window.SpeechRecognition || window.webkitSpeechRecognition;
+		setIsVoiceSupported(!!SpeechRecognition);
+	}, []);
 
 	function handleSend() {
 		const trimmed = value.trim();
 		if (!trimmed || disabled) return;
 		onSend?.(trimmed);
 		setValue("");
-		// Reset textarea height
 		if (textareaRef.current) {
 			textareaRef.current.style.height = "auto";
 		}
 	}
 
 	function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-		if (e.key === "Enter" && !e.shiftKey) {
+		if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
 			e.preventDefault();
 			handleSend();
 		}
@@ -42,9 +50,50 @@ export function MessageInput({
 	function handleInput() {
 		const el = textareaRef.current;
 		if (!el) return;
-		// Auto-resize up to ~8 lines
 		el.style.height = "auto";
 		el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+	}
+
+	function handleMicClick() {
+		if (isRecording) {
+			recognitionRef.current?.stop();
+			return;
+		}
+
+		const SpeechRecognition =
+			window.SpeechRecognition || window.webkitSpeechRecognition;
+		if (!SpeechRecognition) return;
+
+		const recognition = new SpeechRecognition();
+		recognition.continuous = true;
+		recognition.interimResults = false;
+		recognition.lang = navigator.language || "en-US";
+
+		recognition.onresult = (event: SpeechRecognitionEvent) => {
+			let transcript = "";
+			for (let i = event.resultIndex; i < event.results.length; i++) {
+				if (event.results[i].isFinal) {
+					transcript += event.results[i][0].transcript;
+				}
+			}
+			if (transcript) {
+				setValue((prev) => (prev ? `${prev} ${transcript}` : transcript));
+			}
+		};
+
+		recognition.onend = () => {
+			setIsRecording(false);
+			recognitionRef.current = null;
+		};
+
+		recognition.onerror = () => {
+			setIsRecording(false);
+			recognitionRef.current = null;
+		};
+
+		recognitionRef.current = recognition;
+		recognition.start();
+		setIsRecording(true);
 	}
 
 	return (
@@ -69,11 +118,45 @@ export function MessageInput({
 					aria-label="Chat message"
 				/>
 
+				{isVoiceSupported && (
+					<button
+						type="button"
+						onClick={handleMicClick}
+						aria-label={isRecording ? t("voiceStop") : t("voiceStart")}
+						aria-pressed={isRecording}
+						className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
+							isRecording
+								? "bg-red-500 text-white animate-pulse"
+								: "bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-600"
+						}`}
+					>
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"
+							/>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"
+							/>
+						</svg>
+					</button>
+				)}
+
 				<button
 					type="button"
 					onClick={handleSend}
 					disabled={!canSend}
-					aria-label="Send message"
+					aria-label={t("sendMessage")}
 					className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
 						canSend
 							? "bg-indigo-700 text-white hover:bg-indigo-800 active:bg-indigo-900 shadow-sm shadow-indigo-500/20"
