@@ -89,20 +89,44 @@ function RecipeStep({
 						</span>
 						<button
 							type="button"
-							onClick={() => handleCopy(recipe.prompt_template, setPromptCopied)}
+							onClick={() =>
+								handleCopy(recipe.prompt_template, setPromptCopied)
+							}
 							className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-stone-500 hover:bg-stone-100 transition-colors dark:text-stone-400 dark:hover:bg-stone-700"
 						>
 							{promptCopied ? (
 								<>
-									<svg className="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+									<svg
+										className="w-3.5 h-3.5 text-green-600 dark:text-green-400"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2.5}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M4.5 12.75l6 6 9-13.5"
+										/>
 									</svg>
 									{t("copied")}
 								</>
 							) : (
 								<>
-									<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" />
+									<svg
+										className="w-3.5 h-3.5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z"
+										/>
 									</svg>
 									{t("copyPrompt")}
 								</>
@@ -125,7 +149,9 @@ function RecipeStep({
 									</span>
 									<button
 										type="button"
-										onClick={() => handleCopy(recipe.example_query, setQueryCopied)}
+										onClick={() =>
+											handleCopy(recipe.example_query, setQueryCopied)
+										}
 										className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
 									>
 										{queryCopied ? t("copied") : t("copy")}
@@ -162,7 +188,9 @@ export default function RecipesOnboardingPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	const getToken = useCallback(() => {
-		return (session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+		return (
+			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
+		);
 	}, [session]);
 
 	useEffect(() => {
@@ -179,14 +207,21 @@ export default function RecipesOnboardingPage() {
 				const json: OnboardingResponse = await res.json();
 				if (!cancelled) setData(json);
 			} catch (err) {
-				if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load onboarding recipes");
+				if (!cancelled)
+					setError(
+						err instanceof Error
+							? err.message
+							: "Failed to load onboarding recipes",
+					);
 			} finally {
 				if (!cancelled) setIsLoading(false);
 			}
 		}
 
 		load();
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	}, [getToken]);
 
 	return (
@@ -198,8 +233,19 @@ export default function RecipesOnboardingPage() {
 						href="../recipes"
 						className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
 					>
-						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-							<path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M15.75 19.5L8.25 12l7.5-7.5"
+							/>
 						</svg>
 						{t("backToRecipes")}
 					</Link>
@@ -210,7 +256,9 @@ export default function RecipesOnboardingPage() {
 				</div>
 				{data?.department && (
 					<p className="text-sm text-stone-500 dark:text-stone-400">
-						{t("onboardingSubtitle", { department: data.department.replace("_", " ") })}
+						{t("onboardingSubtitle", {
+							department: data.department.replace("_", " "),
+						})}
 					</p>
 				)}
 			</div>
@@ -220,8 +268,19 @@ export default function RecipesOnboardingPage() {
 				<div className="max-w-3xl mx-auto">
 					{error && (
 						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
-							<svg className="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-								<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+							<svg
+								className="w-4 h-4 text-red-500 shrink-0"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+								aria-hidden="true"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+								/>
 							</svg>
 							<p className="text-sm text-red-700 dark:text-red-400">{error}</p>
 						</div>
@@ -232,8 +291,19 @@ export default function RecipesOnboardingPage() {
 						<div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-5 mb-6">
 							<div className="flex items-start gap-3">
 								<div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-indigo-700 flex items-center justify-center shrink-0">
-									<svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+									<svg
+										className="w-4 h-4 text-white"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
+										/>
 									</svg>
 								</div>
 								<div>
@@ -259,14 +329,29 @@ export default function RecipesOnboardingPage() {
 					) : data && data.recipes.length > 0 ? (
 						<div>
 							{data.recipes.map((recipe, idx) => (
-								<RecipeStep key={recipe.id} recipe={recipe} stepNumber={idx + 1} />
+								<RecipeStep
+									key={recipe.id}
+									recipe={recipe}
+									stepNumber={idx + 1}
+								/>
 							))}
 
 							{/* Completion card */}
 							<div className="flex gap-5 mt-2">
 								<div className="shrink-0 w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center shadow-sm">
-									<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2.5}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M4.5 12.75l6 6 9-13.5"
+										/>
 									</svg>
 								</div>
 								<div className="flex-1 bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-800 p-5 mb-5">
@@ -281,8 +366,19 @@ export default function RecipesOnboardingPage() {
 										className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400 hover:underline"
 									>
 										{t("exploreAllRecipes")}
-										<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-											<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+										<svg
+											className="w-3.5 h-3.5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={2}
+											aria-hidden="true"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M8.25 4.5l7.5 7.5-7.5 7.5"
+											/>
 										</svg>
 									</Link>
 								</div>
@@ -291,11 +387,24 @@ export default function RecipesOnboardingPage() {
 					) : (
 						<div className="flex flex-col items-center justify-center py-20 text-center">
 							<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
-								<svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-									<path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+								<svg
+									className="w-8 h-8 text-stone-400"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={1.5}
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+									/>
 								</svg>
 							</div>
-							<p className="text-stone-700 dark:text-stone-200 font-medium">{t("noOnboardingRecipes")}</p>
+							<p className="text-stone-700 dark:text-stone-200 font-medium">
+								{t("noOnboardingRecipes")}
+							</p>
 						</div>
 					)}
 				</div>

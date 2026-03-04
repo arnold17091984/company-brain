@@ -31,7 +31,11 @@ interface KPIInputFormProps {
 	onSuccess?: () => void;
 }
 
-export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps) {
+export function KPIInputForm({
+	token,
+	users = [],
+	onSuccess,
+}: KPIInputFormProps) {
 	const [userId, setUserId] = useState("");
 	const [period, setPeriod] = useState(() => {
 		const now = new Date();
@@ -42,18 +46,26 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 	const [actualValue, setActualValue] = useState("");
 	const [errors, setErrors] = useState<FormErrors>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [submitResult, setSubmitResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+	const [submitResult, setSubmitResult] = useState<{
+		type: "success" | "error";
+		message: string;
+	} | null>(null);
 
 	const validate = (): boolean => {
 		const newErrors: FormErrors = {};
 		if (!userId.trim()) newErrors.user_id = "Please select a user";
 		if (!period.trim()) newErrors.period = "Period is required";
-		else if (!/^\d{4}-\d{2}$/.test(period)) newErrors.period = "Format: YYYY-MM";
+		else if (!/^\d{4}-\d{2}$/.test(period))
+			newErrors.period = "Format: YYYY-MM";
 		if (!kpiName.trim()) newErrors.kpi_name = "KPI name is required";
-		if (!targetValue.trim()) newErrors.target_value = "Target value is required";
-		else if (Number.isNaN(Number(targetValue))) newErrors.target_value = "Must be a number";
-		if (!actualValue.trim()) newErrors.actual_value = "Actual value is required";
-		else if (Number.isNaN(Number(actualValue))) newErrors.actual_value = "Must be a number";
+		if (!targetValue.trim())
+			newErrors.target_value = "Target value is required";
+		else if (Number.isNaN(Number(targetValue)))
+			newErrors.target_value = "Must be a number";
+		if (!actualValue.trim())
+			newErrors.actual_value = "Actual value is required";
+		else if (Number.isNaN(Number(actualValue)))
+			newErrors.actual_value = "Must be a number";
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
@@ -85,10 +97,16 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 
 			if (!res.ok) {
 				const errData = await res.json().catch(() => ({}));
-				throw new Error((errData as { detail?: string }).detail ?? `${res.status} ${res.statusText}`);
+				throw new Error(
+					(errData as { detail?: string }).detail ??
+						`${res.status} ${res.statusText}`,
+				);
 			}
 
-			setSubmitResult({ type: "success", message: "KPI data saved successfully." });
+			setSubmitResult({
+				type: "success",
+				message: "KPI data saved successfully.",
+			});
 			// Reset form
 			setUserId("");
 			setKpiName("");
@@ -113,7 +131,8 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 				: "border-stone-200 dark:border-stone-600"
 		}`;
 
-	const labelClass = "block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
+	const labelClass =
+		"block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
 	const errorClass = "mt-1 text-xs text-red-600 dark:text-red-400";
 
 	return (
@@ -122,18 +141,25 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 			<div>
 				<label htmlFor="kpi-user" className={labelClass}>
 					User
-					<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+					<span className="text-red-500 ml-0.5" aria-hidden="true">
+						*
+					</span>
 				</label>
 				{users.length > 0 ? (
 					<select
 						id="kpi-user"
 						value={userId}
-						onChange={(e) => { setUserId(e.target.value); setErrors((p) => ({ ...p, user_id: undefined })); }}
+						onChange={(e) => {
+							setUserId(e.target.value);
+							setErrors((p) => ({ ...p, user_id: undefined }));
+						}}
 						className={fieldClass(Boolean(errors.user_id))}
 					>
 						<option value="">Select a user...</option>
 						{users.map((u) => (
-							<option key={u.id} value={u.id}>{u.name}</option>
+							<option key={u.id} value={u.id}>
+								{u.name}
+							</option>
 						))}
 					</select>
 				) : (
@@ -141,7 +167,10 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 						id="kpi-user"
 						type="text"
 						value={userId}
-						onChange={(e) => { setUserId(e.target.value); setErrors((p) => ({ ...p, user_id: undefined })); }}
+						onChange={(e) => {
+							setUserId(e.target.value);
+							setErrors((p) => ({ ...p, user_id: undefined }));
+						}}
 						placeholder="User ID"
 						className={fieldClass(Boolean(errors.user_id))}
 					/>
@@ -153,13 +182,18 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 			<div>
 				<label htmlFor="kpi-period" className={labelClass}>
 					Period (Month)
-					<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+					<span className="text-red-500 ml-0.5" aria-hidden="true">
+						*
+					</span>
 				</label>
 				<input
 					id="kpi-period"
 					type="month"
 					value={period}
-					onChange={(e) => { setPeriod(e.target.value); setErrors((p) => ({ ...p, period: undefined })); }}
+					onChange={(e) => {
+						setPeriod(e.target.value);
+						setErrors((p) => ({ ...p, period: undefined }));
+					}}
 					className={fieldClass(Boolean(errors.period))}
 				/>
 				{errors.period && <p className={errorClass}>{errors.period}</p>}
@@ -169,13 +203,18 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 			<div>
 				<label htmlFor="kpi-name" className={labelClass}>
 					KPI Name
-					<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+					<span className="text-red-500 ml-0.5" aria-hidden="true">
+						*
+					</span>
 				</label>
 				<input
 					id="kpi-name"
 					type="text"
 					value={kpiName}
-					onChange={(e) => { setKpiName(e.target.value); setErrors((p) => ({ ...p, kpi_name: undefined })); }}
+					onChange={(e) => {
+						setKpiName(e.target.value);
+						setErrors((p) => ({ ...p, kpi_name: undefined }));
+					}}
 					placeholder="e.g. Customer Satisfaction Score"
 					className={fieldClass(Boolean(errors.kpi_name))}
 				/>
@@ -187,51 +226,81 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 				<div>
 					<label htmlFor="kpi-target" className={labelClass}>
 						Target Value
-						<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+						<span className="text-red-500 ml-0.5" aria-hidden="true">
+							*
+						</span>
 					</label>
 					<input
 						id="kpi-target"
 						type="number"
 						step="any"
 						value={targetValue}
-						onChange={(e) => { setTargetValue(e.target.value); setErrors((p) => ({ ...p, target_value: undefined })); }}
+						onChange={(e) => {
+							setTargetValue(e.target.value);
+							setErrors((p) => ({ ...p, target_value: undefined }));
+						}}
 						placeholder="100"
 						className={fieldClass(Boolean(errors.target_value))}
 					/>
-					{errors.target_value && <p className={errorClass}>{errors.target_value}</p>}
+					{errors.target_value && (
+						<p className={errorClass}>{errors.target_value}</p>
+					)}
 				</div>
 				<div>
 					<label htmlFor="kpi-actual" className={labelClass}>
 						Actual Value
-						<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+						<span className="text-red-500 ml-0.5" aria-hidden="true">
+							*
+						</span>
 					</label>
 					<input
 						id="kpi-actual"
 						type="number"
 						step="any"
 						value={actualValue}
-						onChange={(e) => { setActualValue(e.target.value); setErrors((p) => ({ ...p, actual_value: undefined })); }}
+						onChange={(e) => {
+							setActualValue(e.target.value);
+							setErrors((p) => ({ ...p, actual_value: undefined }));
+						}}
 						placeholder="87"
 						className={fieldClass(Boolean(errors.actual_value))}
 					/>
-					{errors.actual_value && <p className={errorClass}>{errors.actual_value}</p>}
+					{errors.actual_value && (
+						<p className={errorClass}>{errors.actual_value}</p>
+					)}
 				</div>
 			</div>
 
 			{/* Preview achievement */}
-			{targetValue && actualValue && !Number.isNaN(Number(targetValue)) && !Number.isNaN(Number(actualValue)) && Number(targetValue) > 0 && (
-				<div className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 dark:bg-stone-700/40 rounded-lg border border-stone-200 dark:border-stone-600">
-					<svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-						<path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-					</svg>
-					<span className="text-xs text-stone-600 dark:text-stone-400">
-						Achievement rate:{" "}
-						<span className="font-semibold text-indigo-600 dark:text-indigo-400">
-							{((Number(actualValue) / Number(targetValue)) * 100).toFixed(1)}%
+			{targetValue &&
+				actualValue &&
+				!Number.isNaN(Number(targetValue)) &&
+				!Number.isNaN(Number(actualValue)) &&
+				Number(targetValue) > 0 && (
+					<div className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 dark:bg-stone-700/40 rounded-lg border border-stone-200 dark:border-stone-600">
+						<svg
+							className="w-4 h-4 text-indigo-500 shrink-0"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={1.75}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+							/>
+						</svg>
+						<span className="text-xs text-stone-600 dark:text-stone-400">
+							Achievement rate:{" "}
+							<span className="font-semibold text-indigo-600 dark:text-indigo-400">
+								{((Number(actualValue) / Number(targetValue)) * 100).toFixed(1)}
+								%
+							</span>
 						</span>
-					</span>
-				</div>
-			)}
+					</div>
+				)}
 
 			{/* Result feedback */}
 			{submitResult && (
@@ -244,12 +313,34 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 					role="alert"
 				>
 					{submitResult.type === "success" ? (
-						<svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-							<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+						<svg
+							className="w-4 h-4 shrink-0"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M4.5 12.75l6 6 9-13.5"
+							/>
 						</svg>
 					) : (
-						<svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-							<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+						<svg
+							className="w-4 h-4 shrink-0"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+							/>
 						</svg>
 					)}
 					{submitResult.message}
@@ -265,16 +356,43 @@ export function KPIInputForm({ token, users = [], onSuccess }: KPIInputFormProps
 				>
 					{isSubmitting ? (
 						<>
-							<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+							<svg
+								className="w-4 h-4 animate-spin"
+								fill="none"
+								viewBox="0 0 24 24"
+								aria-hidden="true"
+							>
+								<circle
+									className="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									strokeWidth="4"
+								/>
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+								/>
 							</svg>
 							Saving...
 						</>
 					) : (
 						<>
-							<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-								<path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+							<svg
+								className="w-4 h-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+								aria-hidden="true"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
 							</svg>
 							Save KPI
 						</>

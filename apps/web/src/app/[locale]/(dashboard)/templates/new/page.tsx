@@ -8,7 +8,12 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-type Category = "cs" | "marketing" | "development" | "accounting" | "general_affairs";
+type Category =
+	| "cs"
+	| "marketing"
+	| "development"
+	| "accounting"
+	| "general_affairs";
 
 interface Template {
 	id: string;
@@ -51,7 +56,9 @@ export default function TemplateFormPage() {
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const getToken = useCallback(() => {
-		return (session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+		return (
+			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
+		);
 	}, [session]);
 
 	// Load existing template when editing
@@ -76,14 +83,19 @@ export default function TemplateFormPage() {
 					setCategory(data.category);
 				}
 			} catch (err) {
-				if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load template");
+				if (!cancelled)
+					setLoadError(
+						err instanceof Error ? err.message : "Failed to load template",
+					);
 			} finally {
 				if (!cancelled) setIsLoadingEdit(false);
 			}
 		}
 
 		load();
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	}, [editId, getToken]);
 
 	const validate = (): boolean => {
@@ -101,7 +113,12 @@ export default function TemplateFormPage() {
 		setIsSubmitting(true);
 		setSubmitError(null);
 
-		const payload = { title: title.trim(), description: description.trim(), content: content.trim(), category };
+		const payload = {
+			title: title.trim(),
+			description: description.trim(),
+			content: content.trim(),
+			category,
+		};
 
 		try {
 			let res: Response;
@@ -130,7 +147,9 @@ export default function TemplateFormPage() {
 			const saved: Template = await res.json();
 			router.push(`../templates/${saved.id}`);
 		} catch (err) {
-			setSubmitError(err instanceof Error ? err.message : "Failed to save template");
+			setSubmitError(
+				err instanceof Error ? err.message : "Failed to save template",
+			);
 			setIsSubmitting(false);
 		}
 	};
@@ -142,9 +161,25 @@ export default function TemplateFormPage() {
 					<div className="h-5 w-40 bg-stone-200 dark:bg-stone-700 rounded animate-pulse" />
 				</div>
 				<div className="flex-1 flex items-center justify-center">
-					<svg className="w-6 h-6 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-						<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-						<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+					<svg
+						className="w-6 h-6 text-indigo-500 animate-spin"
+						fill="none"
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+					>
+						<circle
+							className="opacity-25"
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							strokeWidth="4"
+						/>
+						<path
+							className="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+						/>
 					</svg>
 				</div>
 			</div>
@@ -157,11 +192,24 @@ export default function TemplateFormPage() {
 			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
 				<div className="flex items-center gap-3">
 					<Link
-						href={isEditing && editId ? `../templates/${editId}` : "../templates"}
+						href={
+							isEditing && editId ? `../templates/${editId}` : "../templates"
+						}
 						className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
 					>
-						<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-							<path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M15.75 19.5L8.25 12l7.5-7.5"
+							/>
 						</svg>
 						{t("back")}
 					</Link>
@@ -177,24 +225,38 @@ export default function TemplateFormPage() {
 				<div className="max-w-2xl mx-auto">
 					{loadError && (
 						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
-							<p className="text-sm text-red-700 dark:text-red-400">{loadError}</p>
+							<p className="text-sm text-red-700 dark:text-red-400">
+								{loadError}
+							</p>
 						</div>
 					)}
 
-					<form onSubmit={handleSubmit} noValidate className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6 space-y-5">
+					<form
+						onSubmit={handleSubmit}
+						noValidate
+						className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6 space-y-5"
+					>
 						{/* Title */}
 						<div>
-							<label htmlFor="tpl-title" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
+							<label
+								htmlFor="tpl-title"
+								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+							>
 								{t("fieldTitle")}
-								<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+								<span className="text-red-500 ml-0.5" aria-hidden="true">
+									*
+								</span>
 							</label>
 							<input
-						id="tpl-title"
-						type="text"
-						aria-required="true"
-						value={title}
-						onChange={(e) => { setTitle(e.target.value); setErrors((prev) => ({ ...prev, title: undefined })); }}
-						placeholder={t("fieldTitlePlaceholder")}
+								id="tpl-title"
+								type="text"
+								aria-required="true"
+								value={title}
+								onChange={(e) => {
+									setTitle(e.target.value);
+									setErrors((prev) => ({ ...prev, title: undefined }));
+								}}
+								placeholder={t("fieldTitlePlaceholder")}
 								className={`w-full px-3 py-2 text-sm rounded-lg border bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 transition-colors ${
 									errors.title
 										? "border-red-400 dark:border-red-600"
@@ -202,13 +264,18 @@ export default function TemplateFormPage() {
 								}`}
 							/>
 							{errors.title && (
-								<p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.title}</p>
+								<p className="mt-1 text-xs text-red-600 dark:text-red-400">
+									{errors.title}
+								</p>
 							)}
 						</div>
 
 						{/* Description */}
 						<div>
-							<label htmlFor="tpl-desc" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
+							<label
+								htmlFor="tpl-desc"
+								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+							>
 								{t("fieldDescription")}
 							</label>
 							<textarea
@@ -223,7 +290,10 @@ export default function TemplateFormPage() {
 
 						{/* Category */}
 						<div>
-							<label htmlFor="tpl-category" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
+							<label
+								htmlFor="tpl-category"
+								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+							>
 								{t("fieldCategory")}
 							</label>
 							<select
@@ -242,16 +312,24 @@ export default function TemplateFormPage() {
 
 						{/* Content */}
 						<div>
-							<label htmlFor="tpl-content" className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5">
+							<label
+								htmlFor="tpl-content"
+								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+							>
 								{t("fieldContent")}
-								<span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
+								<span className="text-red-500 ml-0.5" aria-hidden="true">
+									*
+								</span>
 							</label>
 							<textarea
-						id="tpl-content"
-						aria-required="true"
-						value={content}
-						onChange={(e) => { setContent(e.target.value); setErrors((prev) => ({ ...prev, content: undefined })); }}
-						placeholder={t("fieldContentPlaceholder")}
+								id="tpl-content"
+								aria-required="true"
+								value={content}
+								onChange={(e) => {
+									setContent(e.target.value);
+									setErrors((prev) => ({ ...prev, content: undefined }));
+								}}
+								placeholder={t("fieldContentPlaceholder")}
 								rows={12}
 								className={`w-full px-3 py-2 text-sm font-mono rounded-lg border bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 resize-y ${
 									errors.content
@@ -260,24 +338,43 @@ export default function TemplateFormPage() {
 								}`}
 							/>
 							{errors.content && (
-								<p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.content}</p>
+								<p className="mt-1 text-xs text-red-600 dark:text-red-400">
+									{errors.content}
+								</p>
 							)}
 						</div>
 
 						{/* Submit error */}
 						{submitError && (
 							<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3">
-								<svg className="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-									<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+								<svg
+									className="w-4 h-4 text-red-500 shrink-0"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={2}
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+									/>
 								</svg>
-								<p className="text-sm text-red-700 dark:text-red-400">{submitError}</p>
+								<p className="text-sm text-red-700 dark:text-red-400">
+									{submitError}
+								</p>
 							</div>
 						)}
 
 						{/* Actions */}
 						<div className="flex items-center justify-end gap-3 pt-2">
 							<Link
-								href={isEditing && editId ? `../templates/${editId}` : "../templates"}
+								href={
+									isEditing && editId
+										? `../templates/${editId}`
+										: "../templates"
+								}
 								className="px-4 py-2 text-sm font-medium rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors dark:border-stone-600 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600"
 							>
 								{t("cancel")}
@@ -289,9 +386,25 @@ export default function TemplateFormPage() {
 							>
 								{isSubmitting ? (
 									<>
-										<svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+										<svg
+											className="w-4 h-4 animate-spin"
+											fill="none"
+											viewBox="0 0 24 24"
+											aria-hidden="true"
+										>
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+											/>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+											/>
 										</svg>
 										{t("saving")}
 									</>

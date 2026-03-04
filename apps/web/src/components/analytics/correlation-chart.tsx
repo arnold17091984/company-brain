@@ -46,12 +46,20 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 	const d = payload[0].payload;
 	return (
 		<div className="bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg shadow-lg px-3 py-2.5 text-xs">
-			<p className="font-semibold text-stone-800 dark:text-stone-200 mb-1">{d.user_name}</p>
-			<p className="text-stone-500 dark:text-stone-400">
-				AI Queries: <span className="font-medium text-indigo-600 dark:text-indigo-400">{d.query_count}</span>
+			<p className="font-semibold text-stone-800 dark:text-stone-200 mb-1">
+				{d.user_name}
 			</p>
 			<p className="text-stone-500 dark:text-stone-400">
-				KPI Achievement: <span className="font-medium text-green-600 dark:text-green-400">{d.kpi_achievement_pct.toFixed(1)}%</span>
+				AI Queries:{" "}
+				<span className="font-medium text-indigo-600 dark:text-indigo-400">
+					{d.query_count}
+				</span>
+			</p>
+			<p className="text-stone-500 dark:text-stone-400">
+				KPI Achievement:{" "}
+				<span className="font-medium text-green-600 dark:text-green-400">
+					{d.kpi_achievement_pct.toFixed(1)}%
+				</span>
 			</p>
 		</div>
 	);
@@ -69,20 +77,20 @@ export function CorrelationChart({ data }: CorrelationChartProps) {
 
 	if (data.length === 0) {
 		return (
-			<div className="flex items-center justify-center h-64 text-sm text-stone-400 dark:text-stone-500" role="status">
+			<output className="flex items-center justify-center h-64 text-sm text-stone-400 dark:text-stone-500">
 				No correlation data available
-			</div>
+			</output>
 		);
 	}
 
 	return (
-		<div role="img" aria-label="Scatter plot showing AI usage vs KPI achievement correlation">
+		<div
+			role="img"
+			aria-label="Scatter plot showing AI usage vs KPI achievement correlation"
+		>
 			<ResponsiveContainer width="100%" height={320}>
 				<ScatterChart margin={{ top: 16, right: 24, bottom: 16, left: 8 }}>
-					<CartesianGrid
-						strokeDasharray="3 3"
-						stroke={gridColor}
-					/>
+					<CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
 					<XAxis
 						type="number"
 						dataKey="query_count"

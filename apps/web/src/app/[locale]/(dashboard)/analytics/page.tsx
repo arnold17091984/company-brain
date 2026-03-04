@@ -225,9 +225,12 @@ export default function AnalyticsPage() {
 			setRoiReportsLoading(true);
 			setRoiReportsError(null);
 			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/analytics/roi-reports`, {
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
-				});
+				const res = await fetch(
+					`${API_BASE_URL}/api/v1/analytics/roi-reports`,
+					{
+						headers: { Authorization: `Bearer ${getAccessToken()}` },
+					},
+				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: ROIReport[] = await res.json();
 				if (!cancelled) {
@@ -273,7 +276,11 @@ export default function AnalyticsPage() {
 
 			{/* Tabs */}
 			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 shrink-0">
-				<nav className="flex gap-1 -mb-px overflow-x-auto" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }} aria-label="Analytics tabs">
+				<nav
+					className="flex gap-1 -mb-px overflow-x-auto"
+					style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+					aria-label="Analytics tabs"
+				>
 					{TABS.map((tab) => (
 						<button
 							key={tab.id}
@@ -531,7 +538,8 @@ export default function AnalyticsPage() {
 															{report.total_queries.toLocaleString()} queries
 														</p>
 														<p className="text-xs text-stone-500 dark:text-stone-400">
-															{report.estimated_hours_saved.toFixed(1)} hrs saved
+															{report.estimated_hours_saved.toFixed(1)} hrs
+															saved
 														</p>
 													</div>
 												</button>
