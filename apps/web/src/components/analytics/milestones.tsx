@@ -54,8 +54,8 @@ const MILESTONES: Milestone[] = [
 		title: "Company Brain launched",
 		description:
 			"Company Brain went live for the full 40-person team, unifying knowledge from Google Drive, Notion, and Telegram.",
-		badgeColor: "bg-stone-100 text-stone-700 border-stone-200",
-		dotColor: "bg-stone-500",
+		badgeColor: "bg-zinc-100 text-zinc-700 border-zinc-200",
+		dotColor: "bg-zinc-500",
 	},
 ];
 
@@ -64,12 +64,12 @@ export function Milestones() {
 
 	return (
 		<section>
-			<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
 				<div className="mb-6">
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("milestonesTitle")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("milestonesSub")}
 					</p>
 				</div>
@@ -83,7 +83,7 @@ export function Milestones() {
 									className={`w-3 h-3 rounded-full mt-1 shrink-0 ${m.dotColor}`}
 								/>
 								{idx < MILESTONES.length - 1 && (
-									<div className="w-px flex-1 bg-stone-200 dark:bg-stone-700 mt-1 mb-0" />
+									<div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 mt-1 mb-0" />
 								)}
 							</div>
 
@@ -97,14 +97,14 @@ export function Milestones() {
 									>
 										{m.team}
 									</span>
-									<span className="text-xs text-stone-400 dark:text-stone-500">
+									<span className="text-xs text-zinc-400 dark:text-zinc-500">
 										{m.date}
 									</span>
 								</div>
-								<p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+								<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
 									{m.title}
 								</p>
-								<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+								<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 									{m.description}
 								</p>
 							</div>

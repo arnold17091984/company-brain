@@ -45,17 +45,17 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
 	const d = payload[0].payload;
 	return (
-		<div className="bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg shadow-lg px-3 py-2.5 text-xs">
-			<p className="font-semibold text-stone-800 dark:text-stone-200 mb-1">
+		<div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg px-3 py-2.5 text-xs">
+			<p className="font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
 				{d.user_name}
 			</p>
-			<p className="text-stone-500 dark:text-stone-400">
+			<p className="text-zinc-500 dark:text-zinc-400">
 				AI Queries:{" "}
 				<span className="font-medium text-indigo-600 dark:text-indigo-400">
 					{d.query_count}
 				</span>
 			</p>
-			<p className="text-stone-500 dark:text-stone-400">
+			<p className="text-zinc-500 dark:text-zinc-400">
 				KPI Achievement:{" "}
 				<span className="font-medium text-green-600 dark:text-green-400">
 					{d.kpi_achievement_pct.toFixed(1)}%
@@ -71,13 +71,13 @@ interface CorrelationChartProps {
 
 export function CorrelationChart({ data }: CorrelationChartProps) {
 	const isDark = useDarkMode();
-	const axisColor = isDark ? "rgb(168 162 158)" : "rgb(120 113 108)"; // stone-400 : stone-500
-	const gridColor = isDark ? "rgb(68 64 60)" : "rgb(231 229 228)"; // stone-700 : stone-200
-	const lineColor = isDark ? "rgb(87 83 78)" : "rgb(214 211 209)"; // stone-600 : stone-300
+	const axisColor = isDark ? "rgb(168 162 158)" : "rgb(120 113 108)"; // zinc-400 : zinc-500
+	const gridColor = isDark ? "rgb(68 64 60)" : "rgb(231 229 228)"; // zinc-700 : zinc-200
+	const lineColor = isDark ? "rgb(87 83 78)" : "rgb(214 211 209)"; // zinc-600 : zinc-300
 
 	if (data.length === 0) {
 		return (
-			<output className="flex items-center justify-center h-64 text-sm text-stone-400 dark:text-stone-500">
+			<output className="flex items-center justify-center h-64 text-sm text-zinc-400 dark:text-zinc-500">
 				No correlation data available
 			</output>
 		);

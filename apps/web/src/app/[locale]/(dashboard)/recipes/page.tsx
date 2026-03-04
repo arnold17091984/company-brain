@@ -48,7 +48,7 @@ function StarRating({ score }: { score: number }) {
 				<svg
 					// biome-ignore lint/suspicious/noArrayIndexKey: static star ratings
 					key={i}
-					className={`w-3.5 h-3.5 ${i < stars ? "text-amber-400" : "text-stone-200 dark:text-stone-600"}`}
+					className={`w-3.5 h-3.5 ${i < stars ? "text-amber-400" : "text-zinc-200 dark:text-zinc-600"}`}
 					fill="currentColor"
 					viewBox="0 0 20 20"
 					aria-hidden="true"
@@ -62,18 +62,18 @@ function StarRating({ score }: { score: number }) {
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 animate-pulse">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
 			<div className="flex items-start justify-between gap-3 mb-3">
-				<div className="h-4 w-40 bg-stone-200 dark:bg-stone-700 rounded" />
-				<div className="h-5 w-20 bg-stone-100 dark:bg-stone-600 rounded-full" />
+				<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
+				<div className="h-5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
 			</div>
 			<div className="space-y-2 mb-3">
-				<div className="h-3 w-full bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-4/5 bg-stone-100 dark:bg-stone-600 rounded" />
+				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-4/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
 			</div>
 			<div className="flex items-center gap-3">
-				<div className="h-3.5 w-20 bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-12 bg-stone-100 dark:bg-stone-600 rounded" />
+				<div className="h-3.5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-12 bg-zinc-100 dark:bg-zinc-600 rounded" />
 			</div>
 		</div>
 	);
@@ -88,7 +88,7 @@ function RecipeCard({
 	const [promptCopied, setPromptCopied] = useState(false);
 	const deptColor =
 		DEPT_COLORS[recipe.department] ??
-		"bg-stone-50 text-stone-600 border-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:border-stone-600";
+		"bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600";
 
 	const handleCopyPrompt = async (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -103,7 +103,7 @@ function RecipeCard({
 
 	return (
 		<div
-			className={`bg-white dark:bg-stone-800 rounded-xl border transition-all duration-200 ${isExpanded ? "border-indigo-300 dark:border-indigo-600 shadow-md" : "border-stone-200 dark:border-stone-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-sm hover:-translate-y-0.5"}`}
+			className={`bg-white dark:bg-zinc-800 rounded-lg border ${isExpanded ? "border-indigo-300 dark:border-indigo-600" : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"}`}
 		>
 			{/* Card header - clickable */}
 			<button
@@ -121,22 +121,22 @@ function RecipeCard({
 								{recipe.department.replace("_", " ")}
 							</span>
 							{recipe.category && (
-								<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs text-stone-500 dark:text-stone-400 bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600">
+								<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600">
 									{recipe.category}
 								</span>
 							)}
 						</div>
-						<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 leading-snug">
+						<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">
 							{recipe.title}
 						</h3>
 						{recipe.description && (
-							<p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">
+							<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
 								{recipe.description}
 							</p>
 						)}
 					</div>
 					<svg
-						className={`w-4 h-4 text-stone-400 shrink-0 mt-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+						className={`w-4 h-4 text-zinc-400 shrink-0 mt-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -153,7 +153,7 @@ function RecipeCard({
 
 				<div className="flex items-center gap-4 mt-3">
 					<StarRating score={recipe.effectiveness_score} />
-					<span className="text-xs text-stone-400 dark:text-stone-500">
+					<span className="text-xs text-zinc-400 dark:text-zinc-500">
 						{recipe.usage_count} {t("usages")}
 					</span>
 				</div>
@@ -161,17 +161,17 @@ function RecipeCard({
 
 			{/* Expanded content */}
 			{isExpanded && (
-				<div className="border-t border-stone-100 dark:border-stone-700 p-5 space-y-4">
+				<div className="border-t border-zinc-100 dark:border-zinc-700 p-5 space-y-4">
 					{/* Prompt template */}
 					<div>
 						<div className="flex items-center justify-between mb-2">
-							<span className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+							<span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
 								{t("promptTemplate")}
 							</span>
 							<button
 								type="button"
 								onClick={handleCopyPrompt}
-								className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-stone-500 hover:bg-stone-100 transition-colors dark:text-stone-400 dark:hover:bg-stone-700"
+								className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-zinc-500 hover:bg-zinc-100 transition-colors dark:text-zinc-400 dark:hover:bg-zinc-700"
 							>
 								{promptCopied ? (
 									<>
@@ -212,7 +212,7 @@ function RecipeCard({
 								)}
 							</button>
 						</div>
-						<pre className="text-xs font-mono text-stone-700 dark:text-stone-300 bg-stone-50 dark:bg-stone-900/40 rounded-lg p-3 whitespace-pre-wrap break-words leading-relaxed border border-stone-100 dark:border-stone-700">
+						<pre className="text-xs font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md p-3 whitespace-pre-wrap break-words leading-relaxed border border-zinc-100 dark:border-zinc-800">
 							{recipe.prompt_template}
 						</pre>
 					</div>
@@ -222,20 +222,20 @@ function RecipeCard({
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							{recipe.example_query && (
 								<div>
-									<p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">
+									<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
 										{t("exampleQuery")}
 									</p>
-									<div className="text-xs text-stone-600 dark:text-stone-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
+									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
 										{recipe.example_query}
 									</div>
 								</div>
 							)}
 							{recipe.example_response && (
 								<div>
-									<p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">
+									<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
 										{t("exampleResponse")}
 									</p>
-									<div className="text-xs text-stone-600 dark:text-stone-400 bg-green-50/50 dark:bg-green-950/20 rounded-lg p-3 border border-green-100 dark:border-green-900 leading-relaxed">
+									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-green-50/50 dark:bg-green-950/20 rounded-lg p-3 border border-green-100 dark:border-green-900 leading-relaxed">
 										{recipe.example_response}
 									</div>
 								</div>
@@ -327,17 +327,17 @@ export default function RecipesPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
+				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
 
 			{/* Filters */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 px-6 py-3 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 px-8 py-3 shrink-0">
 				<div className="flex items-center gap-3 flex-wrap">
 					{/* Search */}
 					<form
@@ -346,7 +346,7 @@ export default function RecipesPage() {
 					>
 						<div className="relative flex-1">
 							<svg
-								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none"
+								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -365,12 +365,12 @@ export default function RecipesPage() {
 								value={searchInput}
 								onChange={(e) => setSearchInput(e.target.value)}
 								placeholder={t("searchPlaceholder")}
-								className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500"
+								className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500"
 							/>
 						</div>
 						<button
 							type="submit"
-							className="px-3 py-2 text-sm font-medium rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors dark:border-stone-600 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600"
+							className="px-3 py-2 text-sm font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
 						>
 							{t("search")}
 						</button>
@@ -384,7 +384,7 @@ export default function RecipesPage() {
 								setDepartment(e.target.value);
 								setExpandedId(null);
 							}}
-							className="px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white text-stone-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+							className="px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
 						>
 							<option value="">{t("allDepartments")}</option>
 							{departments.map((d) => (
@@ -403,7 +403,7 @@ export default function RecipesPage() {
 								setCategory(e.target.value);
 								setExpandedId(null);
 							}}
-							className="px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white text-stone-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+							className="px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
 						>
 							<option value="">{t("allCategories")}</option>
 							{categories.map((c) => (
@@ -417,10 +417,10 @@ export default function RecipesPage() {
 			</div>
 
 			{/* Content */}
-			<div className="flex-1 overflow-y-auto p-6">
+			<div className="flex-1 overflow-y-auto p-5">
 				<div className="max-w-4xl mx-auto">
 					{error && (
-						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 mb-6">
 							<svg
 								className="w-4 h-4 text-red-500 shrink-0"
 								fill="none"
@@ -464,16 +464,16 @@ export default function RecipesPage() {
 									/>
 								</svg>
 							</div>
-							<p className="text-stone-700 dark:text-stone-200 font-medium">
+							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 								{t("noRecipes")}
 							</p>
-							<p className="text-stone-400 dark:text-stone-500 text-sm mt-1">
+							<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">
 								{t("noRecipesHint")}
 							</p>
 						</div>
 					) : (
 						<div className="space-y-3">
-							<p className="text-xs text-stone-400 dark:text-stone-500 mb-4">
+							<p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
 								{t("recipesFound", { count: recipes.length })}
 							</p>
 							{recipes.map((recipe) => (

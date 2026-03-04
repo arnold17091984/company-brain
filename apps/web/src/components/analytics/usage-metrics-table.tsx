@@ -61,7 +61,7 @@ function SortIcon({ dir }: { dir: SortDir | null }) {
 	if (!dir) {
 		return (
 			<svg
-				className="w-3 h-3 text-stone-300 dark:text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity"
+				className="w-3 h-3 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -143,17 +143,17 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 
 	if (data.length === 0) {
 		return (
-			<output className="flex items-center justify-center py-12 text-sm text-stone-400 dark:text-stone-500">
+			<output className="flex items-center justify-center py-12 text-sm text-zinc-400 dark:text-zinc-500">
 				No usage data available
 			</output>
 		);
 	}
 
 	return (
-		<div className="overflow-x-auto rounded-xl border border-stone-200 dark:border-stone-700">
+		<div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
 			<table className="w-full text-sm min-w-[800px]">
 				<thead>
-					<tr className="border-b border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/60">
+					<tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60">
 						{COLUMNS.map((col) => (
 							<th
 								key={col.key}
@@ -166,7 +166,7 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 											: "descending"
 										: "none"
 								}
-								className={`group px-4 py-3 text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider cursor-pointer select-none hover:text-stone-700 dark:hover:text-stone-200 transition-colors ${col.align === "right" ? "text-right" : "text-left"}`}
+								className={`group px-4 py-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer select-none hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors ${col.align === "right" ? "text-right" : "text-left"}`}
 								onClick={() => handleSort(col.key)}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -185,12 +185,12 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 						))}
 					</tr>
 				</thead>
-				<tbody className="divide-y divide-stone-100 dark:divide-stone-700 bg-white dark:bg-stone-800">
+				<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
 					{sorted.map((row, idx) => (
 						<tr
 							// biome-ignore lint/suspicious/noArrayIndexKey: table rows keyed by index when no unique id
 							key={`${row.user_email}-${row.date}-${idx}`}
-							className="hover:bg-stone-50 dark:hover:bg-stone-700/30 transition-colors"
+							className="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
 						>
 							{COLUMNS.map((col) => {
 								const raw = row[col.key];
@@ -199,10 +199,10 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 								if (col.key === "user_name") {
 									return (
 										<td key={col.key} className="px-4 py-3">
-											<p className="font-medium text-stone-800 dark:text-stone-200 truncate max-w-[140px]">
+											<p className="font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
 												{displayed}
 											</p>
-											<p className="text-xs text-stone-400 dark:text-stone-500 truncate max-w-[140px]">
+											<p className="text-xs text-zinc-400 dark:text-zinc-500 truncate max-w-[140px]">
 												{row.user_email}
 											</p>
 										</td>
@@ -248,7 +248,7 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 								return (
 									<td
 										key={col.key}
-										className={`px-4 py-3 text-stone-700 dark:text-stone-300 ${col.align === "right" ? "text-right tabular-nums" : ""}`}
+										className={`px-4 py-3 text-zinc-700 dark:text-zinc-300 ${col.align === "right" ? "text-right tabular-nums" : ""}`}
 									>
 										{displayed}
 									</td>

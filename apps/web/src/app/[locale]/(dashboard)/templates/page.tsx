@@ -59,7 +59,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 function CategoryBadge({ category }: { category: string }) {
 	const colorClass =
 		CATEGORY_COLORS[category] ??
-		"bg-stone-50 text-stone-600 border-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:border-stone-600";
+		"bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600";
 	return (
 		<span
 			className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}
@@ -71,18 +71,18 @@ function CategoryBadge({ category }: { category: string }) {
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm animate-pulse">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
 			<div className="flex items-start justify-between gap-3 mb-3">
-				<div className="h-4 w-40 bg-stone-200 dark:bg-stone-700 rounded" />
-				<div className="h-5 w-20 bg-stone-100 dark:bg-stone-600 rounded-full" />
+				<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
+				<div className="h-5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
 			</div>
 			<div className="space-y-2 mb-4">
-				<div className="h-3 w-full bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-3/4 bg-stone-100 dark:bg-stone-600 rounded" />
+				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-600 rounded" />
 			</div>
 			<div className="flex items-center gap-4">
-				<div className="h-3 w-16 bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-16 bg-stone-100 dark:bg-stone-600 rounded" />
+				<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
 			</div>
 		</div>
 	);
@@ -106,11 +106,11 @@ function TemplateCard({
 	const copied = copiedIds.has(template.id);
 
 	return (
-		<div className="group bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-3">
+		<div className="group bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors flex flex-col gap-3">
 			<div className="flex items-start justify-between gap-3">
 				<Link
 					href={`./templates/${template.id}`}
-					className="text-sm font-semibold text-stone-900 dark:text-stone-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors line-clamp-2 leading-snug"
+					className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors line-clamp-2 leading-snug"
 				>
 					{template.title}
 				</Link>
@@ -118,13 +118,13 @@ function TemplateCard({
 			</div>
 
 			{template.description && (
-				<p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed">
+				<p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
 					{template.description}
 				</p>
 			)}
 
 			<div className="flex items-center justify-between mt-auto pt-1">
-				<span className="text-xs text-stone-400 dark:text-stone-500">
+				<span className="text-xs text-zinc-400 dark:text-zinc-500">
 					{template.author_name}
 				</span>
 
@@ -137,7 +137,7 @@ function TemplateCard({
 						className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors min-w-[36px] ${
 							voted
 								? "bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
-								: "bg-stone-50 text-stone-500 border border-stone-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:bg-stone-700 dark:text-stone-400 dark:border-stone-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+								: "bg-zinc-50 text-zinc-500 border border-zinc-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:bg-zinc-700 dark:text-zinc-400 dark:border-zinc-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
 						}`}
 					>
 						<svg
@@ -165,7 +165,7 @@ function TemplateCard({
 						className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors min-w-[36px] ${
 							copied
 								? "bg-indigo-50 text-indigo-600 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-700"
-								: "bg-stone-50 text-stone-500 border border-stone-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:bg-stone-700 dark:text-stone-400 dark:border-stone-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
+								: "bg-zinc-50 text-zinc-500 border border-zinc-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:bg-zinc-700 dark:text-zinc-400 dark:border-zinc-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
 						}`}
 					>
 						<svg
@@ -319,13 +319,13 @@ export default function TemplatesPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
 				<div className="flex items-center justify-between gap-4">
 					<div>
-						<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+						<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 							{t("pageTitle")}
 						</h1>
-						<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 							{t("subtitle")}
 						</p>
 					</div>
@@ -353,7 +353,7 @@ export default function TemplatesPage() {
 			</div>
 
 			{/* Filters */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 shrink-0">
 				<div className="flex items-center justify-between gap-4 flex-wrap py-2">
 					{/* Category tabs */}
 					<nav
@@ -368,7 +368,7 @@ export default function TemplatesPage() {
 								className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 									category === cat.id
 										? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-										: "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 dark:text-stone-400 dark:hover:text-stone-200 dark:hover:border-stone-600"
+										: "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:border-zinc-600"
 								}`}
 							>
 								{t(cat.labelKey as Parameters<typeof t>[0])}
@@ -380,7 +380,7 @@ export default function TemplatesPage() {
 					<select
 						value={sort}
 						onChange={(e) => handleSortChange(e.target.value as SortMode)}
-						className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+						className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
 					>
 						<option value="popular">{t("sortPopular")}</option>
 						<option value="recent">{t("sortRecent")}</option>
@@ -390,10 +390,10 @@ export default function TemplatesPage() {
 			</div>
 
 			{/* Content */}
-			<div className="flex-1 overflow-y-auto p-6">
+			<div className="flex-1 overflow-y-auto p-5">
 				<div className="max-w-6xl mx-auto">
 					{error && (
-						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 mb-6">
 							<svg
 								className="w-4 h-4 text-red-500 shrink-0"
 								fill="none"
@@ -437,10 +437,10 @@ export default function TemplatesPage() {
 									/>
 								</svg>
 							</div>
-							<p className="text-stone-700 dark:text-stone-200 font-medium">
+							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 								{t("noTemplates")}
 							</p>
-							<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
+							<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 max-w-xs">
 								{t("noTemplatesHint")}
 							</p>
 						</div>
@@ -462,7 +462,7 @@ export default function TemplatesPage() {
 					{/* Pagination */}
 					{!isLoading && total > PAGE_SIZE && (
 						<div className="flex items-center justify-between mt-8 px-1">
-							<p className="text-xs text-stone-500 dark:text-stone-400">
+							<p className="text-xs text-zinc-500 dark:text-zinc-400">
 								{t("pagination", { page, total: totalPages })}
 							</p>
 							<div className="flex items-center gap-2">
@@ -470,7 +470,7 @@ export default function TemplatesPage() {
 									type="button"
 									disabled={page <= 1}
 									onClick={() => setPage((p) => Math.max(1, p - 1))}
-									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-stone-600 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600"
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
 								>
 									<svg
 										className="w-3.5 h-3.5"
@@ -492,7 +492,7 @@ export default function TemplatesPage() {
 									type="button"
 									disabled={page >= totalPages}
 									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-stone-600 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600"
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
 								>
 									{t("next")}
 									<svg

@@ -99,10 +99,10 @@ export function MessageInput({
 	return (
 		<div className="max-w-3xl mx-auto">
 			<div
-				className={`flex items-end gap-3 rounded-2xl border bg-white dark:bg-stone-800 px-4 py-3 shadow-sm transition-colors ${
+				className={`flex items-end gap-3 rounded-2xl border bg-white dark:bg-zinc-800 px-4 py-3 transition-colors ${
 					disabled
-						? "border-stone-200 dark:border-stone-700 opacity-60"
-						: "border-stone-200 dark:border-stone-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10"
+						? "border-zinc-200 dark:border-zinc-700 opacity-60"
+						: "border-zinc-200 dark:border-zinc-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10"
 				}`}
 			>
 				<textarea
@@ -114,7 +114,7 @@ export function MessageInput({
 					disabled={disabled}
 					placeholder={resolvedPlaceholder}
 					rows={1}
-					className="flex-1 resize-none bg-transparent text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none min-h-[24px] max-h-[200px] py-0.5 leading-6"
+					className="flex-1 resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none min-h-[24px] max-h-[200px] py-0.5 leading-6"
 					aria-label="Chat message"
 				/>
 
@@ -127,7 +127,7 @@ export function MessageInput({
 						className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
 							isRecording
 								? "bg-red-500 text-white animate-pulse"
-								: "bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-600"
+								: "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
 						}`}
 					>
 						<svg
@@ -160,7 +160,7 @@ export function MessageInput({
 					className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
 						canSend
 							? "bg-indigo-700 text-white hover:bg-indigo-800 active:bg-indigo-900 shadow-sm shadow-indigo-500/20"
-							: "bg-stone-100 dark:bg-stone-700 text-stone-300 dark:text-stone-500 cursor-not-allowed"
+							: "bg-zinc-100 dark:bg-zinc-700 text-zinc-300 dark:text-zinc-500 cursor-not-allowed"
 					}`}
 				>
 					<svg
@@ -180,7 +180,7 @@ export function MessageInput({
 				</button>
 			</div>
 
-			<p className="text-center text-xs text-stone-400 dark:text-stone-500 mt-2">
+			<p className="text-center text-xs text-zinc-400 dark:text-zinc-500 mt-2">
 				{t("sendHint")}
 			</p>
 		</div>

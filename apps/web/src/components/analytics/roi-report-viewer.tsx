@@ -97,7 +97,7 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 				{statCards.map((card) => (
 					<div
 						key={card.label}
-						className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-4 shadow-sm"
+						className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4"
 					>
 						<div
 							className={`w-8 h-8 rounded-lg ${card.iconBg} ${card.iconColor} flex items-center justify-center mb-3`}
@@ -117,14 +117,14 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 								/>
 							</svg>
 						</div>
-						<p className="text-xs text-stone-500 dark:text-stone-400 leading-tight mb-1">
+						<p className="text-xs text-zinc-500 dark:text-zinc-400 leading-tight mb-1">
 							{card.label}
 						</p>
-						<p className="text-lg font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-100 leading-none">
+						<p className="text-lg font-bold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
 							{card.value}
 						</p>
 						{card.sub && (
-							<p className="text-xs text-stone-400 dark:text-stone-500 mt-1 leading-tight">
+							<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 leading-tight">
 								{card.sub}
 							</p>
 						)}
@@ -134,7 +134,7 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 
 			{/* Markdown report */}
 			{report.report_markdown && (
-				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
+				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
 					<div className="flex items-center gap-2 mb-4">
 						<div className="w-6 h-6 rounded-full bg-indigo-700 flex items-center justify-center">
 							<svg
@@ -152,27 +152,27 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 								/>
 							</svg>
 						</div>
-						<h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">
+						<h3 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
 							ROI Analysis Report
 						</h3>
 					</div>
 
-					<div className="prose prose-sm dark:prose-invert max-w-none text-stone-700 dark:text-stone-300">
+					<div className="prose prose-sm dark:prose-invert max-w-none text-zinc-700 dark:text-zinc-300">
 						<ReactMarkdown
 							remarkPlugins={[remarkGfm]}
 							components={{
 								h1: ({ children }) => (
-									<h1 className="text-lg font-bold text-stone-900 dark:text-stone-100 mb-3 mt-5 first:mt-0">
+									<h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3 mt-5 first:mt-0">
 										{children}
 									</h1>
 								),
 								h2: ({ children }) => (
-									<h2 className="text-base font-semibold text-stone-800 dark:text-stone-200 mb-2 mt-4 first:mt-0">
+									<h2 className="text-base font-medium text-zinc-800 dark:text-zinc-200 mb-2 mt-4 first:mt-0">
 										{children}
 									</h2>
 								),
 								h3: ({ children }) => (
-									<h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-1.5 mt-3 first:mt-0">
+									<h3 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-1.5 mt-3 first:mt-0">
 										{children}
 									</h3>
 								),
@@ -195,12 +195,12 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 									<li className="text-sm leading-relaxed">{children}</li>
 								),
 								strong: ({ children }) => (
-									<strong className="font-semibold text-stone-900 dark:text-stone-100">
+									<strong className="font-semibold text-zinc-900 dark:text-zinc-100">
 										{children}
 									</strong>
 								),
 								blockquote: ({ children }) => (
-									<blockquote className="border-l-4 border-indigo-300 dark:border-indigo-700 pl-4 py-1 my-3 text-stone-600 dark:text-stone-400 italic">
+									<blockquote className="border-l-4 border-indigo-300 dark:border-indigo-700 pl-4 py-1 my-3 text-zinc-600 dark:text-zinc-400 italic">
 										{children}
 									</blockquote>
 								),
@@ -209,7 +209,7 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 									if (isBlock) {
 										return (
 											<code
-												className="block bg-stone-50 dark:bg-stone-900 rounded-lg px-4 py-3 my-3 text-xs font-mono overflow-x-auto whitespace-pre border border-stone-200 dark:border-stone-700"
+												className="block bg-zinc-50 dark:bg-zinc-900 rounded-lg px-4 py-3 my-3 text-xs font-mono overflow-x-auto whitespace-pre border border-zinc-200 dark:border-zinc-700"
 												{...props}
 											>
 												{children}
@@ -218,7 +218,7 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 									}
 									return (
 										<code
-											className="bg-stone-100 dark:bg-stone-700 rounded px-1.5 py-0.5 text-xs font-mono text-stone-800 dark:text-stone-200"
+											className="bg-zinc-100 dark:bg-zinc-700 rounded px-1.5 py-0.5 text-xs font-mono text-zinc-800 dark:text-zinc-200"
 											{...props}
 										>
 											{children}
@@ -229,22 +229,22 @@ export function ROIReportViewer({ report }: ROIReportViewerProps) {
 									<div className="my-3 last:mb-0">{children}</div>
 								),
 								table: ({ children }) => (
-									<div className="overflow-x-auto my-4 rounded-lg border border-stone-200 dark:border-stone-700">
+									<div className="overflow-x-auto my-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
 										<table className="min-w-full text-sm">{children}</table>
 									</div>
 								),
 								thead: ({ children }) => (
-									<thead className="bg-stone-50 dark:bg-stone-700/50">
+									<thead className="bg-zinc-50 dark:bg-zinc-700/50">
 										{children}
 									</thead>
 								),
 								th: ({ children }) => (
-									<th className="px-4 py-2.5 text-left text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase tracking-wider border-b border-stone-200 dark:border-stone-700">
+									<th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider border-b border-zinc-200 dark:border-zinc-700">
 										{children}
 									</th>
 								),
 								td: ({ children }) => (
-									<td className="px-4 py-2.5 text-xs text-stone-700 dark:text-stone-300 border-b border-stone-100 dark:border-stone-700 last:border-0">
+									<td className="px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 border-b border-zinc-100 dark:border-zinc-700 last:border-0">
 										{children}
 									</td>
 								),

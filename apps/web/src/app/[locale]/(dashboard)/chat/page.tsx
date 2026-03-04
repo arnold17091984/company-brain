@@ -42,12 +42,12 @@ export default function ChatPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-stone-200/60 bg-white/80 dark:bg-stone-900/80 dark:border-stone-700/60 backdrop-blur-sm px-6 py-4 shrink-0 flex items-center justify-between">
+			<div className="border-b border-zinc-200 bg-white/80 dark:bg-zinc-950/80 dark:border-zinc-800 backdrop-blur-md px-8 py-4 shrink-0 flex items-center justify-between">
 				<div>
-					<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+					<h1 className="text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-100">
 						{t("pageTitle")}
 					</h1>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("subtitle")}
 					</p>
 				</div>
@@ -55,7 +55,7 @@ export default function ChatPage() {
 					<button
 						type="button"
 						onClick={startNewChat}
-						className="text-xs text-stone-400 hover:text-stone-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-stone-100 dark:text-stone-500 dark:hover:text-stone-300 dark:hover:bg-stone-800"
+						className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:text-zinc-500 dark:hover:text-zinc-300 dark:hover:bg-zinc-800"
 					>
 						{t("newChat")}
 					</button>
@@ -87,9 +87,9 @@ export default function ChatPage() {
 			<div className="flex-1 overflow-hidden">
 				{messages.length === 0 ? (
 					<div className="flex flex-col items-center justify-center h-full text-center px-6 animate-fade-in">
-						<div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center mb-4">
+						<div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
 							<svg
-								className="w-8 h-8 text-amber-400"
+								className="w-8 h-8 text-indigo-500"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -103,10 +103,10 @@ export default function ChatPage() {
 								/>
 							</svg>
 						</div>
-						<p className="text-stone-700 dark:text-stone-200 font-medium">
+						<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 							{t("emptyTitle")}
 						</p>
-						<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-md">
+						<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 max-w-md">
 							{t("emptySubtitle")}
 						</p>
 
@@ -115,48 +115,48 @@ export default function ChatPage() {
 							<button
 								type="button"
 								onClick={() => sendMessage(t("suggestEmailDesc"))}
-								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+								className="text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 transition-colors group dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
 							>
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+								<p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-zinc-200">
 									{t("suggestEmail")}
 								</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+								<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 									{t("suggestEmailDesc")}
 								</p>
 							</button>
 							<button
 								type="button"
 								onClick={() => sendMessage(t("suggestPolicyDesc"))}
-								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+								className="text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 transition-colors group dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
 							>
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+								<p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-zinc-200">
 									{t("suggestPolicy")}
 								</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+								<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 									{t("suggestPolicyDesc")}
 								</p>
 							</button>
 							<button
 								type="button"
 								onClick={() => sendMessage(t("suggestTranslateDesc"))}
-								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+								className="text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 transition-colors group dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
 							>
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+								<p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-zinc-200">
 									{t("suggestTranslate")}
 								</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+								<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 									{t("suggestTranslateDesc")}
 								</p>
 							</button>
 							<button
 								type="button"
 								onClick={() => sendMessage(t("suggestCodeDesc"))}
-								className="text-left p-3 rounded-xl border border-stone-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 transition-colors group dark:border-stone-700 dark:bg-stone-800 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+								className="text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 transition-colors group dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
 							>
-								<p className="text-xs font-medium text-stone-600 group-hover:text-indigo-700 dark:text-stone-300 dark:group-hover:text-indigo-300">
+								<p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-zinc-200">
 									{t("suggestCode")}
 								</p>
-								<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+								<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 									{t("suggestCodeDesc")}
 								</p>
 							</button>
@@ -168,7 +168,7 @@ export default function ChatPage() {
 			</div>
 
 			{/* Input */}
-			<div className="shrink-0 border-t border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4">
+			<div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4">
 				<MessageInput onSend={sendMessage} disabled={isLoading} />
 			</div>
 		</div>

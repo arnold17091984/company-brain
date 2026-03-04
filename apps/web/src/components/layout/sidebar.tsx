@@ -229,7 +229,7 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 	if (isLoading && sessions.length === 0) {
 		return (
 			<div className="px-3 py-2">
-				<div className="h-3 w-24 bg-indigo-800/40 rounded animate-pulse" />
+				<div className="h-3 w-24 bg-zinc-800 rounded animate-pulse" />
 			</div>
 		);
 	}
@@ -237,7 +237,7 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 	if (sessions.length === 0) {
 		return (
 			<div className="px-4 py-2">
-				<p className="text-xs text-indigo-500">{tChat("noChats")}</p>
+				<p className="text-xs text-zinc-500">{tChat("noChats")}</p>
 			</div>
 		);
 	}
@@ -260,8 +260,8 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 						onClick={onNavigate}
 						className={`block px-3 py-1.5 rounded-md text-xs truncate transition-colors ${
 							isActive
-								? "bg-indigo-600/50 text-white"
-								: "text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800/30"
+								? "bg-zinc-800 text-white"
+								: "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
 						}`}
 						title={s.title || "Untitled"}
 					>
@@ -294,7 +294,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	return (
 		<>
 			{/* Brand */}
-			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-indigo-800/40">
+			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-zinc-800">
 				<BrainLogo size="sm" />
 				<span className="text-sm font-semibold text-white">
 					{tCommon("companyBrain")}
@@ -313,10 +313,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 							key={item.href}
 							href={item.href}
 							onClick={onNavigate}
-							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+							className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
 								isActive
-									? "bg-indigo-600 text-white shadow-sm shadow-indigo-900/30 border-l-[3px] border-white/40"
-									: "text-indigo-300 hover:text-white hover:bg-indigo-800/40 border-l-[3px] border-transparent"
+									? "bg-zinc-800 text-white border-l-2 border-indigo-500"
+									: "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border-l-2 border-transparent"
 							}`}
 							aria-current={isActive ? "page" : undefined}
 						>
@@ -329,15 +329,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 			{/* Recent Chats */}
 			{isOnChatPage && (
-				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-indigo-800/40">
+				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-zinc-800">
 					<div className="flex items-center justify-between px-1 pt-3 pb-2">
-						<p className="text-xs font-medium text-indigo-400 uppercase tracking-wider">
+						<p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
 							{tChat("recentChats")}
 						</p>
 						<Link
 							href="/chat"
 							onClick={onNavigate}
-							className="text-xs text-indigo-400 hover:text-indigo-200 transition-colors"
+							className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
 							title={tChat("newChat")}
 						>
 							<svg
@@ -364,11 +364,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 			{!isOnChatPage && <div className="flex-1" />}
 
 			{/* Footer / user area */}
-			<div className="border-t border-indigo-800/40 px-3 py-4">
+			<div className="border-t border-zinc-800 px-3 py-4">
 				<div className="flex items-center gap-3 px-3 py-2 rounded-lg">
-					<div className="w-7 h-7 rounded-full bg-indigo-800 flex items-center justify-center shrink-0">
+					<div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
 						<svg
-							className="w-4 h-4 text-indigo-300"
+							className="w-4 h-4 text-zinc-400"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
@@ -383,16 +383,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 						</svg>
 					</div>
 					<div className="flex-1 min-w-0">
-						<p className="text-xs font-medium text-indigo-200 truncate">
+						<p className="text-xs font-medium text-zinc-200 truncate">
 							{userName}
 						</p>
-						<p className="text-xs text-indigo-400 truncate">{userEmail}</p>
+						<p className="text-xs text-zinc-500 truncate">{userEmail}</p>
 					</div>
 				</div>
 				<button
 					type="button"
 					onClick={() => signOut({ callbackUrl: "/login" })}
-					className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800/40 transition-colors"
+					className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors"
 				>
 					<svg
 						className="w-4 h-4"
@@ -419,7 +419,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar() {
 	return (
-		<aside className="hidden lg:flex flex-col w-60 shrink-0 bg-sidebar-gradient text-indigo-100">
+		<aside className="hidden lg:flex flex-col w-60 shrink-0 bg-zinc-950 text-zinc-300 border-r border-zinc-800">
 			<SidebarContent />
 		</aside>
 	);
@@ -443,12 +443,12 @@ export function MobileSidebar() {
 			/>
 
 			{/* Drawer */}
-			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar-gradient text-indigo-100 lg:hidden animate-slide-in-left">
+			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-zinc-950 text-zinc-300 border-r border-zinc-800 lg:hidden animate-slide-in-left">
 				{/* Close button */}
 				<button
 					type="button"
 					onClick={close}
-					className="absolute top-3 right-3 p-1.5 rounded-lg text-indigo-400 hover:text-white hover:bg-indigo-800/40 focus-visible:ring-2 focus-visible:ring-white transition-colors"
+					className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-white transition-colors"
 					aria-label="Close sidebar"
 				>
 					<svg

@@ -222,13 +222,13 @@ function ConnectorIcon({ id }: { id: string }) {
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none animate-pulse">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
 			<div className="flex items-start gap-4">
-				<div className="shrink-0 w-10 h-10 rounded-lg bg-stone-200 dark:bg-stone-700" />
+				<div className="shrink-0 w-10 h-10 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
 				<div className="flex-1 min-w-0 space-y-2">
-					<div className="h-4 w-32 bg-stone-200 dark:bg-stone-700 rounded" />
-					<div className="h-3 w-48 bg-stone-100 dark:bg-stone-600 rounded" />
-					<div className="h-3 w-24 bg-stone-100 dark:bg-stone-600 rounded" />
+					<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded" />
+					<div className="h-3 w-48 bg-zinc-100 dark:bg-zinc-600 rounded" />
+					<div className="h-3 w-24 bg-zinc-100 dark:bg-zinc-600 rounded" />
 				</div>
 			</div>
 		</div>
@@ -260,7 +260,7 @@ function ConnectorCard({
 		: t("neverSynced");
 
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
 			<div className="flex items-start gap-4">
 				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					<ConnectorIcon id={source.id} />
@@ -268,27 +268,27 @@ function ConnectorCard({
 
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2 mb-1">
-						<h3 className="font-semibold text-stone-900 dark:text-stone-100">
+						<h3 className="font-medium text-zinc-900 dark:text-zinc-100">
 							{source.label}
 						</h3>
 						<span
 							className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 border ${
 								isActive
 									? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/40 dark:border-green-800"
-									: "text-stone-500 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600"
+									: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600"
 							}`}
 						>
 							<span
-								className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-stone-400"}`}
+								className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-400"}`}
 							/>
 							{isActive ? t("statusActive") : t("statusInactive")}
 						</span>
 					</div>
 
-					<p className="text-sm text-stone-500 dark:text-stone-400">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400">
 						{t("documents", { count: source.document_count })}
 					</p>
-					<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+					<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 						{lastSyncedText}
 					</p>
 
@@ -382,16 +382,16 @@ function AnalyticsLinkCard({
 	icon: React.ReactNode;
 }) {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
 			<div className="flex items-start gap-4">
 				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					{icon}
 				</div>
 				<div className="flex-1 min-w-0">
-					<h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-1">
+					<h3 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
 						{title}
 					</h3>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
 						{description}
 					</p>
 					<Link
@@ -557,12 +557,12 @@ function SettingsTab({
 				{[1, 2, 3].map((i) => (
 					<div
 						key={i}
-						className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 animate-pulse"
+						className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
 					>
-						<div className="h-4 w-32 bg-stone-200 dark:bg-stone-700 rounded mb-4" />
+						<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-4" />
 						<div className="space-y-3">
-							<div className="h-8 bg-stone-100 dark:bg-stone-600 rounded" />
-							<div className="h-8 bg-stone-100 dark:bg-stone-600 rounded" />
+							<div className="h-8 bg-zinc-100 dark:bg-zinc-600 rounded" />
+							<div className="h-8 bg-zinc-100 dark:bg-zinc-600 rounded" />
 						</div>
 					</div>
 				))}
@@ -575,10 +575,10 @@ function SettingsTab({
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("settingsTitle")}
 				</h2>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("settingsSub")}
 				</p>
 			</div>
@@ -590,8 +590,8 @@ function SettingsTab({
 			)}
 
 			{/* RAG section */}
-			<section className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
-				<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("ragSettings")}
 				</h3>
 				<div className="grid gap-4 sm:grid-cols-3">
@@ -626,8 +626,8 @@ function SettingsTab({
 			</section>
 
 			{/* LLM section */}
-			<section className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
-				<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("llmSettings")}
 				</h3>
 				<div className="grid gap-4 sm:grid-cols-3">
@@ -664,8 +664,8 @@ function SettingsTab({
 			</section>
 
 			{/* Agent section */}
-			<section className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
-				<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("agentSettings")}
 				</h3>
 				<div className="grid gap-4 sm:grid-cols-2">
@@ -743,24 +743,24 @@ function SettingsTab({
 				)}
 			</div>
 			{/* API Keys */}
-			<div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
-				<h3 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-1">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-1">
 					{t("apiKeysTitle")}
 				</h3>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
 					{t("apiKeysSub")}
 				</p>
 				{apiKeysLoading ? (
-					<p className="text-sm text-stone-500">Loading...</p>
+					<p className="text-sm text-zinc-500">Loading...</p>
 				) : (
 					<div className="space-y-3">
 						{apiKeys.map((ak) => (
 							<div
 								key={ak.key_name}
-								className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-stone-50 dark:bg-stone-700/40"
+								className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-zinc-50 dark:bg-zinc-700/40"
 							>
 								<div className="min-w-0 flex-1">
-									<p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+									<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
 										{ak.key_name
 											.replace(/_/g, " ")
 											.replace(/\b\w/g, (c) => c.toUpperCase())
@@ -774,7 +774,7 @@ function SettingsTab({
 													? "text-indigo-700 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-950/40"
 													: ak.source === "env"
 														? "text-green-700 bg-green-50 dark:text-green-300 dark:bg-green-950/40"
-														: "text-stone-500 bg-stone-100 dark:text-stone-400 dark:bg-stone-600"
+														: "text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-600"
 											}`}
 										>
 											{t(
@@ -786,7 +786,7 @@ function SettingsTab({
 											)}
 										</span>
 										{ak.masked_value && (
-											<span className="text-xs text-stone-400 font-mono">
+											<span className="text-xs text-zinc-400 font-mono">
 												{ak.masked_value}
 											</span>
 										)}
@@ -800,7 +800,7 @@ function SettingsTab({
 												value={keyValue}
 												onChange={(e) => setKeyValue(e.target.value)}
 												placeholder="Enter new key..."
-												className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
+												className="px-3 py-1.5 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-48"
 											/>
 											<button
 												type="button"
@@ -816,7 +816,7 @@ function SettingsTab({
 													setEditingKey(null);
 													setKeyValue("");
 												}}
-												className="px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-600 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-500"
+												className="px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-600 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-500"
 											>
 												{t("cancel")}
 											</button>
@@ -838,7 +838,7 @@ function SettingsTab({
 													type="button"
 													onClick={() => handleResetKey(ak.key_name)}
 													disabled={keySaving}
-													className="px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-600 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-500 disabled:opacity-50"
+													className="px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-600 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-500 disabled:opacity-50"
 												>
 													{t("apiKeyResetEnv")}
 												</button>
@@ -875,7 +875,7 @@ function SettingsField({
 		<div>
 			<label
 				htmlFor={inputId}
-				className="block text-xs font-medium text-stone-600 dark:text-stone-400 mb-1.5"
+				className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5"
 			>
 				{label}
 			</label>
@@ -885,7 +885,7 @@ function SettingsField({
 				value={value}
 				step={step}
 				onChange={(e) => onChange(e.target.value)}
-				className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+				className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 			/>
 		</div>
 	);
@@ -1050,10 +1050,10 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("usersTitle")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("usersSub")}
 					</p>
 				</div>
@@ -1072,10 +1072,10 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 				</div>
 			)}
 
-			<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm dark:shadow-none overflow-hidden">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
 				<div className="overflow-x-auto">
-					<table className="min-w-full divide-y divide-stone-200 dark:divide-stone-700">
-						<thead className="bg-stone-50 dark:bg-stone-900/50">
+					<table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+						<thead className="bg-zinc-50 dark:bg-zinc-900/50">
 							<tr>
 								{[
 									t("userName"),
@@ -1088,21 +1088,21 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								].map((col) => (
 									<th
 										key={col}
-										className="px-4 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider"
+										className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
 									>
 										{col}
 									</th>
 								))}
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-stone-100 dark:divide-stone-700/60">
+						<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
 							{loading ? (
 								(["r0", "r1", "r2", "r3"] as const).map((rowKey) => (
 									<tr key={rowKey} className="animate-pulse">
 										{(["c0", "c1", "c2", "c3", "c4", "c5", "c6"] as const).map(
 											(colKey) => (
 												<td key={colKey} className="px-4 py-3">
-													<div className="h-3 bg-stone-200 dark:bg-stone-700 rounded w-24" />
+													<div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
 												</td>
 											),
 										)}
@@ -1112,7 +1112,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								<tr>
 									<td
 										colSpan={7}
-										className="px-4 py-8 text-center text-sm text-stone-400 dark:text-stone-500"
+										className="px-4 py-8 text-center text-sm text-zinc-400 dark:text-zinc-500"
 									>
 										—
 									</td>
@@ -1121,15 +1121,15 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								users.map((user) => (
 									<tr
 										key={user.id}
-										className="hover:bg-stone-50 dark:hover:bg-stone-700/40 transition-colors"
+										className="hover:bg-zinc-50 dark:hover:bg-zinc-700/40 transition-colors"
 									>
-										<td className="px-4 py-3 text-sm font-medium text-stone-900 dark:text-stone-100 whitespace-nowrap">
+										<td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
 											{user.name}
 										</td>
-										<td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 whitespace-nowrap">
+										<td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
 											{user.email}
 										</td>
-										<td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400">
+										<td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
 											{user.department ?? "—"}
 										</td>
 										<td className="px-4 py-3">
@@ -1138,7 +1138,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 										<td className="px-4 py-3">
 											<RoleBadge role={user.role} />
 										</td>
-										<td className="px-4 py-3 text-sm text-stone-500 dark:text-stone-500 whitespace-nowrap">
+										<td className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-500 whitespace-nowrap">
 											{new Date(user.created_at).toLocaleDateString(undefined, {
 												dateStyle: "medium",
 											})}
@@ -1162,17 +1162,17 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 			{/* Edit user modal */}
 			{editingUser && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-					<div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xl w-full max-w-md mx-4 p-6">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full max-w-md mx-4 p-6">
 						<div className="flex items-center justify-between mb-6">
-							<h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+							<h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 								{t("editUser")}
 							</h3>
 							<button
 								type="button"
 								onClick={() => setEditingUser(null)}
 								aria-label={t("cancel")}
-								className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+								className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
 							>
 								<svg
 									className="w-5 h-5"
@@ -1193,18 +1193,18 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 						<div className="space-y-4">
 							<div>
-								<p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+								<p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
 									{t("userName")}
 								</p>
-								<p className="text-sm text-stone-900 dark:text-stone-100">
+								<p className="text-sm text-zinc-900 dark:text-zinc-100">
 									{editingUser.name}
 								</p>
 							</div>
 							<div>
-								<p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+								<p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
 									{t("userEmail")}
 								</p>
-								<p className="text-sm text-stone-500 dark:text-stone-400">
+								<p className="text-sm text-zinc-500 dark:text-zinc-400">
 									{editingUser.email}
 								</p>
 							</div>
@@ -1213,7 +1213,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="edit-user-role"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userRole")}
 								</label>
@@ -1221,7 +1221,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-role"
 									value={editRole}
 									onChange={(e) => setEditRole(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									{[
 										"admin",
@@ -1242,7 +1242,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="edit-user-access-level"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userAccessLevel")}
 								</label>
@@ -1250,7 +1250,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-access-level"
 									value={editAccessLevel}
 									onChange={(e) => setEditAccessLevel(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									{["all", "department", "restricted"].map((l) => (
 										<option key={l} value={l}>
@@ -1264,7 +1264,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="edit-user-department"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userDept")}
 								</label>
@@ -1272,7 +1272,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-department"
 									value={editDepartmentId ?? ""}
 									onChange={(e) => setEditDepartmentId(e.target.value || null)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									<option value="">— None —</option>
 									{departments.map((d) => (
@@ -1287,7 +1287,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="edit-user-telegram"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("telegramId")}
 								</label>
@@ -1297,7 +1297,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									value={editTelegramId}
 									onChange={(e) => setEditTelegramId(e.target.value)}
 									placeholder={t("telegramIdHint")}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								/>
 							</div>
 						</div>
@@ -1306,7 +1306,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setEditingUser(null)}
-								className="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
+								className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
 							>
 								{t("cancel")}
 							</button>
@@ -1325,17 +1325,17 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 			{/* Create user modal */}
 			{showCreateModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-					<div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xl w-full max-w-md mx-4 p-6">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full max-w-md mx-4 p-6">
 						<div className="flex items-center justify-between mb-6">
-							<h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+							<h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 								{t("addUserTitle")}
 							</h3>
 							<button
 								type="button"
 								onClick={() => setShowCreateModal(false)}
 								aria-label={t("cancel")}
-								className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+								className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
 							>
 								<svg
 									className="w-5 h-5"
@@ -1353,14 +1353,14 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								</svg>
 							</button>
 						</div>
-						<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
 							{t("addUserSub")}
 						</p>
 						<div className="space-y-4">
 							<div>
 								<label
 									htmlFor="create-user-email"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userEmail")}
 								</label>
@@ -1369,13 +1369,13 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="email"
 									value={createEmail}
 									onChange={(e) => setCreateEmail(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								/>
 							</div>
 							<div>
 								<label
 									htmlFor="create-user-name"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userName")}
 								</label>
@@ -1384,13 +1384,13 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="text"
 									value={createName}
 									onChange={(e) => setCreateName(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								/>
 							</div>
 							<div>
 								<label
 									htmlFor="create-user-role"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userRole")}
 								</label>
@@ -1398,7 +1398,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="create-user-role"
 									value={createRole}
 									onChange={(e) => setCreateRole(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									{[
 										"admin",
@@ -1417,7 +1417,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="create-user-dept"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userDept")}
 								</label>
@@ -1427,7 +1427,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									onChange={(e) =>
 										setCreateDepartmentId(e.target.value || null)
 									}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									<option value="">— None —</option>
 									{departments.map((d) => (
@@ -1440,7 +1440,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="create-user-access"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("userAccessLevel")}
 								</label>
@@ -1448,7 +1448,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="create-user-access"
 									value={createAccessLevel}
 									onChange={(e) => setCreateAccessLevel(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								>
 									{["all", "department", "restricted"].map((l) => (
 										<option key={l} value={l}>
@@ -1462,7 +1462,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setShowCreateModal(false)}
-								className="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
+								className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
 							>
 								{t("cancel")}
 							</button>
@@ -1488,7 +1488,7 @@ function AccessBadge({ level }: { level: string }) {
 			? "text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
 			: level === "department"
 				? "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800"
-				: "text-stone-600 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600";
+				: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
 	return (
 		<span
 			className={`inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 border ${colour}`}
@@ -1506,7 +1506,7 @@ function RoleBadge({ role }: { role: string }) {
 				? "text-purple-700 bg-purple-50 border-purple-200 dark:text-purple-300 dark:bg-purple-950/40 dark:border-purple-800"
 				: role === "hr" || role === "manager"
 					? "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/40 dark:border-blue-800"
-					: "text-stone-600 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600";
+					: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
 	return (
 		<span
 			className={`inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 border ${colour}`}
@@ -1551,10 +1551,10 @@ function HealthTab({ getAccessToken }: { getAccessToken: () => string }) {
 	return (
 		<div className="space-y-4">
 			<div>
-				<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("healthTitle")}
 				</h2>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("healthSub")}
 				</p>
 			</div>
@@ -1570,13 +1570,13 @@ function HealthTab({ getAccessToken }: { getAccessToken: () => string }) {
 					? (["skel-pg", "skel-qdrant", "skel-redis"] as const).map((key) => (
 							<div
 								key={key}
-								className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 animate-pulse"
+								className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
 							>
 								<div className="flex items-center gap-3 mb-3">
-									<div className="w-3 h-3 rounded-full bg-stone-200 dark:bg-stone-700" />
-									<div className="h-4 w-24 bg-stone-200 dark:bg-stone-700 rounded" />
+									<div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+									<div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-700 rounded" />
 								</div>
-								<div className="h-3 w-16 bg-stone-100 dark:bg-stone-600 rounded" />
+								<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
 							</div>
 						))
 					: checks.map((check) => (
@@ -1620,17 +1620,17 @@ function HealthCard({ check }: { check: HealthCheck }) {
 
 	return (
 		<div
-			className={`bg-white dark:bg-stone-800 rounded-xl border p-6 shadow-sm dark:shadow-none ${borderColour}`}
+			className={`bg-white dark:bg-zinc-800 rounded-lg border p-5 ${borderColour}`}
 		>
 			<div className="flex items-center gap-2.5 mb-3">
 				<span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColour}`} />
-				<span className="text-sm font-semibold text-stone-900 dark:text-stone-100 capitalize">
+				<span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 capitalize">
 					{check.service}
 				</span>
 			</div>
 			<p className={`text-sm font-medium ${statusTextColour}`}>{statusLabel}</p>
 			{check.latency_ms > 0 && (
-				<p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+				<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
 					{t("latency", { ms: check.latency_ms.toFixed(1) })}
 				</p>
 			)}
@@ -1719,7 +1719,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 			return "text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950/40 dark:border-red-800";
 		if (action === "masked")
 			return "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800";
-		return "text-stone-600 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600";
+		return "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
 	};
 
 	const riskLabel = (level: string) => {
@@ -1731,10 +1731,10 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h2>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
@@ -1751,10 +1751,10 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 					(["s0", "s1", "s2", "s3"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 animate-pulse"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
 						>
-							<div className="h-3 w-24 bg-stone-200 dark:bg-stone-700 rounded mb-3" />
-							<div className="h-7 w-12 bg-stone-100 dark:bg-stone-600 rounded" />
+							<div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-700 rounded mb-3" />
+							<div className="h-7 w-12 bg-zinc-100 dark:bg-zinc-600 rounded" />
 						</div>
 					))
 				) : stats ? (
@@ -1775,8 +1775,8 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 			{/* Top violation types */}
 			{!loading && stats && stats.top_violation_types.length > 0 && (
-				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
-					<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">
+				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 						{t("topTypes")}
 					</h3>
 					<div className="space-y-3">
@@ -1786,14 +1786,14 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 							return (
 								<div key={type}>
 									<div className="flex items-center justify-between mb-1">
-										<span className="text-xs font-medium text-stone-700 dark:text-stone-300 capitalize">
+										<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 capitalize">
 											{type.replace(/_/g, " ")}
 										</span>
-										<span className="text-xs text-stone-500 dark:text-stone-400">
+										<span className="text-xs text-zinc-500 dark:text-zinc-400">
 											{count}
 										</span>
 									</div>
-									<div className="h-1.5 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
+									<div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
 										<div
 											className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400"
 											style={{ width: `${pct}%` }}
@@ -1807,15 +1807,15 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 			)}
 
 			{/* Violations table */}
-			<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm dark:shadow-none overflow-hidden">
-				<div className="px-6 py-4 border-b border-stone-100 dark:border-stone-700">
-					<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+				<div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-700">
+					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
 						{t("violations")}
 					</h3>
 				</div>
 				<div className="overflow-x-auto">
-					<table className="min-w-full divide-y divide-stone-200 dark:divide-stone-700">
-						<thead className="bg-stone-50 dark:bg-stone-900/50">
+					<table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+						<thead className="bg-zinc-50 dark:bg-zinc-900/50">
 							<tr>
 								{[
 									t("stats"),
@@ -1830,21 +1830,21 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 											// biome-ignore lint/suspicious/noArrayIndexKey: stable header indices
 											i
 										}`}
-										className="px-4 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider"
+										className="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
 									>
 										{col}
 									</th>
 								))}
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-stone-100 dark:divide-stone-700/60">
+						<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
 							{loading ? (
 								(["vr0", "vr1", "vr2", "vr3"] as const).map((rowKey) => (
 									<tr key={rowKey} className="animate-pulse">
 										{(["vc0", "vc1", "vc2", "vc3", "vc4", "vc5"] as const).map(
 											(colKey) => (
 												<td key={colKey} className="px-4 py-3">
-													<div className="h-3 bg-stone-200 dark:bg-stone-700 rounded w-20" />
+													<div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-20" />
 												</td>
 											),
 										)}
@@ -1854,7 +1854,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 								<tr>
 									<td
 										colSpan={6}
-										className="px-4 py-8 text-center text-sm text-stone-400 dark:text-stone-500"
+										className="px-4 py-8 text-center text-sm text-zinc-400 dark:text-zinc-500"
 									>
 										—
 									</td>
@@ -1863,12 +1863,12 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 								violations.map((v) => (
 									<tr
 										key={v.id}
-										className="hover:bg-stone-50 dark:hover:bg-stone-700/40 transition-colors"
+										className="hover:bg-zinc-50 dark:hover:bg-zinc-700/40 transition-colors"
 									>
-										<td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 whitespace-nowrap max-w-[160px] truncate">
+										<td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap max-w-[160px] truncate">
 											{v.user_email}
 										</td>
-										<td className="px-4 py-3 text-sm text-stone-700 dark:text-stone-300 capitalize whitespace-nowrap">
+										<td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 capitalize whitespace-nowrap">
 											{v.violation_type.replace(/_/g, " ")}
 										</td>
 										<td className="px-4 py-3">
@@ -1885,7 +1885,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 												{v.action_taken}
 											</span>
 										</td>
-										<td className="px-4 py-3 text-xs text-stone-500 dark:text-stone-500 whitespace-nowrap">
+										<td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-500 whitespace-nowrap">
 											{new Date(v.created_at).toLocaleString(undefined, {
 												dateStyle: "short",
 												timeStyle: "short",
@@ -1942,11 +1942,11 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 function StatCard({ label, value }: { label: string; value: number }) {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none">
-			<p className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+			<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
 				{label}
 			</p>
-			<p className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+			<p className="text-2xl font-medium text-zinc-900 dark:text-zinc-100">
 				{value.toLocaleString()}
 			</p>
 		</div>
@@ -2029,7 +2029,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 			return "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-800";
 		if (status === "draft")
 			return "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800";
-		return "text-stone-500 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600";
+		return "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
 	};
 
 	const statusLabel = (status: string) => {
@@ -2043,10 +2043,10 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div>
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("pageTitle")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("subtitle")}
 					</p>
 				</div>
@@ -2101,24 +2101,24 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{(["rc0", "rc1", "rc2", "rc3"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 animate-pulse"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
 						>
-							<div className="h-4 w-40 bg-stone-200 dark:bg-stone-700 rounded mb-2" />
-							<div className="h-3 w-full bg-stone-100 dark:bg-stone-600 rounded mb-1" />
-							<div className="h-3 w-3/4 bg-stone-100 dark:bg-stone-600 rounded mb-4" />
+							<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
+							<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded mb-1" />
+							<div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-600 rounded mb-4" />
 							<div className="flex gap-2">
-								<div className="h-5 w-16 bg-stone-200 dark:bg-stone-700 rounded-full" />
-								<div className="h-5 w-16 bg-stone-200 dark:bg-stone-700 rounded-full" />
+								<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
+								<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
 							</div>
 						</div>
 					))}
 				</div>
 			) : recipes.length === 0 ? (
-				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-12 text-center shadow-sm dark:shadow-none">
-					<p className="text-sm font-medium text-stone-500 dark:text-stone-400">
+				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-12 text-center">
+					<p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
 						{t("noRecipes")}
 					</p>
-					<p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+					<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
 						{t("noRecipesHint")}
 					</p>
 				</div>
@@ -2127,11 +2127,11 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{recipes.map((recipe) => (
 						<div
 							key={recipe.id}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none flex flex-col gap-3"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 flex flex-col gap-3"
 						>
 							{/* Title + status */}
 							<div className="flex items-start justify-between gap-2">
-								<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 leading-snug">
+								<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">
 									{recipe.title}
 								</h3>
 								<span
@@ -2143,13 +2143,13 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 							{/* Description */}
 							{recipe.description && (
-								<p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2">
+								<p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">
 									{recipe.description}
 								</p>
 							)}
 
 							{/* Meta row */}
-							<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
+							<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
 								{recipe.department_name && (
 									<span className="flex items-center gap-1">
 										<svg
@@ -2287,10 +2287,10 @@ function DataSourcesTab({
 			<section>
 				<div className="flex items-center justify-between mb-4">
 					<div>
-						<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+						<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 							{t("dataSources")}
 						</h2>
-						<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 							{t("dataSourcesSub")}
 						</p>
 					</div>
@@ -2326,10 +2326,10 @@ function DataSourcesTab({
 			{/* Usage Analytics section */}
 			<section>
 				<div className="mb-4">
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("usageAnalytics")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("usageAnalyticsSub")}
 					</p>
 				</div>
@@ -2451,10 +2451,10 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 	return (
 		<div>
-			<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+			<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 				{t("knowledgeTitle")}
 			</h2>
-			<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5 mb-4">
+			<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">
 				{t("knowledgeSub")}
 			</p>
 
@@ -2463,7 +2463,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 					<div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
 				</div>
 			) : items.length === 0 ? (
-				<p className="text-sm text-stone-500 dark:text-stone-400 text-center py-12">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-12">
 					{t("knowledgeEmpty")}
 				</p>
 			) : (
@@ -2471,7 +2471,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 					<div className="overflow-x-auto">
 						<table className="w-full text-sm">
 							<thead>
-								<tr className="border-b border-stone-200 dark:border-stone-700 text-left text-stone-500 dark:text-stone-400">
+								<tr className="border-b border-zinc-200 dark:border-zinc-700 text-left text-zinc-500 dark:text-zinc-400">
 									<th className="pb-2 font-medium">{t("knowledgeQuestion")}</th>
 									<th className="pb-2 font-medium">{t("knowledgeAnswer")}</th>
 									<th className="pb-2 font-medium text-center">
@@ -2486,18 +2486,18 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 								{items.map((item) => (
 									<tr
 										key={item.message_id}
-										className="border-b border-stone-100 dark:border-stone-800"
+										className="border-b border-zinc-100 dark:border-zinc-800"
 									>
 										<td className="py-3 pr-3 max-w-[240px]">
-											<p className="text-stone-900 dark:text-stone-100 truncate">
+											<p className="text-zinc-900 dark:text-zinc-100 truncate">
 												{item.question}
 											</p>
-											<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+											<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 												{item.user_email}
 											</p>
 										</td>
 										<td className="py-3 pr-3 max-w-[300px]">
-											<p className="text-stone-700 dark:text-stone-300 line-clamp-2 text-xs">
+											<p className="text-zinc-700 dark:text-zinc-300 line-clamp-2 text-xs">
 												{item.answer}
 											</p>
 										</td>
@@ -2549,18 +2549,18 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => setPage((p) => Math.max(1, p - 1))}
 								disabled={page === 1}
-								className="px-3 py-1 text-sm rounded border border-stone-300 dark:border-stone-600 disabled:opacity-40"
+								className="px-3 py-1 text-sm rounded border border-zinc-300 dark:border-zinc-600 disabled:opacity-40"
 							>
 								&laquo;
 							</button>
-							<span className="px-3 py-1 text-sm text-stone-600 dark:text-stone-400">
+							<span className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400">
 								{page} / {totalPages}
 							</span>
 							<button
 								type="button"
 								onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
 								disabled={page === totalPages}
-								className="px-3 py-1 text-sm rounded border border-stone-300 dark:border-stone-600 disabled:opacity-40"
+								className="px-3 py-1 text-sm rounded border border-zinc-300 dark:border-zinc-600 disabled:opacity-40"
 							>
 								&raquo;
 							</button>
@@ -2815,10 +2815,10 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							</svg>
 							{t("backToList")}
 						</button>
-						<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+						<h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 							{selectedSession.target_user_name}
 						</h2>
-						<p className="text-sm text-stone-500 dark:text-stone-400">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400">
 							{selectedSession.target_user_email}
 						</p>
 					</div>
@@ -2833,7 +2833,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => handleToggle(selectedSession)}
 								disabled={togglingId === selectedSession.id}
-								className="px-3 py-1.5 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+								className="px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
 							>
 								{selectedSession.status === "paused"
 									? t("resumeSession")
@@ -2844,23 +2844,23 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 				</div>
 
 				{/* Progress card */}
-				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
+				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
 					<div className="flex items-center justify-between mb-2">
-						<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+						<span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
 							{t("progress")}
 						</span>
-						<span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+						<span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
 							{selectedSession.answered_questions} /{" "}
 							{selectedSession.total_questions}
 						</span>
 					</div>
-					<div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+					<div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
 						<div
 							className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
 							style={{ width: `${selectedSession.progress_percent}%` }}
 						/>
 					</div>
-					<p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+					<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
 						{Math.round(selectedSession.progress_percent)}%
 					</p>
 				</div>
@@ -2875,7 +2875,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							className={`px-3 py-1 text-sm rounded-full border transition-colors ${
 								categoryFilter === cat
 									? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
-									: "border-stone-200 dark:border-stone-600 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-500"
+									: "border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-500"
 							}`}
 						>
 							{cat === "all" ? t("allCategories") : categoryLabel(cat)}
@@ -2888,10 +2888,10 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{filtered.map((q) => (
 						<div
 							key={q.id}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5"
 						>
 							<div className="flex items-start justify-between gap-3 mb-3">
-								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-600">
+								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-600">
 									{categoryLabel(q.category)}
 								</span>
 								{q.answered_at ? (
@@ -2901,16 +2901,16 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 											: t("answered")}
 									</span>
 								) : (
-									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-600">
+									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-600">
 										{t("noAnswer")}
 									</span>
 								)}
 							</div>
-							<p className="text-sm font-medium text-stone-900 dark:text-stone-100 mb-2">
+							<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
 								{q.question}
 							</p>
 							{q.answer && (
-								<p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-wrap">
+								<p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
 									{q.answer}
 								</p>
 							)}
@@ -2927,10 +2927,10 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 						{t("title")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("description")}
 					</p>
 				</div>
@@ -2965,9 +2965,9 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 			{/* Create session modal */}
 			{showCreate && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-					<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-xl w-full max-w-md mx-4">
-						<h3 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-4">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 shadow-xl w-full max-w-md mx-4">
+						<h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 							{t("createSession")}
 						</h3>
 
@@ -2981,18 +2981,18 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="harvest-user"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("selectUser")}
 								</label>
 								{usersLoading ? (
-									<div className="h-9 rounded-lg bg-stone-100 dark:bg-stone-700 animate-pulse" />
+									<div className="h-9 rounded-lg bg-zinc-100 dark:bg-zinc-700 animate-pulse" />
 								) : (
 									<select
 										id="harvest-user"
 										value={formUserId}
 										onChange={(e) => setFormUserId(e.target.value)}
-										className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 									>
 										<option value="">— {t("selectUser")} —</option>
 										{users.map((u) => (
@@ -3007,7 +3007,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<div>
 								<label
 									htmlFor="harvest-date"
-									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+									className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
 								>
 									{t("suspensionDate")}
 								</label>
@@ -3016,7 +3016,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="date"
 									value={formDate}
 									onChange={(e) => setFormDate(e.target.value)}
-									className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								/>
 							</div>
 						</div>
@@ -3025,7 +3025,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setShowCreate(false)}
-								className="px-4 py-2 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
+								className="px-4 py-2 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
 							>
 								{tAdmin("cancel")}
 							</button>
@@ -3048,22 +3048,22 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{(["s0", "s1", "s2"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 animate-pulse"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
 						>
 							<div className="flex items-center justify-between mb-4">
 								<div className="space-y-2">
-									<div className="h-4 w-36 bg-stone-200 dark:bg-stone-700 rounded" />
-									<div className="h-3 w-48 bg-stone-100 dark:bg-stone-600 rounded" />
+									<div className="h-4 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
+									<div className="h-3 w-48 bg-zinc-100 dark:bg-zinc-600 rounded" />
 								</div>
-								<div className="h-6 w-16 bg-stone-100 dark:bg-stone-600 rounded-full" />
+								<div className="h-6 w-16 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
 							</div>
-							<div className="h-2 rounded-full bg-stone-100 dark:bg-stone-700" />
+							<div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-700" />
 						</div>
 					))}
 				</div>
 			) : sessions.length === 0 ? (
-				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-12 text-center shadow-sm dark:shadow-none">
-					<p className="text-stone-500 dark:text-stone-400 text-sm">
+				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-12 text-center">
+					<p className="text-zinc-500 dark:text-zinc-400 text-sm">
 						{t("noSessions")}
 					</p>
 				</div>
@@ -3072,18 +3072,18 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{sessions.map((session) => (
 						<div
 							key={session.id}
-							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none"
+							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5"
 						>
 							<div className="flex items-start justify-between gap-4 mb-4">
 								<div className="min-w-0">
-									<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 truncate">
+									<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
 										{session.target_user_name}
 									</h3>
-									<p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+									<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
 										{session.target_user_email}
 									</p>
 									{session.suspension_date && (
-										<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+										<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 											{t("suspensionDate")}: {session.suspension_date}
 										</p>
 									)}
@@ -3100,15 +3100,15 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							{/* Progress bar */}
 							<div className="mb-4">
 								<div className="flex items-center justify-between mb-1">
-									<span className="text-xs text-stone-500 dark:text-stone-400">
+									<span className="text-xs text-zinc-500 dark:text-zinc-400">
 										{t("progress")}
 									</span>
-									<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
+									<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
 										{session.answered_questions}/{session.total_questions}{" "}
 										{t("answered")}
 									</span>
 								</div>
-								<div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+								<div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
 									<div
 										className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
 										style={{ width: `${session.progress_percent}%` }}
@@ -3134,7 +3134,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 										type="button"
 										onClick={() => handleToggle(session)}
 										disabled={togglingId === session.id}
-										className="px-3 py-1.5 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+										className="px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
 									>
 										{session.status === "paused"
 											? t("resumeSession")
@@ -3246,10 +3246,10 @@ export default function AdminPage() {
 		return (
 			<div className="flex items-center justify-center h-full">
 				<div className="text-center">
-					<h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-xl font-medium text-zinc-900 dark:text-zinc-100">
 						{t("accessDenied")}
 					</h2>
-					<p className="text-stone-500 dark:text-stone-400 mt-2">
+					<p className="text-zinc-500 dark:text-zinc-400 mt-2">
 						{t("accessDeniedDesc")}
 					</p>
 				</div>
@@ -3260,19 +3260,19 @@ export default function AdminPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-stone-200 dark:border-stone-700/60 bg-white dark:bg-stone-900/80 px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950/80 px-8 py-4 shrink-0">
+				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
 
 			{/* Tab bar */}
-			<div className="border-b border-stone-200 dark:border-stone-700/60 bg-white dark:bg-stone-900/80 px-6 shrink-0">
+			<div className="bg-white dark:bg-zinc-950/80 px-8 py-3 shrink-0">
 				<div
-					className="-mb-px flex gap-1"
+					className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 inline-flex gap-0.5"
 					role="tablist"
 					aria-label="Admin tabs"
 				>
@@ -3283,10 +3283,10 @@ export default function AdminPage() {
 							role="tab"
 							aria-selected={activeTab === tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+							className={`px-3 py-1.5 text-sm transition-colors whitespace-nowrap ${
 								activeTab === tab.id
-									? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-									: "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 dark:text-stone-400 dark:hover:text-stone-200 dark:hover:border-stone-500"
+									? "bg-white dark:bg-zinc-700 rounded-md shadow-sm text-zinc-950 dark:text-zinc-100 font-medium"
+									: "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-md"
 							}`}
 						>
 							{tab.label}

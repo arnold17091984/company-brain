@@ -3,70 +3,65 @@
 /* ─── Dark Mode — class-based ─────────────────────────────── */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Warm Intelligence Design System ─────────────────────── */
+/* ─── Design System — Linear/Vercel Zinc ─────────────────── */
 
 :root {
-	/* Primary — Deep Indigo */
-	--color-primary: #4338ca;
-	--color-primary-hover: #3730a3;
+	/* Primary — Indigo */
+	--color-primary: #6366f1;
+	--color-primary-hover: #4f46e5;
 	--color-primary-light: #e0e7ff;
 	--color-primary-foreground: #ffffff;
 
-	/* Accent — Warm Amber */
-	--color-accent: #f59e0b;
-	--color-accent-hover: #d97706;
-	--color-accent-light: #fef3c7;
+	/* Accent — removed (unified under primary) */
 
-	/* Neutral backgrounds — warm stone tones */
+	/* Neutral backgrounds — cool zinc tones */
 	--color-bg-base: #ffffff;
-	--color-bg-subtle: #faf9f7;
-	--color-bg-muted: #f3f1ee;
-	--color-bg-sidebar: #1e1b4b;
+	--color-bg-subtle: #fafafa;
+	--color-bg-muted: #f4f4f5;
+	--color-bg-sidebar: #09090b;
 
-	/* Neutral foregrounds — warm grays */
-	--color-fg-base: #1c1917;
-	--color-fg-muted: #57534e;
-	--color-fg-subtle: #a8a29e;
-	--color-fg-on-dark: #e8e5e0;
+	/* Neutral foregrounds — cool grays */
+	--color-fg-base: #09090b;
+	--color-fg-muted: #71717a;
+	--color-fg-subtle: #a1a1aa;
+	--color-fg-on-dark: #fafafa;
 
-	/* Borders — warm */
-	--color-border: #e7e5e4;
-	--color-border-strong: #d6d3d1;
+	/* Borders — cool */
+	--color-border: #e4e4e7;
+	--color-border-strong: #d4d4d8;
 
 	/* Status */
-	--color-success: #16a34a;
-	--color-warning: #d97706;
-	--color-danger: #dc2626;
+	--color-success: #22c55e;
+	--color-warning: #f59e0b;
+	--color-danger: #ef4444;
 
-	/* Radius — consistent system */
-	--radius-sm: 0.5rem;
-	--radius-md: 0.75rem;
-	--radius-lg: 1rem;
-	--radius-xl: 1.25rem;
+	/* Radius — tighter */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
 
-	/* Shadows — soft, warm */
-	--shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.04);
-	--shadow-md: 0 4px 12px -2px rgb(28 25 23 / 0.06), 0 2px 4px -2px
-		rgb(28 25 23 / 0.04);
-	--shadow-lg: 0 8px 24px -4px rgb(28 25 23 / 0.08), 0 4px 8px -4px
-		rgb(28 25 23 / 0.04);
-	--shadow-glow: 0 0 20px rgb(67 56 202 / 0.15);
+	/* Shadows — minimal */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+	--shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.05);
+	--shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.08);
+	--shadow-glow: 0 0 20px rgb(99 102 241 / 0.12);
 }
 
 /* ─── Dark Mode Tokens ─────────────────────────────────────── */
 
 .dark {
-	--color-bg-base: #0c0a09;
-	--color-bg-subtle: #1c1917;
-	--color-bg-muted: #292524;
-	--color-bg-surface: #292524;
-	--color-fg-base: #e7e5e4;
-	--color-fg-muted: #a8a29e;
-	--color-fg-subtle: #78716c;
-	--color-fg-on-dark: #fafaf9;
-	--color-border: #44403c;
-	--color-border-strong: #57534e;
-	--color-sidebar-bg: #0f0d2e;
+	--color-bg-base: #09090b;
+	--color-bg-subtle: #18181b;
+	--color-bg-muted: #27272a;
+	--color-bg-surface: #27272a;
+	--color-fg-base: #fafafa;
+	--color-fg-muted: #a1a1aa;
+	--color-fg-subtle: #52525b;
+	--color-fg-on-dark: #fafafa;
+	--color-border: #3f3f46;
+	--color-border-strong: #52525b;
+	--color-sidebar-bg: #09090b;
 }
 
 html {
@@ -92,26 +87,21 @@ html {
 /* ─── Gradients ────────────────────────────────────────────── */
 
 .bg-warm-gradient {
-	background: linear-gradient(
-		135deg,
-		var(--color-bg-subtle) 0%,
-		#f0edf9 50%,
-		var(--color-bg-subtle) 100%
-	);
+	background: var(--color-bg-subtle);
 }
 
 .bg-sidebar-gradient {
-	background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+	background: #09090b;
 }
 
 .dark .bg-sidebar-gradient {
-	background: linear-gradient(180deg, #0f0d2e 0%, #1a1744 100%);
+	background: #09090b;
 }
 
 .bg-hero-gradient {
 	background: radial-gradient(
 			ellipse at 50% 0%,
-			rgb(99 102 241 / 0.08) 0%,
+			rgb(99 102 241 / 0.06) 0%,
 			transparent 60%
 		), var(--color-bg-subtle);
 }
@@ -119,15 +109,15 @@ html {
 /* ─── Glass Morphism ───────────────────────────────────────── */
 
 .glass {
-	background: rgb(255 255 255 / 0.7);
+	background: rgb(255 255 255 / 0.8);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
-	border: 1px solid rgb(255 255 255 / 0.5);
+	border: 1px solid var(--color-border);
 }
 
 .dark .glass {
-	background: rgba(28, 25, 23, 0.7);
-	border: 1px solid rgba(68, 64, 60, 0.5);
+	background: rgba(24, 24, 27, 0.8);
+	border: 1px solid rgba(63, 63, 70, 0.5);
 }
 
 /* ─── CJK Font Stack ───────────────────────────────────────── */
@@ -180,11 +170,11 @@ html {
 }
 
 .animate-fade-in {
-	animation: fade-in 0.4s ease-out both;
+	animation: fade-in 0.15s ease-out both;
 }
 
 .animate-fade-in-scale {
-	animation: fade-in-scale 0.3s ease-out both;
+	animation: fade-in-scale 0.15s ease-out both;
 }
 
 .animate-slide-in-left {
@@ -220,9 +210,9 @@ select:focus-visible {
 .animate-shimmer {
 	background: linear-gradient(
 		90deg,
-		rgb(231 229 228 / 0.4) 25%,
-		rgb(231 229 228 / 0.8) 50%,
-		rgb(231 229 228 / 0.4) 75%
+		rgb(228 228 231 / 0.4) 25%,
+		rgb(228 228 231 / 0.8) 50%,
+		rgb(228 228 231 / 0.4) 75%
 	);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s ease-in-out infinite;
@@ -231,18 +221,11 @@ select:focus-visible {
 :is(.dark) .animate-shimmer {
 	background: linear-gradient(
 		90deg,
-		rgb(68 64 60 / 0.4) 25%,
-		rgb(68 64 60 / 0.8) 50%,
-		rgb(68 64 60 / 0.4) 75%
+		rgb(63 63 70 / 0.4) 25%,
+		rgb(63 63 70 / 0.8) 50%,
+		rgb(63 63 70 / 0.4) 75%
 	);
 	background-size: 200% 100%;
-}
-
-/* ─── Button Press Feedback ────────────────────────────────── */
-
-button:active:not(:disabled),
-[role="button"]:active:not(:disabled) {
-	transform: scale(0.98);
 }
 
 @media (prefers-reduced-motion: reduce) {

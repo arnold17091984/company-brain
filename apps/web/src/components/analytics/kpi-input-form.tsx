@@ -125,14 +125,14 @@ export function KPIInputForm({
 	};
 
 	const fieldClass = (hasError: boolean) =>
-		`w-full px-3 py-2 text-sm rounded-lg border bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 transition-colors ${
+		`w-full px-3 py-2 text-sm rounded-lg border bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500 transition-colors ${
 			hasError
 				? "border-red-400 dark:border-red-600"
-				: "border-stone-200 dark:border-stone-600"
+				: "border-zinc-200 dark:border-zinc-600"
 		}`;
 
 	const labelClass =
-		"block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5";
+		"block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5";
 	const errorClass = "mt-1 text-xs text-red-600 dark:text-red-400";
 
 	return (
@@ -277,7 +277,7 @@ export function KPIInputForm({
 				!Number.isNaN(Number(targetValue)) &&
 				!Number.isNaN(Number(actualValue)) &&
 				Number(targetValue) > 0 && (
-					<div className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 dark:bg-stone-700/40 rounded-lg border border-stone-200 dark:border-stone-600">
+					<div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-700/40 rounded-lg border border-zinc-200 dark:border-zinc-600">
 						<svg
 							className="w-4 h-4 text-indigo-500 shrink-0"
 							fill="none"
@@ -292,7 +292,7 @@ export function KPIInputForm({
 								d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
 							/>
 						</svg>
-						<span className="text-xs text-stone-600 dark:text-stone-400">
+						<span className="text-xs text-zinc-600 dark:text-zinc-400">
 							Achievement rate:{" "}
 							<span className="font-semibold text-indigo-600 dark:text-indigo-400">
 								{((Number(actualValue) / Number(targetValue)) * 100).toFixed(1)}

@@ -157,8 +157,8 @@ export default function TemplateFormPage() {
 	if (isLoadingEdit) {
 		return (
 			<div className="flex flex-col h-full">
-				<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-					<div className="h-5 w-40 bg-stone-200 dark:bg-stone-700 rounded animate-pulse" />
+				<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-4 shrink-0">
+					<div className="h-5 w-40 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" />
 				</div>
 				<div className="flex-1 flex items-center justify-center">
 					<svg
@@ -189,13 +189,13 @@ export default function TemplateFormPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-4 shrink-0">
 				<div className="flex items-center gap-3">
 					<Link
 						href={
 							isEditing && editId ? `../templates/${editId}` : "../templates"
 						}
-						className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
+						className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
 					>
 						<svg
 							className="w-4 h-4"
@@ -213,8 +213,8 @@ export default function TemplateFormPage() {
 						</svg>
 						{t("back")}
 					</Link>
-					<span className="text-stone-300 dark:text-stone-600">/</span>
-					<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+					<span className="text-zinc-300 dark:text-zinc-600">/</span>
+					<h1 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 						{isEditing ? t("editTemplate") : t("newTemplate")}
 					</h1>
 				</div>
@@ -224,7 +224,7 @@ export default function TemplateFormPage() {
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="max-w-2xl mx-auto">
 					{loadError && (
-						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 mb-6">
 							<p className="text-sm text-red-700 dark:text-red-400">
 								{loadError}
 							</p>
@@ -234,13 +234,13 @@ export default function TemplateFormPage() {
 					<form
 						onSubmit={handleSubmit}
 						noValidate
-						className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6 space-y-5"
+						className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 space-y-5"
 					>
 						{/* Title */}
 						<div>
 							<label
 								htmlFor="tpl-title"
-								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+								className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
 							>
 								{t("fieldTitle")}
 								<span className="text-red-500 ml-0.5" aria-hidden="true">
@@ -257,10 +257,10 @@ export default function TemplateFormPage() {
 									setErrors((prev) => ({ ...prev, title: undefined }));
 								}}
 								placeholder={t("fieldTitlePlaceholder")}
-								className={`w-full px-3 py-2 text-sm rounded-lg border bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 transition-colors ${
+								className={`w-full px-3 py-2 text-sm rounded-lg border bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500 transition-colors ${
 									errors.title
 										? "border-red-400 dark:border-red-600"
-										: "border-stone-200 dark:border-stone-600"
+										: "border-zinc-200 dark:border-zinc-600"
 								}`}
 							/>
 							{errors.title && (
@@ -274,7 +274,7 @@ export default function TemplateFormPage() {
 						<div>
 							<label
 								htmlFor="tpl-desc"
-								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+								className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
 							>
 								{t("fieldDescription")}
 							</label>
@@ -284,7 +284,7 @@ export default function TemplateFormPage() {
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder={t("fieldDescriptionPlaceholder")}
 								rows={3}
-								className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 resize-none"
+								className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500 resize-none"
 							/>
 						</div>
 
@@ -292,7 +292,7 @@ export default function TemplateFormPage() {
 						<div>
 							<label
 								htmlFor="tpl-category"
-								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+								className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
 							>
 								{t("fieldCategory")}
 							</label>
@@ -300,7 +300,7 @@ export default function TemplateFormPage() {
 								id="tpl-category"
 								value={category}
 								onChange={(e) => setCategory(e.target.value as Category)}
-								className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+								className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
 							>
 								{CATEGORIES.map((cat) => (
 									<option key={cat.value} value={cat.value}>
@@ -314,7 +314,7 @@ export default function TemplateFormPage() {
 						<div>
 							<label
 								htmlFor="tpl-content"
-								className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1.5"
+								className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
 							>
 								{t("fieldContent")}
 								<span className="text-red-500 ml-0.5" aria-hidden="true">
@@ -331,10 +331,10 @@ export default function TemplateFormPage() {
 								}}
 								placeholder={t("fieldContentPlaceholder")}
 								rows={12}
-								className={`w-full px-3 py-2 text-sm font-mono rounded-lg border bg-stone-50 text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-stone-700 dark:text-stone-100 dark:placeholder-stone-500 resize-y ${
+								className={`w-full px-3 py-2 text-sm font-mono rounded-lg border bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500 resize-y ${
 									errors.content
 										? "border-red-400 dark:border-red-600"
-										: "border-stone-200 dark:border-stone-600"
+										: "border-zinc-200 dark:border-zinc-600"
 								}`}
 							/>
 							{errors.content && (
@@ -375,7 +375,7 @@ export default function TemplateFormPage() {
 										? `../templates/${editId}`
 										: "../templates"
 								}
-								className="px-4 py-2 text-sm font-medium rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors dark:border-stone-600 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600"
+								className="px-4 py-2 text-sm font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
 							>
 								{t("cancel")}
 							</Link>

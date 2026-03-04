@@ -108,28 +108,28 @@ function ResultCard({ result }: { result: SearchResult }) {
 			href={result.url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all"
+			className="group flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all"
 		>
 			<div className="flex items-start gap-3">
 				<div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 flex items-center justify-center">
 					<SourceTypeIcon type={result.sourceType} />
 				</div>
 				<div className="flex-1 min-w-0">
-					<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 line-clamp-1 transition-colors">
+					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 line-clamp-1 transition-colors">
 						{result.title}
 					</h3>
-					<p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-2">
+					<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
 						{result.snippet}
 					</p>
 				</div>
 			</div>
 			<div className="flex items-center gap-2 mt-1">
 				{result.sourceType && (
-					<span className="text-xs text-stone-400 dark:text-stone-500 capitalize bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-full px-2 py-0.5">
+					<span className="text-xs text-zinc-400 dark:text-zinc-500 capitalize bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-full px-2 py-0.5">
 						{result.sourceType}
 					</span>
 				)}
-				<span className="text-xs text-stone-400 dark:text-stone-500 ml-auto">
+				<span className="text-xs text-zinc-400 dark:text-zinc-500 ml-auto">
 					{formattedDate}
 				</span>
 			</div>
@@ -139,7 +139,7 @@ function ResultCard({ result }: { result: SearchResult }) {
 
 function AnswerCard({ answer }: { answer: string }) {
 	return (
-		<div className="mb-6 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30 p-5">
+		<div className="mb-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-5">
 			<div className="flex items-center gap-2 mb-3">
 				<div className="w-6 h-6 rounded-full bg-indigo-700 flex items-center justify-center">
 					<svg
@@ -161,7 +161,7 @@ function AnswerCard({ answer }: { answer: string }) {
 					AI Answer
 				</span>
 			</div>
-			<div className="text-sm text-stone-800 dark:text-stone-200 leading-relaxed">
+			<div className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
 				<ReactMarkdown
 					remarkPlugins={[remarkGfm]}
 					components={{
@@ -191,7 +191,7 @@ function AnswerCard({ answer }: { answer: string }) {
 							</h2>
 						),
 						h3: ({ children }) => (
-							<h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">
+							<h3 className="text-sm font-medium mb-1 mt-2 first:mt-0">
 								{children}
 							</h3>
 						),
@@ -200,7 +200,7 @@ function AnswerCard({ answer }: { answer: string }) {
 							if (isBlock) {
 								return (
 									<code
-										className="block bg-white dark:bg-stone-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
+										className="block bg-white dark:bg-zinc-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
 										{...props}
 									>
 										{children}
@@ -209,7 +209,7 @@ function AnswerCard({ answer }: { answer: string }) {
 							}
 							return (
 								<code
-									className="bg-white dark:bg-stone-900 rounded px-1.5 py-0.5 text-xs font-mono"
+									className="bg-white dark:bg-zinc-900 rounded px-1.5 py-0.5 text-xs font-mono"
 									{...props}
 								>
 									{children}
@@ -253,7 +253,7 @@ function ResultsSection({
 
 			{results.length > 0 && (
 				<div>
-					<p className="text-xs text-stone-400 mb-3">
+					<p className="text-xs text-zinc-400 mb-3">
 						{t("resultsFound", { count: results.length })}
 					</p>
 					<div className="flex flex-col gap-3">
@@ -266,9 +266,9 @@ function ResultsSection({
 
 			{!answer && results.length === 0 && (
 				<div className="flex flex-col items-center justify-center py-16 text-center">
-					<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+					<div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
 						<svg
-							className="w-8 h-8 text-stone-400"
+							className="w-8 h-8 text-zinc-400"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
@@ -282,10 +282,10 @@ function ResultsSection({
 							/>
 						</svg>
 					</div>
-					<p className="text-stone-700 dark:text-stone-200 font-medium">
+					<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 						{t("noResults")}
 					</p>
-					<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
+					<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 max-w-xs">
 						{t("noResultsHint")}
 					</p>
 				</div>
@@ -360,16 +360,16 @@ export default function SearchPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+			<div className="border-b border-zinc-200 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
+				<h1 className="text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
 
-			<div className="flex-1 overflow-y-auto p-6">
+			<div className="flex-1 overflow-y-auto p-5">
 				<div className="max-w-2xl mx-auto">
 					{/* Search input */}
 					<div className="relative mb-6">
@@ -397,7 +397,7 @@ export default function SearchPage() {
 								</svg>
 							) : (
 								<svg
-									className="h-5 w-5 text-stone-400"
+									className="h-5 w-5 text-zinc-400"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -419,7 +419,7 @@ export default function SearchPage() {
 							onKeyDown={handleKeyDown}
 							placeholder={t("placeholder")}
 							disabled={isLoading}
-							className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 py-3 pl-11 pr-4 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
+							className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-3 pl-11 pr-4 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
 						/>
 						{query.trim() && (
 							<button
@@ -435,7 +435,7 @@ export default function SearchPage() {
 
 					{/* Error state */}
 					{error && (
-						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 mb-6">
 							<svg
 								className="w-4 h-4 text-red-500 shrink-0"
 								fill="none"
@@ -462,9 +462,9 @@ export default function SearchPage() {
 					{/* Initial empty state */}
 					{!hasSearched && (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
-							<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+							<div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
 								<svg
-									className="w-8 h-8 text-stone-400"
+									className="w-8 h-8 text-zinc-400"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -478,10 +478,10 @@ export default function SearchPage() {
 									/>
 								</svg>
 							</div>
-							<p className="text-stone-700 dark:text-stone-200 font-medium">
+							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 								{t("emptyTitle")}
 							</p>
-							<p className="text-stone-400 dark:text-stone-500 text-sm mt-1 max-w-xs">
+							<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 max-w-xs">
 								{t("emptySubtitle")}
 							</p>
 						</div>

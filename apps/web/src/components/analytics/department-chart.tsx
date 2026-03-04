@@ -50,11 +50,11 @@ function SkeletonBar() {
 	return (
 		<div className="animate-pulse">
 			<div className="flex items-center justify-between mb-1.5">
-				<div className="h-4 w-28 bg-stone-200 dark:bg-stone-700 rounded" />
-				<div className="h-4 w-16 bg-stone-200 dark:bg-stone-700 rounded" />
+				<div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-700 rounded" />
+				<div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-700 rounded" />
 			</div>
-			<div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
-				<div className="h-3 rounded-full bg-stone-200 dark:bg-stone-600 w-3/4" />
+			<div className="w-full h-3 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
+				<div className="h-3 rounded-full bg-zinc-200 dark:bg-zinc-600 w-3/4" />
 			</div>
 		</div>
 	);
@@ -75,12 +75,12 @@ export function DepartmentChart({ data, isLoading }: DepartmentChartProps) {
 
 	return (
 		<section>
-			<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
 				<div className="mb-5">
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("deptActivity")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("deptSubtitle")}
 					</p>
 				</div>
@@ -101,14 +101,14 @@ export function DepartmentChart({ data, isLoading }: DepartmentChartProps) {
 								return (
 									<div key={dept.department}>
 										<div className="flex items-center justify-between mb-1.5">
-											<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+											<span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
 												{dept.department}
 											</span>
-											<span className={`text-sm font-semibold ${palette.text}`}>
+											<span className={`text-sm font-medium ${palette.text}`}>
 												{t("queries", { count: dept.query_count })}
 											</span>
 										</div>
-										<div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
+										<div className="w-full h-3 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
 											<div
 												className={`h-3 rounded-full ${palette.bar} transition-all duration-500`}
 												style={{ width: `${pct}%` }}
@@ -119,7 +119,7 @@ export function DepartmentChart({ data, isLoading }: DepartmentChartProps) {
 							})}
 						</div>
 
-						<div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-700 flex flex-wrap gap-3">
+						<div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-700 flex flex-wrap gap-3">
 							{data.map((dept, idx) => {
 								const palette = PALETTE[idx % PALETTE.length];
 								return (
@@ -130,7 +130,7 @@ export function DepartmentChart({ data, isLoading }: DepartmentChartProps) {
 										<span
 											className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`}
 										/>
-										<span className="text-xs text-stone-500 dark:text-stone-400">
+										<span className="text-xs text-zinc-500 dark:text-zinc-400">
 											{dept.department}
 										</span>
 									</div>

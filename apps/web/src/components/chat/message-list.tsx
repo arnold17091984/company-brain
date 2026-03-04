@@ -32,23 +32,23 @@ function SourceCard({ source }: { source: Source }) {
 	return (
 		<a
 			href={source.url}
-			className="group flex flex-col gap-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 px-3 py-2.5 text-left hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+			className="group flex flex-col gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-left hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
 		>
 			<span className="flex items-center gap-1.5">
 				<SourceTypeIcon sourceType={source.sourceType} />
-				<span className="text-xs font-medium text-stone-700 dark:text-stone-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 line-clamp-1">
+				<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 line-clamp-1">
 					{source.title}
 				</span>
 				{source.score !== undefined && (
-					<span className="ml-auto shrink-0 text-[10px] font-medium text-stone-400 dark:text-stone-500">
+					<span className="ml-auto shrink-0 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
 						{Math.round(source.score * 100)}%
 					</span>
 				)}
 			</span>
-			<span className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">
+			<span className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">
 				{source.snippet}
 			</span>
-			<span className="text-xs text-stone-400 dark:text-stone-500">
+			<span className="text-xs text-zinc-400 dark:text-zinc-500">
 				{formattedDate}
 			</span>
 		</a>
@@ -78,9 +78,9 @@ function AssistantIcon() {
 
 function UserIcon() {
 	return (
-		<div className="shrink-0 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center">
+		<div className="shrink-0 w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
 			<svg
-				className="w-4 h-4 text-stone-500 dark:text-stone-400"
+				className="w-4 h-4 text-zinc-500 dark:text-zinc-400"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -101,7 +101,7 @@ function TypingIndicator() {
 	return (
 		<div className="flex gap-3">
 			<AssistantIcon />
-			<div className="flex items-center gap-1.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+			<div className="flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl rounded-tl-sm px-4 py-3">
 				<span
 					className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
 					style={{ animationDelay: "0ms" }}
@@ -159,7 +159,7 @@ function MarkdownContent({ content }: { content: string }) {
 					if (isBlock) {
 						return (
 							<code
-								className="block bg-stone-100 dark:bg-stone-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
+								className="block bg-zinc-100 dark:bg-zinc-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
 								{...props}
 							>
 								{children}
@@ -168,7 +168,7 @@ function MarkdownContent({ content }: { content: string }) {
 					}
 					return (
 						<code
-							className="bg-stone-100 dark:bg-stone-900 rounded px-1.5 py-0.5 text-xs font-mono"
+							className="bg-zinc-100 dark:bg-zinc-900 rounded px-1.5 py-0.5 text-xs font-mono"
 							{...props}
 						>
 							{children}
@@ -177,7 +177,7 @@ function MarkdownContent({ content }: { content: string }) {
 				},
 				pre: ({ children }) => <div className="my-2 last:mb-0">{children}</div>,
 				blockquote: ({ children }) => (
-					<blockquote className="border-l-2 border-indigo-300 dark:border-indigo-600 pl-3 my-2 text-stone-600 dark:text-stone-400 italic">
+					<blockquote className="border-l-2 border-indigo-300 dark:border-indigo-600 pl-3 my-2 text-zinc-600 dark:text-zinc-400 italic">
 						{children}
 					</blockquote>
 				),
@@ -199,12 +199,12 @@ function MarkdownContent({ content }: { content: string }) {
 					</div>
 				),
 				th: ({ children }) => (
-					<th className="border border-stone-300 dark:border-stone-600 bg-stone-100 dark:bg-stone-900 px-2 py-1 text-left font-semibold">
+					<th className="border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-900 px-2 py-1 text-left font-semibold">
 						{children}
 					</th>
 				),
 				td: ({ children }) => (
-					<td className="border border-stone-300 dark:border-stone-600 px-2 py-1">
+					<td className="border border-zinc-300 dark:border-zinc-600 px-2 py-1">
 						{children}
 					</td>
 				),
@@ -220,11 +220,11 @@ function ThinkingAccordion({ thinking }: { thinking: string }) {
 	const t = useTranslations("chat");
 
 	return (
-		<div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 overflow-hidden">
+		<div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 overflow-hidden">
 			<button
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
-				className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors"
+				className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
 			>
 				<svg
 					className={`w-3 h-3 transition-transform ${isOpen ? "rotate-90" : ""}`}
@@ -243,7 +243,7 @@ function ThinkingAccordion({ thinking }: { thinking: string }) {
 				{t("thinkingProcess")}
 			</button>
 			{isOpen && (
-				<div className="px-3 pb-3 text-xs text-stone-500 dark:text-stone-400 leading-relaxed border-t border-stone-200 dark:border-stone-700 pt-2">
+				<div className="px-3 pb-3 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed border-t border-zinc-200 dark:border-zinc-700 pt-2">
 					<MarkdownContent content={thinking} />
 				</div>
 			)}
@@ -290,7 +290,7 @@ function ChatMessage({ message }: { message: Message }) {
 					className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
 						isUser
 							? "bg-indigo-700 text-white rounded-tr-sm shadow-sm shadow-indigo-500/20"
-							: "bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-tl-sm shadow-sm"
+							: "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-tl-sm"
 					}`}
 				>
 					{isUser ? (
@@ -308,7 +308,7 @@ function ChatMessage({ message }: { message: Message }) {
 				{/* Sources */}
 				{!isUser && message.sources && message.sources.length > 0 && (
 					<div className="w-full">
-						<p className="text-xs text-stone-400 dark:text-stone-500 mb-1.5 ml-0.5">
+						<p className="text-xs text-zinc-400 dark:text-zinc-500 mb-1.5 ml-0.5">
 							{t("sources")}
 						</p>
 						<div className="grid gap-2">

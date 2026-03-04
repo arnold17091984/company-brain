@@ -265,19 +265,19 @@ export default function AnalyticsPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
+				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
 
 			{/* Tabs */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 shrink-0">
+			<div className="px-8 py-3 shrink-0">
 				<nav
-					className="flex gap-1 -mb-px overflow-x-auto"
+					className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 inline-flex gap-0.5 overflow-x-auto"
 					style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
 					aria-label="Analytics tabs"
 				>
@@ -286,10 +286,10 @@ export default function AnalyticsPage() {
 							key={tab.id}
 							type="button"
 							onClick={() => setActiveTab(tab.id)}
-							className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+							className={`px-4 py-2 text-sm transition-colors whitespace-nowrap ${
 								activeTab === tab.id
-									? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-									: "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300 dark:text-stone-400 dark:hover:text-stone-200 dark:hover:border-stone-600"
+									? "bg-white dark:bg-zinc-700 rounded-md shadow-sm text-zinc-950 dark:text-zinc-100 font-medium"
+									: "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-md"
 							}`}
 						>
 							{tab.label}
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
 							<div className="flex items-center gap-3">
 								<label
 									htmlFor="roi-period-picker"
-									className="text-sm font-medium text-stone-700 dark:text-stone-300 shrink-0"
+									className="text-sm font-medium text-zinc-700 dark:text-zinc-300 shrink-0"
 								>
 									Period
 								</label>
@@ -343,16 +343,16 @@ export default function AnalyticsPage() {
 									type="month"
 									value={roiPeriod}
 									onChange={(e) => setRoiPeriod(e.target.value)}
-									className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors"
+									className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors"
 								/>
 							</div>
 
 							{/* Correlation chart section */}
-							<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
-								<h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-0.5">
+							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+								<h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-0.5">
 									{tRoi("correlationTitle")}
 								</h2>
-								<p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
+								<p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
 									{tRoi("correlationSub")}
 								</p>
 								{correlationError && (
@@ -389,8 +389,8 @@ export default function AnalyticsPage() {
 							</div>
 
 							{/* Usage metrics table section */}
-							<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
-								<h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-4">
+							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+								<h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-4">
 									{tRoi("usageMetrics")}
 								</h2>
 								{usageMetricsError && (
@@ -462,9 +462,9 @@ export default function AnalyticsPage() {
 								</div>
 							) : roiReports.length === 0 ? (
 								<div className="flex flex-col items-center justify-center py-20 text-center">
-									<div className="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+									<div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
 										<svg
-											className="w-6 h-6 text-stone-400 dark:text-stone-500"
+											className="w-6 h-6 text-zinc-400 dark:text-zinc-500"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
@@ -478,10 +478,10 @@ export default function AnalyticsPage() {
 											/>
 										</svg>
 									</div>
-									<p className="text-sm font-medium text-stone-700 dark:text-stone-300">
+									<p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
 										{tRoi("noReports")}
 									</p>
-									<p className="text-xs text-stone-400 dark:text-stone-500 mt-1 max-w-xs">
+									<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 max-w-xs">
 										{tRoi("noReportsHint")}
 									</p>
 								</div>
@@ -495,7 +495,7 @@ export default function AnalyticsPage() {
 													key={report.period}
 													type="button"
 													onClick={() => setSelectedReport(report)}
-													className="text-left bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-5 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all group"
+													className="text-left bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group"
 												>
 													<div className="flex items-start justify-between gap-2 mb-3">
 														<div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center shrink-0">
@@ -515,7 +515,7 @@ export default function AnalyticsPage() {
 															</svg>
 														</div>
 														<svg
-															className="w-4 h-4 text-stone-300 dark:text-stone-600 group-hover:text-indigo-400 dark:group-hover:text-indigo-500 transition-colors mt-1 shrink-0"
+															className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-indigo-400 dark:group-hover:text-indigo-500 transition-colors mt-1 shrink-0"
 															fill="none"
 															viewBox="0 0 24 24"
 															stroke="currentColor"
@@ -529,15 +529,15 @@ export default function AnalyticsPage() {
 															/>
 														</svg>
 													</div>
-													<p className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-2">
+													<p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">
 														{report.period}
 													</p>
 													<div className="space-y-1">
-														<p className="text-xs text-stone-500 dark:text-stone-400">
+														<p className="text-xs text-zinc-500 dark:text-zinc-400">
 															{report.active_users} active users &middot;{" "}
 															{report.total_queries.toLocaleString()} queries
 														</p>
-														<p className="text-xs text-stone-500 dark:text-stone-400">
+														<p className="text-xs text-zinc-500 dark:text-zinc-400">
 															{report.estimated_hours_saved.toFixed(1)} hrs
 															saved
 														</p>
@@ -553,7 +553,7 @@ export default function AnalyticsPage() {
 											<button
 												type="button"
 												onClick={() => setSelectedReport(null)}
-												className="inline-flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+												className="inline-flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
 											>
 												<svg
 													className="w-4 h-4"
@@ -581,8 +581,8 @@ export default function AnalyticsPage() {
 
 					{/* KPI Input tab */}
 					{activeTab === "kpi-input" && (
-						<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6 max-w-lg">
-							<h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-4">
+						<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 max-w-lg">
+							<h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-4">
 								{tRoi("tabKpiInput")}
 							</h2>
 							<KPIInputForm token={getAccessToken()} />

@@ -56,7 +56,7 @@ export default async function RootLayout({
 			className={`${fontVariables}${isDark ? " dark" : ""}`}
 			suppressHydrationWarning
 		>
-			<body className="bg-(--color-bg-subtle) text-stone-900 antialiased font-sans dark:bg-(--color-bg-base) dark:text-(--color-fg-base)">
+			<body className="bg-(--color-bg-subtle) text-zinc-900 antialiased font-sans dark:bg-(--color-bg-base) dark:text-(--color-fg-base)">
 				<AuthSessionProvider>{children}</AuthSessionProvider>
 			</body>
 		</html>

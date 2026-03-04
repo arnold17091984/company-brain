@@ -22,12 +22,12 @@ export function UseCases() {
 
 	return (
 		<section>
-			<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
+			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
 				<div className="mb-5">
-					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 						{t("useCasesTitle")}
 					</h2>
-					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 						{t("useCasesSub")}
 					</p>
 				</div>
@@ -35,19 +35,19 @@ export function UseCases() {
 				<div className="space-y-4">
 					{USE_CASES.map((uc) => (
 						<div key={uc.labelKey} className="flex items-center gap-4">
-							<span className="w-5 text-xs font-semibold text-stone-400 dark:text-stone-500 text-right shrink-0">
+							<span className="w-5 text-xs font-medium text-zinc-400 dark:text-zinc-500 text-right shrink-0">
 								{uc.rank}
 							</span>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center justify-between mb-1">
-									<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+									<span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
 										{t(uc.labelKey as Parameters<typeof t>[0])}
 									</span>
-									<span className="text-sm font-semibold text-stone-600 dark:text-stone-400 ml-2 shrink-0">
+									<span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 ml-2 shrink-0">
 										{uc.pct}%
 									</span>
 								</div>
-								<div className="w-full h-2 rounded-full bg-stone-100 dark:bg-stone-700 overflow-hidden">
+								<div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
 									<div
 										className={`h-2 rounded-full ${uc.color} transition-all duration-500`}
 										style={{ width: `${uc.pct}%` }}

@@ -72,13 +72,13 @@ const CARD_CONFIGS: StatCardConfig[] = [
 
 function SkeletonStatCard() {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm animate-pulse">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
 			<div className="flex items-start gap-3">
-				<div className="shrink-0 w-9 h-9 rounded-lg bg-stone-200 dark:bg-stone-700" />
+				<div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
 				<div className="flex-1 min-w-0 space-y-2">
-					<div className="h-3 w-28 bg-stone-200 dark:bg-stone-700 rounded" />
-					<div className="h-7 w-16 bg-stone-200 dark:bg-stone-700 rounded" />
-					<div className="h-3 w-20 bg-stone-100 dark:bg-stone-600 rounded" />
+					<div className="h-3 w-28 bg-zinc-200 dark:bg-zinc-700 rounded" />
+					<div className="h-7 w-16 bg-zinc-200 dark:bg-zinc-700 rounded" />
+					<div className="h-3 w-20 bg-zinc-100 dark:bg-zinc-600 rounded" />
 				</div>
 			</div>
 		</div>
@@ -97,7 +97,7 @@ export function OverviewCards({ data, isLoading }: OverviewCardsProps) {
 
 	return (
 		<section>
-			<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-4">
+			<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 				{t("teamOverview")}
 			</h2>
 			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -111,7 +111,7 @@ export function OverviewCards({ data, isLoading }: OverviewCardsProps) {
 							return (
 								<div
 									key={cfg.labelKey}
-									className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm"
+									className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5"
 								>
 									<div className="flex items-start gap-3">
 										<div
@@ -133,13 +133,13 @@ export function OverviewCards({ data, isLoading }: OverviewCardsProps) {
 											</svg>
 										</div>
 										<div className="flex-1 min-w-0">
-											<p className="text-xs text-stone-500 dark:text-stone-400 leading-tight">
+											<p className="text-xs text-zinc-500 dark:text-zinc-400 leading-tight">
 												{t(cfg.labelKey as Parameters<typeof t>[0])}
 											</p>
-											<p className="text-2xl font-bold text-stone-900 dark:text-stone-100 mt-1 leading-none">
+											<p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 leading-none">
 												{value}
 											</p>
-											<p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+											<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
 												{subParams
 													? t(cfg.subKey as Parameters<typeof t>[0], subParams)
 													: t(cfg.subKey as Parameters<typeof t>[0])}

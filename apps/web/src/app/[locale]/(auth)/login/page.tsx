@@ -26,18 +26,18 @@ export default async function LoginPage() {
 					<div className="mb-5">
 						<BrainLogo size="lg" />
 					</div>
-					<h1 className="text-2xl font-bold text-stone-900 tracking-tight">
+					<h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
 						{tc("companyBrain")}
 					</h1>
-					<p className="text-stone-500 text-sm mt-1.5">{t("brandTagline")}</p>
+					<p className="text-zinc-500 text-sm mt-1.5">{t("brandTagline")}</p>
 				</div>
 
 				{/* Card */}
-				<div className="glass rounded-2xl p-8 shadow-lg shadow-stone-900/5">
-					<h2 className="text-lg font-semibold text-stone-800 mb-1">
+				<div className="glass rounded-xl p-8 shadow-lg shadow-zinc-900/5">
+					<h2 className="text-lg font-medium text-zinc-800 mb-1">
 						{t("heading")}
 					</h2>
-					<p className="text-stone-500 text-sm mb-6">{t("subtitle")}</p>
+					<p className="text-zinc-500 text-sm mb-6">{t("subtitle")}</p>
 
 					{isDev ? (
 						<form
@@ -54,15 +54,15 @@ export default async function LoginPage() {
 								type="email"
 								defaultValue="dev@company.com"
 								placeholder="Email"
-								className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm text-stone-900 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+								className="w-full px-4 py-3 rounded-md border border-zinc-200 text-sm text-zinc-900 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 							/>
 							<button
 								type="submit"
-								className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-indigo-700 text-white font-medium text-sm hover:bg-indigo-800 active:bg-indigo-900 transition-colors shadow-md shadow-indigo-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+								className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-md bg-indigo-500 text-white font-medium text-sm hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:ring-offset-2"
 							>
 								{t("devButton")}
 							</button>
-							<p className="text-xs text-amber-600 text-center mt-3">
+							<p className="text-xs text-zinc-500 text-center mt-3">
 								{t("devNote")}
 							</p>
 						</form>
@@ -75,7 +75,7 @@ export default async function LoginPage() {
 						>
 							<button
 								type="submit"
-								className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-indigo-700 text-white font-medium text-sm hover:bg-indigo-800 active:bg-indigo-900 transition-colors shadow-md shadow-indigo-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+								className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-md bg-indigo-500 text-white font-medium text-sm hover:bg-indigo-600 transition-colors shadow-md shadow-indigo-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:ring-offset-2"
 							>
 								{/* Google icon */}
 								<svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -102,7 +102,7 @@ export default async function LoginPage() {
 					)}
 				</div>
 
-				<p className="text-center text-xs text-stone-400 mt-6">
+				<p className="text-center text-xs text-zinc-400 mt-6">
 					{t("restricted")}
 				</p>
 			</div>

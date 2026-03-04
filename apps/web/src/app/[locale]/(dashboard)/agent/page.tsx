@@ -70,10 +70,10 @@ function SectionHeader({
 }) {
 	return (
 		<div className="mb-4">
-			<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+			<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 				{title}
 			</h2>
-			<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+			<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 				{subtitle}
 			</p>
 		</div>
@@ -82,13 +82,13 @@ function SectionHeader({
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none animate-pulse">
-			<div className="h-4 w-32 bg-stone-200 dark:bg-stone-700 rounded mb-3" />
-			<div className="h-3 w-16 bg-stone-100 dark:bg-stone-600 rounded mb-3" />
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
+			<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-3" />
+			<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded mb-3" />
 			<div className="space-y-1.5">
-				<div className="h-3 w-full bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-4/5 bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-3 w-3/5 bg-stone-100 dark:bg-stone-600 rounded" />
+				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-4/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-3 w-3/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
 			</div>
 		</div>
 	);
@@ -108,9 +108,9 @@ function ClusterCard({ cluster }: { cluster: Cluster }) {
 	const t = useTranslations("agent");
 
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
 			<div className="flex items-start justify-between gap-3 mb-3">
-				<h3 className="font-semibold text-stone-900 dark:text-stone-100 text-sm leading-snug">
+				<h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
 					{cluster.label}
 				</h3>
 				<span className="shrink-0 inline-flex items-center text-xs font-medium rounded-full px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800">
@@ -119,14 +119,14 @@ function ClusterCard({ cluster }: { cluster: Cluster }) {
 			</div>
 			{cluster.sample_queries.length > 0 && (
 				<div>
-					<p className="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wide mb-1.5">
+					<p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mb-1.5">
 						{t("sampleQueries")}
 					</p>
 					<ul className="space-y-1">
 						{cluster.sample_queries.slice(0, 3).map((q) => (
 							<li
 								key={q}
-								className="text-xs text-stone-600 dark:text-stone-400 truncate"
+								className="text-xs text-zinc-600 dark:text-zinc-400 truncate"
 								title={q}
 							>
 								&ldquo;{q}&rdquo;
@@ -193,33 +193,33 @@ function IngestionCard({ item }: { item: IngestionStatus }) {
 				item.connector.slice(1).replace(/_/g, " ");
 
 	return (
-		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none">
+		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
 			<div className="flex items-start gap-4">
 				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					<ConnectorIcon connector={item.connector} />
 				</div>
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2 mb-1">
-						<h3 className="font-semibold text-stone-900 dark:text-stone-100 text-sm">
+						<h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm">
 							{connectorLabel}
 						</h3>
 						<span
 							className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 border ${
 								isActive
 									? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/40 dark:border-green-800"
-									: "text-stone-500 bg-stone-50 border-stone-200 dark:text-stone-400 dark:bg-stone-700 dark:border-stone-600"
+									: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600"
 							}`}
 						>
 							<span
-								className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-stone-400"}`}
+								className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-400"}`}
 							/>
 							{isActive ? "Active" : "Inactive"}
 						</span>
 					</div>
-					<p className="text-sm text-stone-500 dark:text-stone-400">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400">
 						{t("documents", { count: item.document_count })}
 					</p>
-					<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+					<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
 						{lastSyncedText}
 					</p>
 					{item.error && (
@@ -476,16 +476,16 @@ export default function AgentPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
-				<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
+				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
 					{t("subtitle")}
 				</p>
 			</div>
 
-			<div className="flex-1 overflow-y-auto p-6">
+			<div className="flex-1 overflow-y-auto p-5">
 				<div className="max-w-5xl mx-auto space-y-10">
 					{/* ── Section 1: Question Clusters ─────────────────────── */}
 					<section>
@@ -508,7 +508,7 @@ export default function AgentPage() {
 										<SkeletonCard />
 									</>
 								) : clusters.length === 0 ? (
-									<p className="text-sm text-stone-500 dark:text-stone-400 col-span-full">
+									<p className="text-sm text-zinc-500 dark:text-zinc-400 col-span-full">
 										{t("noData")}
 									</p>
 								) : (
@@ -530,17 +530,17 @@ export default function AgentPage() {
 						{recsError && <ErrorBanner message={recsError} />}
 
 						{!recsError && (
-							<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm dark:shadow-none overflow-hidden">
+							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
 								<table className="w-full text-sm">
 									<thead>
-										<tr className="border-b border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-700/30">
-											<th className="px-5 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+										<tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-700/30">
+											<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 												{t("topic")}
 											</th>
-											<th className="px-5 py-3 text-right text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+											<th className="px-5 py-3 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 												{t("queryCount")}
 											</th>
-											<th className="px-5 py-3 text-right text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+											<th className="px-5 py-3 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 												{t("priority")}
 											</th>
 										</tr>
@@ -550,16 +550,16 @@ export default function AgentPage() {
 											["r0", "r1", "r2", "r3", "r4"].map((k) => (
 												<tr
 													key={k}
-													className="border-b border-stone-100 dark:border-stone-700/50 animate-pulse"
+													className="border-b border-zinc-100 dark:border-zinc-800 animate-pulse"
 												>
 													<td className="px-5 py-3">
-														<div className="h-3 w-48 bg-stone-200 dark:bg-stone-700 rounded" />
+														<div className="h-3 w-48 bg-zinc-200 dark:bg-zinc-700 rounded" />
 													</td>
 													<td className="px-5 py-3 text-right">
-														<div className="h-3 w-10 bg-stone-200 dark:bg-stone-700 rounded ml-auto" />
+														<div className="h-3 w-10 bg-zinc-200 dark:bg-zinc-700 rounded ml-auto" />
 													</td>
 													<td className="px-5 py-3 text-right">
-														<div className="h-5 w-16 bg-stone-200 dark:bg-stone-700 rounded-full ml-auto" />
+														<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full ml-auto" />
 													</td>
 												</tr>
 											))
@@ -567,7 +567,7 @@ export default function AgentPage() {
 											<tr>
 												<td
 													colSpan={3}
-													className="px-5 py-6 text-center text-sm text-stone-500 dark:text-stone-400"
+													className="px-5 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400"
 												>
 													{t("noData")}
 												</td>
@@ -576,12 +576,12 @@ export default function AgentPage() {
 											recommendations.map((rec) => (
 												<tr
 													key={rec.topic}
-													className="border-b border-stone-100 dark:border-stone-700/50 last:border-0 hover:bg-stone-50/50 dark:hover:bg-stone-700/20 transition-colors"
+													className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 transition-colors"
 												>
-													<td className="px-5 py-3 text-stone-900 dark:text-stone-100 font-medium">
+													<td className="px-5 py-3 text-zinc-900 dark:text-zinc-100 font-medium">
 														{rec.topic}
 													</td>
-													<td className="px-5 py-3 text-right text-stone-600 dark:text-stone-400 tabular-nums">
+													<td className="px-5 py-3 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">
 														{rec.query_count}
 													</td>
 													<td className="px-5 py-3 text-right">
@@ -614,7 +614,7 @@ export default function AgentPage() {
 										<SkeletonCard />
 									</>
 								) : ingestionStatus.length === 0 ? (
-									<p className="text-sm text-stone-500 dark:text-stone-400 col-span-full">
+									<p className="text-sm text-zinc-500 dark:text-zinc-400 col-span-full">
 										{t("noData")}
 									</p>
 								) : (
@@ -634,21 +634,21 @@ export default function AgentPage() {
 
 						{!logsError && (
 							<>
-								<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm dark:shadow-none overflow-hidden">
+								<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
 									<div className="overflow-x-auto">
 										<table className="w-full text-sm">
 											<thead>
-												<tr className="border-b border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-700/30">
-													<th className="px-5 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide whitespace-nowrap">
+												<tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-700/30">
+													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest whitespace-nowrap">
 														{t("logTime")}
 													</th>
-													<th className="px-5 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 														{t("logUser")}
 													</th>
-													<th className="px-5 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 														{t("logAction")}
 													</th>
-													<th className="px-5 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
 														{t("logQuery")}
 													</th>
 												</tr>
@@ -659,19 +659,19 @@ export default function AgentPage() {
 														(k) => (
 															<tr
 																key={k}
-																className="border-b border-stone-100 dark:border-stone-700/50 animate-pulse"
+																className="border-b border-zinc-100 dark:border-zinc-800 animate-pulse"
 															>
 																<td className="px-5 py-3">
-																	<div className="h-3 w-28 bg-stone-200 dark:bg-stone-700 rounded" />
+																	<div className="h-3 w-28 bg-zinc-200 dark:bg-zinc-700 rounded" />
 																</td>
 																<td className="px-5 py-3">
-																	<div className="h-3 w-36 bg-stone-200 dark:bg-stone-700 rounded" />
+																	<div className="h-3 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
 																</td>
 																<td className="px-5 py-3">
-																	<div className="h-3 w-20 bg-stone-200 dark:bg-stone-700 rounded" />
+																	<div className="h-3 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" />
 																</td>
 																<td className="px-5 py-3">
-																	<div className="h-3 w-52 bg-stone-200 dark:bg-stone-700 rounded" />
+																	<div className="h-3 w-52 bg-zinc-200 dark:bg-zinc-700 rounded" />
 																</td>
 															</tr>
 														),
@@ -680,7 +680,7 @@ export default function AgentPage() {
 													<tr>
 														<td
 															colSpan={4}
-															className="px-5 py-6 text-center text-sm text-stone-500 dark:text-stone-400"
+															className="px-5 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400"
 														>
 															{t("noData")}
 														</td>
@@ -689,22 +689,22 @@ export default function AgentPage() {
 													logs.map((entry) => (
 														<tr
 															key={entry.id}
-															className="border-b border-stone-100 dark:border-stone-700/50 last:border-0 hover:bg-stone-50/50 dark:hover:bg-stone-700/20 transition-colors"
+															className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 transition-colors"
 														>
-															<td className="px-5 py-3 text-stone-500 dark:text-stone-400 whitespace-nowrap tabular-nums text-xs">
+															<td className="px-5 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap tabular-nums text-xs">
 																{formatTime(entry.created_at)}
 															</td>
-															<td className="px-5 py-3 text-stone-700 dark:text-stone-300 truncate max-w-[12rem]">
+															<td className="px-5 py-3 text-zinc-700 dark:text-zinc-300 truncate max-w-[12rem]">
 																{entry.user_email}
 															</td>
 															<td className="px-5 py-3">
-																<span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-300">
+																<span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
 																	{entry.action}
 																</span>
 															</td>
-															<td className="px-5 py-3 text-stone-600 dark:text-stone-400 truncate max-w-[20rem]">
+															<td className="px-5 py-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[20rem]">
 																{entry.query ?? (
-																	<span className="text-stone-400 dark:text-stone-600 italic text-xs">
+																	<span className="text-zinc-400 dark:text-zinc-600 italic text-xs">
 																		—
 																	</span>
 																)}
@@ -720,7 +720,7 @@ export default function AgentPage() {
 								{/* Pagination */}
 								{!logsLoading && logsTotal > PAGE_SIZE && (
 									<div className="flex items-center justify-between mt-3 px-1">
-										<p className="text-xs text-stone-500 dark:text-stone-400">
+										<p className="text-xs text-zinc-500 dark:text-zinc-400">
 											Page {logsPage} of {totalPages}
 										</p>
 										<div className="flex items-center gap-2">
@@ -729,10 +729,10 @@ export default function AgentPage() {
 												disabled={logsPage <= 1}
 												onClick={() => setLogsPage((p) => Math.max(1, p - 1))}
 												className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
-													bg-white border-stone-200 text-stone-700
-													hover:bg-stone-50 hover:border-stone-300
-													dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300
-													dark:hover:bg-stone-700 dark:hover:border-stone-600
+													bg-white border-zinc-200 text-zinc-700
+													hover:bg-zinc-50 hover:border-zinc-300
+													dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300
+													dark:hover:bg-zinc-700 dark:hover:border-zinc-600
 													disabled:opacity-40 disabled:cursor-not-allowed"
 											>
 												<svg
@@ -758,10 +758,10 @@ export default function AgentPage() {
 													setLogsPage((p) => Math.min(totalPages, p + 1))
 												}
 												className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
-													bg-white border-stone-200 text-stone-700
-													hover:bg-stone-50 hover:border-stone-300
-													dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300
-													dark:hover:bg-stone-700 dark:hover:border-stone-600
+													bg-white border-zinc-200 text-zinc-700
+													hover:bg-zinc-50 hover:border-zinc-300
+													dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300
+													dark:hover:bg-zinc-700 dark:hover:border-zinc-600
 													disabled:opacity-40 disabled:cursor-not-allowed"
 											>
 												Next

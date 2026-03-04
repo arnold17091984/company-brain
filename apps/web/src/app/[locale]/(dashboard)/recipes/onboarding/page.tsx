@@ -26,11 +26,11 @@ interface OnboardingResponse {
 function SkeletonStep() {
 	return (
 		<div className="flex gap-5 animate-pulse">
-			<div className="shrink-0 w-9 h-9 rounded-full bg-stone-200 dark:bg-stone-700 mt-0.5" />
-			<div className="flex-1 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 space-y-3">
-				<div className="h-4 w-48 bg-stone-200 dark:bg-stone-700 rounded" />
-				<div className="h-3 w-full bg-stone-100 dark:bg-stone-600 rounded" />
-				<div className="h-20 w-full bg-stone-100 dark:bg-stone-600 rounded-lg" />
+			<div className="shrink-0 w-9 h-9 rounded-full bg-zinc-200 dark:bg-zinc-700 mt-0.5" />
+			<div className="flex-1 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 space-y-3">
+				<div className="h-4 w-48 bg-zinc-200 dark:bg-zinc-700 rounded" />
+				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
+				<div className="h-20 w-full bg-zinc-100 dark:bg-zinc-600 rounded-lg" />
 			</div>
 		</div>
 	);
@@ -65,17 +65,17 @@ function RecipeStep({
 					{stepNumber}
 				</div>
 				{/* Connector line (hidden on last item via CSS) */}
-				<div className="w-px flex-1 bg-stone-200 dark:bg-stone-700 mt-2 min-h-[1rem]" />
+				<div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 mt-2 min-h-[1rem]" />
 			</div>
 
 			{/* Card */}
-			<div className="flex-1 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm p-5 mb-5 space-y-4">
+			<div className="flex-1 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 mb-5 space-y-4">
 				<div>
-					<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-1">
+					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
 						{recipe.title}
 					</h3>
 					{recipe.description && (
-						<p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+						<p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
 							{recipe.description}
 						</p>
 					)}
@@ -92,7 +92,7 @@ function RecipeStep({
 							onClick={() =>
 								handleCopy(recipe.prompt_template, setPromptCopied)
 							}
-							className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-stone-500 hover:bg-stone-100 transition-colors dark:text-stone-400 dark:hover:bg-stone-700"
+							className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-zinc-500 hover:bg-zinc-100 transition-colors dark:text-zinc-400 dark:hover:bg-zinc-700"
 						>
 							{promptCopied ? (
 								<>
@@ -133,7 +133,7 @@ function RecipeStep({
 							)}
 						</button>
 					</div>
-					<pre className="text-xs font-mono text-stone-700 dark:text-stone-300 bg-stone-50 dark:bg-stone-900/40 rounded-lg p-3 whitespace-pre-wrap break-words leading-relaxed border border-stone-100 dark:border-stone-700">
+					<pre className="text-xs font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900/40 rounded-lg p-3 whitespace-pre-wrap break-words leading-relaxed border border-zinc-100 dark:border-zinc-700">
 						{recipe.prompt_template}
 					</pre>
 				</div>
@@ -144,7 +144,7 @@ function RecipeStep({
 						{recipe.example_query && (
 							<div>
 								<div className="flex items-center justify-between mb-1.5">
-									<span className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+									<span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
 										{t("exampleQuery")}
 									</span>
 									<button
@@ -152,22 +152,22 @@ function RecipeStep({
 										onClick={() =>
 											handleCopy(recipe.example_query, setQueryCopied)
 										}
-										className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+										className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
 									>
 										{queryCopied ? t("copied") : t("copy")}
 									</button>
 								</div>
-								<div className="text-xs text-stone-600 dark:text-stone-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
+								<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
 									{recipe.example_query}
 								</div>
 							</div>
 						)}
 						{recipe.example_response && (
 							<div>
-								<p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-1.5">
+								<p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
 									{t("exampleResponse")}
 								</p>
-								<div className="text-xs text-stone-600 dark:text-stone-400 bg-green-50/50 dark:bg-green-950/20 rounded-lg p-3 border border-green-100 dark:border-green-900 leading-relaxed">
+								<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-green-50/50 dark:bg-green-950/20 rounded-lg p-3 border border-green-100 dark:border-green-900 leading-relaxed">
 									{recipe.example_response}
 								</div>
 							</div>
@@ -227,11 +227,11 @@ export default function RecipesOnboardingPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header */}
-			<div className="border-b border-stone-200/60 dark:border-stone-700/60 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm px-6 py-4 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-4 shrink-0">
 				<div className="flex items-center gap-3 mb-0.5">
 					<Link
 						href="../recipes"
-						className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
+						className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
 					>
 						<svg
 							className="w-4 h-4"
@@ -249,13 +249,13 @@ export default function RecipesOnboardingPage() {
 						</svg>
 						{t("backToRecipes")}
 					</Link>
-					<span className="text-stone-300 dark:text-stone-600">/</span>
-					<h1 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+					<span className="text-zinc-300 dark:text-zinc-600">/</span>
+					<h1 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 						{t("onboardingTitle")}
 					</h1>
 				</div>
 				{data?.department && (
-					<p className="text-sm text-stone-500 dark:text-stone-400">
+					<p className="text-sm text-zinc-500 dark:text-zinc-400">
 						{t("onboardingSubtitle", {
 							department: data.department.replace("_", " "),
 						})}
@@ -267,7 +267,7 @@ export default function RecipesOnboardingPage() {
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="max-w-3xl mx-auto">
 					{error && (
-						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 mb-6">
+						<div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 mb-6">
 							<svg
 								className="w-4 h-4 text-red-500 shrink-0"
 								fill="none"
@@ -288,7 +288,7 @@ export default function RecipesOnboardingPage() {
 
 					{/* Intro banner */}
 					{!isLoading && !error && (
-						<div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-5 mb-6">
+						<div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg p-5 mb-6">
 							<div className="flex items-start gap-3">
 								<div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-indigo-700 flex items-center justify-center shrink-0">
 									<svg
@@ -307,7 +307,7 @@ export default function RecipesOnboardingPage() {
 									</svg>
 								</div>
 								<div>
-									<p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200 mb-1">
+									<p className="text-sm font-medium text-indigo-800 dark:text-indigo-200 mb-1">
 										{t("onboardingIntroTitle")}
 									</p>
 									<p className="text-xs text-indigo-600 dark:text-indigo-400 leading-relaxed">
@@ -354,8 +354,8 @@ export default function RecipesOnboardingPage() {
 										/>
 									</svg>
 								</div>
-								<div className="flex-1 bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-800 p-5 mb-5">
-									<p className="text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+								<div className="flex-1 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 p-5 mb-5">
+									<p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
 										{t("onboardingComplete")}
 									</p>
 									<p className="text-xs text-green-600 dark:text-green-400 leading-relaxed mb-3">
@@ -386,9 +386,9 @@ export default function RecipesOnboardingPage() {
 						</div>
 					) : (
 						<div className="flex flex-col items-center justify-center py-20 text-center">
-							<div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+							<div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
 								<svg
-									className="w-8 h-8 text-stone-400"
+									className="w-8 h-8 text-zinc-400"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -402,7 +402,7 @@ export default function RecipesOnboardingPage() {
 									/>
 								</svg>
 							</div>
-							<p className="text-stone-700 dark:text-stone-200 font-medium">
+							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
 								{t("noOnboardingRecipes")}
 							</p>
 						</div>
