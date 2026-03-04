@@ -1,5 +1,6 @@
 "use client";
 
+import { BrainLogo } from "@/components/brand/brain-logo";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -294,22 +295,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 		<>
 			{/* Brand */}
 			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-indigo-800/40">
-				<div className="w-7 h-7 rounded-lg bg-indigo-700 flex items-center justify-center shrink-0">
-					<svg
-						className="w-4 h-4 text-amber-300"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth={1.75}
-						aria-hidden="true"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
-						/>
-					</svg>
-				</div>
+				<BrainLogo size="sm" />
 				<span className="text-sm font-semibold text-white">
 					{tCommon("companyBrain")}
 				</span>

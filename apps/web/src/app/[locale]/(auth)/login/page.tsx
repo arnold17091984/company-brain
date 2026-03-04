@@ -1,3 +1,4 @@
+import { BrainLogo } from "@/components/brand/brain-logo";
 import { signIn } from "@/lib/auth";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -22,21 +23,8 @@ export default async function LoginPage() {
 			<div className="w-full max-w-sm animate-fade-in">
 				{/* Logo / Brand */}
 				<div className="flex flex-col items-center mb-10">
-					<div className="w-16 h-16 rounded-2xl bg-indigo-700 flex items-center justify-center mb-5 shadow-lg shadow-indigo-500/20">
-						<svg
-							className="w-9 h-9 text-amber-400"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth={1.75}
-							aria-hidden="true"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
-							/>
-						</svg>
+					<div className="mb-5">
+						<BrainLogo size="lg" />
 					</div>
 					<h1 className="text-2xl font-bold text-stone-900 tracking-tight">
 						{tc("companyBrain")}

@@ -112,6 +112,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					token.role = backendAuth.role;
 				}
 			}
+
+			// Dev credentials provider: assign admin role for local development
+			if (account?.provider === "credentials" && !token.role) {
+				token.backendUserId = "dev-user-1";
+				token.department = "Engineering";
+				token.departmentId = null;
+				token.accessLevel = "all";
+				token.role = "admin";
+			}
+
 			return token;
 		},
 		async session({ session, token }) {
