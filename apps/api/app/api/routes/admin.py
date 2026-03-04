@@ -21,7 +21,7 @@ from app.core.auth import User, get_admin_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.encryption import decrypt_value, encrypt_value
-from app.models.database import Department, SafetyViolation, SystemSetting, UsageMetricsDaily
+from app.models.database import SafetyViolation, SystemSetting, UsageMetricsDaily
 from app.models.database import User as DBUser
 from app.models.schemas import (
     APIKeyStatus,
@@ -32,7 +32,6 @@ from app.models.schemas import (
     SafetyViolationListResponse,
     SafetyViolationResponse,
     SystemSettings,
-    UserSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -237,61 +236,6 @@ async def update_api_keys(
 
     # Return fresh status
     return await get_api_keys(current_user=current_user, db=db)
-
-
-# ---------------------------------------------------------------------------
-# GET /api/v1/admin/users
-# ---------------------------------------------------------------------------
-
-
-@router.get("/users", response_model=list[UserSummary])
-async def list_users(
-    current_user: User = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_db),
-) -> list[UserSummary]:
-    """Return a summary list of all registered users.
-
-    Joins ``users`` with ``departments`` to resolve the department name for
-    each user.
-
-    Args:
-        current_user: Injected authenticated user.
-        db: Injected database session.
-
-    Returns:
-        list[UserSummary]: All users ordered by creation date (newest first).
-    """
-    logger.info("Admin users list requested", extra={"user": current_user.email})
-
-    stmt = (
-        select(
-            DBUser.id,
-            DBUser.email,
-            DBUser.name,
-            Department.name.label("department_name"),
-            DBUser.access_level,
-            DBUser.telegram_id,
-            DBUser.created_at,
-        )
-        .outerjoin(Department, DBUser.department_id == Department.id)
-        .order_by(DBUser.created_at.desc())
-    )
-
-    result = await db.execute(stmt)
-    rows = result.all()
-
-    return [
-        UserSummary(
-            id=str(row.id),
-            email=row.email,
-            name=row.name,
-            department=row.department_name,
-            access_level=row.access_level,
-            telegram_id=row.telegram_id,
-            created_at=row.created_at.isoformat(),
-        )
-        for row in rows
-    ]
 
 
 # ---------------------------------------------------------------------------

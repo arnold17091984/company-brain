@@ -247,7 +247,9 @@ class UserSummary(BaseModel):
     id: str
     email: str
     name: str
+    role: str = "employee"
     department: str | None = None
+    department_id: str | None = None
     access_level: str
     telegram_id: int | None = None
     created_at: str

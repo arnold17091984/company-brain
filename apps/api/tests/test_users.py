@@ -175,7 +175,9 @@ def _make_user_row(
     user_id: uuid.UUID | None = None,
     email: str = "user@example.com",
     name: str = "Test User",
+    role: str = "employee",
     department_name: str | None = "engineering",
+    department_id: uuid.UUID | None = None,
     access_level: str = "restricted",
     telegram_id: int | None = None,
     created_at: datetime | None = None,
@@ -189,7 +191,9 @@ def _make_user_row(
     r.id = user_id or uuid.uuid4()
     r.email = email
     r.name = name
+    r.role = role
     r.department_name = department_name
+    r.department_id = department_id
     r.access_level = access_level
     r.telegram_id = telegram_id
     r.created_at = created_at or datetime(2026, 1, 1, tzinfo=UTC)
