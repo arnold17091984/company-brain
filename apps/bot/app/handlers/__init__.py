@@ -14,6 +14,11 @@ from app.handlers.command import (
     handle_search,
     handle_start,
 )
+from app.handlers.harvest import (
+    handle_harvest_pause,
+    handle_harvest_skip,
+    handle_harvest_status,
+)
 from app.handlers.message import handle_message
 from app.handlers.onboarding import build_onboarding_handler
 
@@ -46,6 +51,11 @@ def register_handlers(application: Application) -> None:  # type: ignore[type-ar
     application.add_handler(CommandHandler("language", handle_lang))
     application.add_handler(CommandHandler("history", handle_history))
     application.add_handler(CommandHandler("clear", handle_clear))
+
+    # ── Harvest commands ────────────────────────────────────────────────────────
+    application.add_handler(CommandHandler("harvest", handle_harvest_status))
+    application.add_handler(CommandHandler("skip", handle_harvest_skip))
+    application.add_handler(CommandHandler("pause_harvest", handle_harvest_pause))
 
     # ── Callback queries (inline keyboard buttons) ─────────────────────────────
     application.add_handler(CallbackQueryHandler(handle_callback_query))

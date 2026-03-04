@@ -15,6 +15,7 @@ from telegram.ext import ContextTypes
 from app.api_client import APIError, CompanyBrainClient
 from app.config import settings
 from app.formatters.response import escape_markdown, format_answer, format_error
+from app.handlers.harvest import handle_harvest_answer, harvest_check
 from app.i18n import t
 
 logger = logging.getLogger(__name__)
@@ -173,6 +174,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         user_data,
     )
 
+    # ── Harvest intercept ─────────────────────────────────────────────────────
+    # When the user is actively answering harvest questions, route the message
+    # directly to the harvest answer handler instead of the knowledge API.
+    if user_data.get("harvest_active"):
+        await handle_harvest_answer(update, context)
+        return
+
+    # If no harvest session is active yet, check whether one should start.
+    # Only check for private chats to avoid triggering in group channels.
+    if chat_type == ChatType.PRIVATE and query:
+        session_started = await harvest_check(update, context)
+        if session_started:
+            return
+
     if not query:
         await message.reply_text(
             escape_markdown(t("welcome", lang)),
@@ -285,7 +300,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data["conversation_id"] = new_conversation_id
     if context.user_data is not None and sources:
         context.user_data["last_sources"] = [
-            {"title": getattr(s, "title", ""), "url": getattr(s, "url", ""), "snippet": getattr(s, "snippet", "")}
+            {
+                "title": getattr(s, "title", ""),
+                "url": getattr(s, "url", ""),
+                "snippet": getattr(s, "snippet", ""),
+            }
             for s in sources
         ]
 

@@ -126,7 +126,7 @@ class CompanyBrainClient:
         )
 
     async def _get(self, path: str) -> dict[str, Any]:
-        """GET with simple retry logic for transient server errors."""
+        """GET a single-object endpoint with simple retry logic for transient server errors."""
         client = self._get_client()
         last_exc: Exception | None = None
 
@@ -171,6 +171,90 @@ class CompanyBrainClient:
             f"All {_MAX_RETRIES + 1} attempts to {path} failed",
             detail=str(last_exc),
         )
+
+    async def _get_list(self, path: str) -> list[Any]:
+        """GET a list endpoint with simple retry logic for transient server errors.
+
+        Args:
+            path: API path that returns a JSON array.
+
+        Returns:
+            Parsed list from the JSON response.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        client = self._get_client()
+        last_exc: Exception | None = None
+
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                response = await client.get(path)
+                if response.status_code in _RETRYABLE_STATUS and attempt < _MAX_RETRIES:
+                    logger.warning(
+                        "Retryable status %s from %s (attempt %d/%d)",
+                        response.status_code,
+                        path,
+                        attempt + 1,
+                        _MAX_RETRIES,
+                    )
+                    continue
+                if response.status_code >= 400:
+                    detail = ""
+                    try:
+                        detail = response.json().get("detail", "")
+                    except Exception:
+                        detail = response.text
+                    raise APIError(
+                        f"API request to {path} failed",
+                        status_code=response.status_code,
+                        detail=str(detail),
+                    )
+                return response.json()  # type: ignore[no-any-return]
+            except httpx.TimeoutException as exc:
+                last_exc = exc
+                logger.warning("Timeout on %s (attempt %d/%d)", path, attempt + 1, _MAX_RETRIES)
+            except httpx.RequestError as exc:
+                last_exc = exc
+                logger.warning(
+                    "Request error on %s: %s (attempt %d/%d)",
+                    path,
+                    exc,
+                    attempt + 1,
+                    _MAX_RETRIES,
+                )
+
+        raise APIError(
+            f"All {_MAX_RETRIES + 1} attempts to {path} failed",
+            detail=str(last_exc),
+        )
+
+    async def _stream_chat_inner(
+        self,
+        message: str,
+        conversation_id: str | None,
+        language: str | None,
+    ) -> AsyncIterator[str]:
+        """Internal async generator for SSE streaming."""
+        client = self._get_client()
+        payload: dict[str, Any] = {"message": message}
+        if conversation_id:
+            payload["conversation_id"] = conversation_id
+        if language:
+            payload["language"] = language
+
+        try:
+            async with httpx_sse.aconnect_sse(
+                client, "POST", "/api/v1/chat/stream", json=payload
+            ) as event_source:
+                async for event in event_source.aiter_sse():
+                    if event.data and event.data != "[DONE]":
+                        yield event.data
+        except httpx.RequestError as exc:
+            raise APIError(
+                "Streaming request to /api/v1/chat/stream failed",
+                detail=str(exc),
+            ) from exc
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -250,32 +334,92 @@ class CompanyBrainClient:
         """
         return self._stream_chat_inner(message, conversation_id, language)
 
-    async def _stream_chat_inner(
-        self,
-        message: str,
-        conversation_id: str | None,
-        language: str | None,
-    ) -> AsyncIterator[str]:
-        """Internal async generator for SSE streaming."""
-        client = self._get_client()
-        payload: dict[str, Any] = {"message": message}
-        if conversation_id:
-            payload["conversation_id"] = conversation_id
-        if language:
-            payload["language"] = language
+    async def get_harvest_sessions(self, target_user_id: str | None = None) -> list[dict[str, Any]]:
+        """Get harvest sessions, optionally filtered by target user ID.
 
-        try:
-            async with httpx_sse.aconnect_sse(
-                client, "POST", "/api/v1/chat/stream", json=payload
-            ) as event_source:
-                async for event in event_source.aiter_sse():
-                    if event.data and event.data != "[DONE]":
-                        yield event.data
-        except httpx.RequestError as exc:
-            raise APIError(
-                "Streaming request to /api/v1/chat/stream failed",
-                detail=str(exc),
-            ) from exc
+        Args:
+            target_user_id: Optional system user UUID to filter sessions by.
+
+        Returns:
+            List of session summary dicts from the API.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        path = "/api/v1/harvest/sessions"
+        if target_user_id:
+            path += f"?target_user_id={target_user_id}"
+        return await self._get_list(path)
+
+    async def get_harvest_session_detail(self, session_id: str) -> dict[str, Any]:
+        """Get full session detail with questions.
+
+        Args:
+            session_id: UUID string of the harvest session.
+
+        Returns:
+            Full session detail dict including questions list.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        return await self._get(f"/api/v1/harvest/sessions/{session_id}")
+
+    async def submit_harvest_answer(
+        self,
+        question_id: str,
+        answer: str,
+        source: str = "telegram",
+    ) -> dict[str, Any]:
+        """Submit an answer to a harvest question.
+
+        Args:
+            question_id: UUID string of the question being answered.
+            answer: The answer text provided by the employee.
+            source: Origin of the answer, defaults to ``"telegram"``.
+
+        Returns:
+            Confirmation dict with status and question_id.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        return await self._post(
+            "/api/v1/harvest/answer",
+            {
+                "question_id": question_id,
+                "answer": answer,
+                "source": source,
+            },
+        )
+
+    async def pause_harvest_session(self, session_id: str) -> dict[str, Any]:
+        """Pause an active harvest session.
+
+        Args:
+            session_id: UUID string of the session to pause.
+
+        Returns:
+            Confirmation dict with updated status.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        return await self._post(f"/api/v1/harvest/sessions/{session_id}/pause", {})
+
+    async def resume_harvest_session(self, session_id: str) -> dict[str, Any]:
+        """Resume a paused harvest session.
+
+        Args:
+            session_id: UUID string of the session to resume.
+
+        Returns:
+            Confirmation dict with updated status.
+
+        Raises:
+            APIError: When the API returns an error or times out after retries.
+        """
+        return await self._post(f"/api/v1/harvest/sessions/{session_id}/resume", {})
 
     async def get_history(self, conversation_id: str) -> dict[str, Any]:
         """Fetch recent conversation history summary from the API.

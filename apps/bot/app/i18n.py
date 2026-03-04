@@ -64,25 +64,41 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "onboarding_dept_marketing": "Marketing",
         "onboarding_wow_sales": (
             "Here's what I can do for your team:\n\n"
-            "Try asking me: \"Draft a follow-up email for a client meeting about cloud migration\""
+            'Try asking me: "Draft a follow-up email for a client meeting about cloud migration"'
         ),
         "onboarding_wow_dev": (
             "Here's what I can do for your team:\n\n"
-            "Try asking me: \"Explain our API authentication flow and suggest improvements\""
+            'Try asking me: "Explain our API authentication flow and suggest improvements"'
         ),
         "onboarding_wow_backoffice": (
             "Here's what I can do for your team:\n\n"
-            "Try asking me: \"What is the process for submitting expense reports?\""
+            'Try asking me: "What is the process for submitting expense reports?"'
         ),
         "onboarding_wow_marketing": (
             "Here's what I can do for your team:\n\n"
-            "Try asking me: \"Create 3 social media post ideas for our new AI product launch\""
+            'Try asking me: "Create 3 social media post ideas for our new AI product launch"'
         ),
         "onboarding_complete": "You're all set! Start chatting with me anytime.",
         "onboarding_tip": (
             "Tip: The more context you give me, the better my answers. "
             "Include relevant details like client names, project codes, or timeframes."
         ),
+        # ── Harvest ─────────────────────────────────────────────────────────────
+        "harvest_greeting": (
+            "You have a knowledge harvest session in progress. Let me ask you some questions "
+            "to preserve your expertise before you leave."
+        ),
+        "harvest_question": "Question ({current}/{total}) - {category}:\n\n{question}",
+        "harvest_answer_received": "Thank you for your answer! Your knowledge is valuable.",
+        "harvest_next": "Here's the next question:",
+        "harvest_complete": (
+            "All questions answered! Thank you for sharing your knowledge. "
+            "Your contributions will help the team."
+        ),
+        "harvest_skip": "Question skipped. Moving to the next one.",
+        "harvest_paused": ("Harvest session paused. You can resume anytime by sending a message."),
+        "harvest_resumed": "Welcome back! Let's continue with the knowledge harvest.",
+        "harvest_no_session": "You don't have any active harvest sessions.",
     },
     "ja": {
         "welcome": (
@@ -130,25 +146,43 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "onboarding_dept_marketing": "マーケティング",
         "onboarding_wow_sales": (
             "営業チームへのサポート例:\n\n"
-            "こんな質問を試してみてください: \"クラウド移行の打ち合わせ後のフォローアップメールを作成してください\""
+            'こんな質問を試してみてください: "クラウド移行の打ち合わせ後のフォローアップメールを作成してください"'
         ),
         "onboarding_wow_dev": (
             "開発チームへのサポート例:\n\n"
-            "こんな質問を試してみてください: \"APIの認証フローを説明し、改善案を提案してください\""
+            'こんな質問を試してみてください: "APIの認証フローを説明し、改善案を提案してください"'
         ),
         "onboarding_wow_backoffice": (
             "バックオフィスへのサポート例:\n\n"
-            "こんな質問を試してみてください: \"経費精算の申請手順を教えてください\""
+            'こんな質問を試してみてください: "経費精算の申請手順を教えてください"'
         ),
         "onboarding_wow_marketing": (
             "マーケティングチームへのサポート例:\n\n"
-            "こんな質問を試してみてください: \"新しいAI製品ローンチ向けのSNS投稿アイデアを3つ作成してください\""
+            'こんな質問を試してみてください: "新しいAI製品ローンチ向けのSNS投稿アイデアを3つ作成してください"'
         ),
         "onboarding_complete": "設定が完了しました！いつでもチャットを始めてください。",
         "onboarding_tip": (
             "ヒント: 詳細な情報を伝えるほど、より良い回答が得られます。"
             "顧客名、プロジェクトコード、期間などの関連情報を含めてください。"
         ),
+        # ── Harvest ─────────────────────────────────────────────────────────────
+        "harvest_greeting": (
+            "ナレッジ回収セッションが進行中です。"
+            "退職前にあなたの専門知識を残すためにいくつか質問させてください。"
+        ),
+        "harvest_question": "質問 ({current}/{total}) - {category}:\n\n{question}",
+        "harvest_answer_received": "回答ありがとうございます！あなたの知識は貴重です。",
+        "harvest_next": "次の質問です:",
+        "harvest_complete": (
+            "全ての質問に回答いただきました！知識を共有いただきありがとうございます。"
+            "チームの役に立ちます。"
+        ),
+        "harvest_skip": "質問をスキップしました。次の質問に進みます。",
+        "harvest_paused": (
+            "回収セッションを一時停止しました。メッセージを送信すればいつでも再開できます。"
+        ),
+        "harvest_resumed": "お帰りなさい！ナレッジ回収を続けましょう。",
+        "harvest_no_session": "アクティブな回収セッションはありません。",
     },
     "ko": {
         "welcome": (
@@ -196,25 +230,42 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "onboarding_dept_marketing": "마케팅",
         "onboarding_wow_sales": (
             "영업팀을 위한 활용 예시:\n\n"
-            "이렇게 질문해 보세요: \"클라우드 마이그레이션 관련 고객 미팅 후 팔로업 이메일을 작성해 주세요\""
+            '이렇게 질문해 보세요: "클라우드 마이그레이션 관련 고객 미팅 후 팔로업 이메일을 작성해 주세요"'
         ),
         "onboarding_wow_dev": (
             "개발팀을 위한 활용 예시:\n\n"
-            "이렇게 질문해 보세요: \"API 인증 흐름을 설명하고 개선 방안을 제안해 주세요\""
+            '이렇게 질문해 보세요: "API 인증 흐름을 설명하고 개선 방안을 제안해 주세요"'
         ),
         "onboarding_wow_backoffice": (
             "백오피스를 위한 활용 예시:\n\n"
-            "이렇게 질문해 보세요: \"경비 보고서 제출 절차가 어떻게 되나요?\""
+            '이렇게 질문해 보세요: "경비 보고서 제출 절차가 어떻게 되나요?"'
         ),
         "onboarding_wow_marketing": (
             "마케팅팀을 위한 활용 예시:\n\n"
-            "이렇게 질문해 보세요: \"새 AI 제품 출시를 위한 소셜 미디어 게시물 아이디어 3가지를 만들어 주세요\""
+            '이렇게 질문해 보세요: "새 AI 제품 출시를 위한 소셜 미디어 게시물 아이디어 3가지를 만들어 주세요"'
         ),
         "onboarding_complete": "설정이 완료되었습니다! 언제든지 대화를 시작하세요.",
         "onboarding_tip": (
             "팁: 더 많은 컨텍스트를 제공할수록 더 좋은 답변을 받을 수 있습니다. "
             "고객명, 프로젝트 코드, 날짜 범위 등 관련 세부 정보를 포함해 보세요."
         ),
+        # ── Harvest ─────────────────────────────────────────────────────────────
+        "harvest_greeting": (
+            "지식 수집 세션이 진행 중입니다. "
+            "퇴사 전에 전문 지식을 보존하기 위해 몇 가지 질문을 드리겠습니다."
+        ),
+        "harvest_question": "질문 ({current}/{total}) - {category}:\n\n{question}",
+        "harvest_answer_received": "답변 감사합니다! 귀하의 지식은 소중합니다.",
+        "harvest_next": "다음 질문입니다:",
+        "harvest_complete": (
+            "모든 질문에 답변하셨습니다! 지식을 공유해 주셔서 감사합니다. 팀에 큰 도움이 됩니다."
+        ),
+        "harvest_skip": "질문을 건너뛰었습니다. 다음 질문으로 이동합니다.",
+        "harvest_paused": (
+            "수집 세션이 일시 중지되었습니다. 메시지를 보내면 언제든지 재개할 수 있습니다."
+        ),
+        "harvest_resumed": "다시 오셨군요! 지식 수집을 계속하겠습니다.",
+        "harvest_no_session": "활성화된 수집 세션이 없습니다.",
     },
     "tl": {
         "welcome": (
@@ -264,25 +315,44 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "onboarding_dept_marketing": "Marketing",
         "onboarding_wow_sales": (
             "Narito ang maaari kong gawin para sa inyong team:\n\n"
-            "Subukan itanong: \"Gumawa ng follow-up email para sa client meeting tungkol sa cloud migration\""
+            'Subukan itanong: "Gumawa ng follow-up email para sa client meeting tungkol sa cloud migration"'
         ),
         "onboarding_wow_dev": (
             "Narito ang maaari kong gawin para sa inyong team:\n\n"
-            "Subukan itanong: \"Ipaliwanag ang aming API authentication flow at magmungkahi ng mga pagpapabuti\""
+            'Subukan itanong: "Ipaliwanag ang aming API authentication flow at magmungkahi ng mga pagpapabuti"'
         ),
         "onboarding_wow_backoffice": (
             "Narito ang maaari kong gawin para sa inyong team:\n\n"
-            "Subukan itanong: \"Ano ang proseso ng pag-submit ng expense reports?\""
+            'Subukan itanong: "Ano ang proseso ng pag-submit ng expense reports?"'
         ),
         "onboarding_wow_marketing": (
             "Narito ang maaari kong gawin para sa inyong team:\n\n"
-            "Subukan itanong: \"Gumawa ng 3 ideya para sa social media post para sa aming bagong AI product launch\""
+            'Subukan itanong: "Gumawa ng 3 ideya para sa social media post para sa aming bagong AI product launch"'
         ),
         "onboarding_complete": "Handa ka na! Makipag-chat sa akin anumang oras.",
         "onboarding_tip": (
             "Tip: Mas maraming konteksto ang ibinibigay mo, mas maganda ang aking mga sagot. "
             "Isama ang mga detalye tulad ng mga pangalan ng kliyente, project code, o timeframe."
         ),
+        # ── Harvest ─────────────────────────────────────────────────────────────
+        "harvest_greeting": (
+            "May aktibong knowledge harvest session ka. "
+            "Magtanong ako ng ilang katanungan upang mapreserba ang iyong kaalaman bago ka umalis."
+        ),
+        "harvest_question": "Tanong ({current}/{total}) - {category}:\n\n{question}",
+        "harvest_answer_received": "Salamat sa iyong sagot! Mahalaga ang iyong kaalaman.",
+        "harvest_next": "Narito ang susunod na tanong:",
+        "harvest_complete": (
+            "Nasagot na ang lahat ng tanong! Salamat sa pagbabahagi ng iyong kaalaman. "
+            "Makakatulong ito sa team."
+        ),
+        "harvest_skip": "Na-skip ang tanong. Lumipat sa susunod.",
+        "harvest_paused": (
+            "Na-pause ang harvest session. "
+            "Maaari kang magpatuloy anumang oras sa pamamagitan ng pagpapadala ng mensahe."
+        ),
+        "harvest_resumed": "Welcome back! Ipagpatuloy natin ang knowledge harvest.",
+        "harvest_no_session": "Wala kang aktibong harvest session.",
     },
 }
 
