@@ -230,7 +230,22 @@
 		"knowledgeUpvotes": "좋아요",
 		"knowledgePromote": "지식에 추가",
 		"knowledgePromoted": "승격 완료",
-		"knowledgePromoteSuccess": "지식 베이스에 추가되었습니다"
+		"knowledgePromoteSuccess": "지식 베이스에 추가되었습니다",
+		"apiKeysTitle": "API 키",
+		"apiKeysSub": "LLM 프로바이더 API 키를 관리합니다. DB에 저장된 키가 환경 변수보다 우선합니다.",
+		"apiKeySourceDb": "DB",
+		"apiKeySourceEnv": "ENV",
+		"apiKeySourceNone": "미설정",
+		"apiKeyUpdate": "업데이트",
+		"apiKeyResetEnv": "ENV로 리셋",
+		"addUser": "사용자 추가",
+		"addUserTitle": "사용자 추가",
+		"addUserSub": "사용자 계정을 사전 생성합니다. 나중에 Google OAuth로 로그인할 수 있습니다.",
+		"userCreated": "사용자가 생성되었습니다",
+		"emailExists": "이 이메일 주소의 사용자가 이미 존재합니다",
+		"telegramId": "Telegram ID",
+		"telegramIdHint": "Telegram 사용자 ID (숫자)",
+		"telegramIdConflict": "이 Telegram ID는 이미 다른 사용자에게 연결되어 있습니다"
 	},
 	"agent": {
 		"pageTitle": "AI 에이전트 대시보드",

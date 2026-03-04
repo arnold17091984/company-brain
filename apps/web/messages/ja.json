@@ -230,7 +230,22 @@
 		"knowledgeUpvotes": "高評価数",
 		"knowledgePromote": "ナレッジに追加",
 		"knowledgePromoted": "昇格済み",
-		"knowledgePromoteSuccess": "ナレッジベースに追加しました"
+		"knowledgePromoteSuccess": "ナレッジベースに追加しました",
+		"apiKeysTitle": "APIキー",
+		"apiKeysSub": "LLMプロバイダーのAPIキーを管理します。DB保存のキーが環境変数より優先されます。",
+		"apiKeySourceDb": "DB",
+		"apiKeySourceEnv": "ENV",
+		"apiKeySourceNone": "未設定",
+		"apiKeyUpdate": "更新",
+		"apiKeyResetEnv": "ENVに戻す",
+		"addUser": "ユーザー追加",
+		"addUserTitle": "ユーザー追加",
+		"addUserSub": "ユーザーアカウントを事前作成します。後でGoogle OAuthでサインインできます。",
+		"userCreated": "ユーザーを作成しました",
+		"emailExists": "このメールアドレスのユーザーは既に存在します",
+		"telegramId": "Telegram ID",
+		"telegramIdHint": "TelegramのユーザーID（数値）",
+		"telegramIdConflict": "このTelegram IDは既に別のユーザーに紐付けられています"
 	},
 	"agent": {
 		"pageTitle": "AIエージェントダッシュボード",

@@ -230,7 +230,22 @@
 		"knowledgeUpvotes": "Upvotes",
 		"knowledgePromote": "Add to Knowledge",
 		"knowledgePromoted": "Promoted",
-		"knowledgePromoteSuccess": "Successfully added to knowledge base"
+		"knowledgePromoteSuccess": "Successfully added to knowledge base",
+		"apiKeysTitle": "API Keys",
+		"apiKeysSub": "Manage LLM provider API keys. DB-stored keys take priority over environment variables.",
+		"apiKeySourceDb": "DB",
+		"apiKeySourceEnv": "ENV",
+		"apiKeySourceNone": "Not Set",
+		"apiKeyUpdate": "Update",
+		"apiKeyResetEnv": "Reset to ENV",
+		"addUser": "Add User",
+		"addUserTitle": "Add User",
+		"addUserSub": "Pre-provision a new user account. They can sign in later via Google OAuth.",
+		"userCreated": "User created",
+		"emailExists": "A user with this email already exists",
+		"telegramId": "Telegram ID",
+		"telegramIdHint": "Numeric Telegram user ID",
+		"telegramIdConflict": "This Telegram ID is already linked to another user"
 	},
 	"agent": {
 		"pageTitle": "AI Agent Dashboard",

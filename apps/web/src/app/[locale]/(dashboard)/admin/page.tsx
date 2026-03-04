@@ -54,6 +54,7 @@ interface UserSummary {
 	department_id: string | null;
 	access_level: string;
 	role: string;
+	telegram_id: number | null;
 	created_at: string;
 }
 
@@ -117,6 +118,12 @@ interface AIRecipe {
 	source: string;
 	status: "draft" | "published" | "archived" | string;
 	created_at: string;
+}
+
+interface APIKeyStatus {
+	key_name: string;
+	source: "db" | "env" | "none";
+	masked_value: string | null;
 }
 
 // ---- Icon map -------------------------------------------------------------
@@ -426,6 +433,11 @@ function SettingsTab({
 	const [saving, setSaving] = useState(false);
 	const [saved, setSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [apiKeys, setApiKeys] = useState<APIKeyStatus[]>([]);
+	const [apiKeysLoading, setApiKeysLoading] = useState(true);
+	const [editingKey, setEditingKey] = useState<string | null>(null);
+	const [keyValue, setKeyValue] = useState("");
+	const [keySaving, setKeySaving] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -451,6 +463,25 @@ function SettingsTab({
 		};
 	}, [getAccessToken, t]);
 
+	useEffect(() => {
+		async function loadKeys() {
+			setApiKeysLoading(true);
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+					headers: { Authorization: `Bearer ${getAccessToken()}` },
+				});
+				if (res.ok) {
+					setApiKeys(await res.json());
+				}
+			} catch {
+				// silent fail
+			} finally {
+				setApiKeysLoading(false);
+			}
+		}
+		loadKeys();
+	}, [getAccessToken]);
+
 	const handleSave = async () => {
 		if (!settings) return;
 		setSaving(true);
@@ -473,6 +504,50 @@ function SettingsTab({
 			setError(t("loadError"));
 		} finally {
 			setSaving(false);
+		}
+	};
+
+	const handleSaveKey = async (keyName: string) => {
+		setKeySaving(true);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ [keyName]: keyValue }),
+			});
+			if (res.ok) {
+				setApiKeys(await res.json());
+				setEditingKey(null);
+				setKeyValue("");
+			}
+		} catch {
+			// silent fail
+		} finally {
+			setKeySaving(false);
+		}
+	};
+
+	const handleResetKey = async (keyName: string) => {
+		setKeySaving(true);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ [keyName]: "" }),
+			});
+			if (res.ok) {
+				setApiKeys(await res.json());
+			}
+		} catch {
+			// silent fail
+		} finally {
+			setKeySaving(false);
 		}
 	};
 
@@ -667,6 +742,115 @@ function SettingsTab({
 					</span>
 				)}
 			</div>
+			{/* API Keys */}
+			<div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm p-6">
+				<h3 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-1">
+					{t("apiKeysTitle")}
+				</h3>
+				<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
+					{t("apiKeysSub")}
+				</p>
+				{apiKeysLoading ? (
+					<p className="text-sm text-stone-500">Loading...</p>
+				) : (
+					<div className="space-y-3">
+						{apiKeys.map((ak) => (
+							<div
+								key={ak.key_name}
+								className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-stone-50 dark:bg-stone-700/40"
+							>
+								<div className="min-w-0 flex-1">
+									<p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+										{ak.key_name
+											.replace(/_/g, " ")
+											.replace(/\b\w/g, (c) => c.toUpperCase())
+											.replace("Api", "API")
+											.replace("Ai", "AI")}
+									</p>
+									<div className="flex items-center gap-2 mt-0.5">
+										<span
+											className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+												ak.source === "db"
+													? "text-indigo-700 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-950/40"
+													: ak.source === "env"
+														? "text-green-700 bg-green-50 dark:text-green-300 dark:bg-green-950/40"
+														: "text-stone-500 bg-stone-100 dark:text-stone-400 dark:bg-stone-600"
+											}`}
+										>
+											{t(
+												ak.source === "db"
+													? "apiKeySourceDb"
+													: ak.source === "env"
+														? "apiKeySourceEnv"
+														: "apiKeySourceNone",
+											)}
+										</span>
+										{ak.masked_value && (
+											<span className="text-xs text-stone-400 font-mono">
+												{ak.masked_value}
+											</span>
+										)}
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									{editingKey === ak.key_name ? (
+										<>
+											<input
+												type="password"
+												value={keyValue}
+												onChange={(e) => setKeyValue(e.target.value)}
+												placeholder="Enter new key..."
+												className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
+											/>
+											<button
+												type="button"
+												onClick={() => handleSaveKey(ak.key_name)}
+												disabled={keySaving || !keyValue}
+												className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+											>
+												{t("saveSettings")}
+											</button>
+											<button
+												type="button"
+												onClick={() => {
+													setEditingKey(null);
+													setKeyValue("");
+												}}
+												className="px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-600 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-500"
+											>
+												{t("cancel")}
+											</button>
+										</>
+									) : (
+										<>
+											<button
+												type="button"
+												onClick={() => {
+													setEditingKey(ak.key_name);
+													setKeyValue("");
+												}}
+												className="px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+											>
+												{t("apiKeyUpdate")}
+											</button>
+											{ak.source === "db" && (
+												<button
+													type="button"
+													onClick={() => handleResetKey(ak.key_name)}
+													disabled={keySaving}
+													className="px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-600 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-500 disabled:opacity-50"
+												>
+													{t("apiKeyResetEnv")}
+												</button>
+											)}
+										</>
+									)}
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -719,7 +903,17 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 	const [editRole, setEditRole] = useState("");
 	const [editAccessLevel, setEditAccessLevel] = useState("");
 	const [editDepartmentId, setEditDepartmentId] = useState<string | null>(null);
+	const [editTelegramId, setEditTelegramId] = useState<string>("");
 	const [saving, setSaving] = useState(false);
+	const [showCreateModal, setShowCreateModal] = useState(false);
+	const [createEmail, setCreateEmail] = useState("");
+	const [createName, setCreateName] = useState("");
+	const [createRole, setCreateRole] = useState("employee");
+	const [createDepartmentId, setCreateDepartmentId] = useState<string | null>(
+		null,
+	);
+	const [createAccessLevel, setCreateAccessLevel] = useState("restricted");
+	const [creating, setCreating] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -769,6 +963,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 			setEditRole(editingUser.role);
 			setEditAccessLevel(editingUser.access_level);
 			setEditDepartmentId(editingUser.department_id);
+			setEditTelegramId(editingUser.telegram_id?.toString() ?? "");
 		}
 	}, [editingUser]);
 
@@ -788,6 +983,9 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 						role: editRole,
 						access_level: editAccessLevel,
 						department_id: editDepartmentId,
+						...(editTelegramId
+							? { telegram_id: Number.parseInt(editTelegramId, 10) }
+							: {}),
 					}),
 				},
 			);
@@ -807,15 +1005,65 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 		}
 	};
 
+	const handleCreateUser = async () => {
+		setCreating(true);
+		try {
+			const body: Record<string, unknown> = {
+				email: createEmail,
+				name: createName,
+				role: createRole,
+				access_level: createAccessLevel,
+			};
+			if (createDepartmentId) body.department_id = createDepartmentId;
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+			});
+			if (res.status === 409) {
+				alert(t("emailExists"));
+				return;
+			}
+			if (!res.ok) throw new Error(`${res.status}`);
+			setShowCreateModal(false);
+			setCreateEmail("");
+			setCreateName("");
+			setCreateRole("employee");
+			setCreateDepartmentId(null);
+			setCreateAccessLevel("restricted");
+			// Reload users list
+			const listRes = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
+				headers: { Authorization: `Bearer ${getAccessToken()}` },
+			});
+			if (listRes.ok) setUsers(await listRes.json());
+		} catch {
+			// silent fail
+		} finally {
+			setCreating(false);
+		}
+	};
+
 	return (
 		<div className="space-y-4">
-			<div>
-				<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
-					{t("usersTitle")}
-				</h2>
-				<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
-					{t("usersSub")}
-				</p>
+			<div className="flex items-center justify-between">
+				<div>
+					<h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+						{t("usersTitle")}
+					</h2>
+					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+						{t("usersSub")}
+					</p>
+				</div>
+				<button
+					type="button"
+					onClick={() => setShowCreateModal(true)}
+					className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+				>
+					{t("addUser")}
+				</button>
 			</div>
 
 			{error && (
@@ -1034,6 +1282,24 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									))}
 								</select>
 							</div>
+
+							{/* Telegram ID */}
+							<div>
+								<label
+									htmlFor="edit-user-telegram"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("telegramId")}
+								</label>
+								<input
+									id="edit-user-telegram"
+									type="number"
+									value={editTelegramId}
+									onChange={(e) => setEditTelegramId(e.target.value)}
+									placeholder={t("telegramIdHint")}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								/>
+							</div>
 						</div>
 
 						<div className="flex justify-end gap-3 mt-6">
@@ -1051,6 +1317,162 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
 							>
 								{saving ? "..." : t("saveUser")}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Create user modal */}
+			{showCreateModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+					<div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xl w-full max-w-md mx-4 p-6">
+						<div className="flex items-center justify-between mb-6">
+							<h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+								{t("addUserTitle")}
+							</h3>
+							<button
+								type="button"
+								onClick={() => setShowCreateModal(false)}
+								aria-label={t("cancel")}
+								className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+						<p className="text-sm text-stone-500 dark:text-stone-400 mb-4">
+							{t("addUserSub")}
+						</p>
+						<div className="space-y-4">
+							<div>
+								<label
+									htmlFor="create-user-email"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("userEmail")}
+								</label>
+								<input
+									id="create-user-email"
+									type="email"
+									value={createEmail}
+									onChange={(e) => setCreateEmail(e.target.value)}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor="create-user-name"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("userName")}
+								</label>
+								<input
+									id="create-user-name"
+									type="text"
+									value={createName}
+									onChange={(e) => setCreateName(e.target.value)}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor="create-user-role"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("userRole")}
+								</label>
+								<select
+									id="create-user-role"
+									value={createRole}
+									onChange={(e) => setCreateRole(e.target.value)}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								>
+									{[
+										"admin",
+										"ceo",
+										"executive",
+										"hr",
+										"manager",
+										"employee",
+									].map((r) => (
+										<option key={r} value={r}>
+											{t(`role_${r}` as Parameters<typeof t>[0])}
+										</option>
+									))}
+								</select>
+							</div>
+							<div>
+								<label
+									htmlFor="create-user-dept"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("userDept")}
+								</label>
+								<select
+									id="create-user-dept"
+									value={createDepartmentId ?? ""}
+									onChange={(e) =>
+										setCreateDepartmentId(e.target.value || null)
+									}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								>
+									<option value="">— None —</option>
+									{departments.map((d) => (
+										<option key={d.id} value={d.id}>
+											{d.name}
+										</option>
+									))}
+								</select>
+							</div>
+							<div>
+								<label
+									htmlFor="create-user-access"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("userAccessLevel")}
+								</label>
+								<select
+									id="create-user-access"
+									value={createAccessLevel}
+									onChange={(e) => setCreateAccessLevel(e.target.value)}
+									className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								>
+									{["all", "department", "restricted"].map((l) => (
+										<option key={l} value={l}>
+											{l}
+										</option>
+									))}
+								</select>
+							</div>
+						</div>
+						<div className="flex justify-end gap-3 mt-6">
+							<button
+								type="button"
+								onClick={() => setShowCreateModal(false)}
+								className="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
+							>
+								{t("cancel")}
+							</button>
+							<button
+								type="button"
+								onClick={handleCreateUser}
+								disabled={creating || !createEmail || !createName}
+								className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+							>
+								{creating ? "..." : t("addUser")}
 							</button>
 						</div>
 					</div>
@@ -2733,7 +3155,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 export default function AdminPage() {
 	const t = useTranslations("admin");
 	const locale = useLocale();
-	const { data: session } = useSession();
+	const { data: session, status: sessionStatus } = useSession();
 
 	const [activeTab, setActiveTab] = useState<TabId>("datasources");
 	const [sources, setSources] = useState<KnowledgeSource[]>([]);
@@ -2814,6 +3236,11 @@ export default function AdminPage() {
 		{ id: "harvest", label: t("tabHarvest") },
 	];
 
+	// Suppress hydration mismatch: wait for session to load on client
+	if (sessionStatus === "loading") {
+		return null;
+	}
+
 	// Role guard - only admin users can access this page
 	if (session?.user?.role && session.user.role !== "admin") {
 		return (
@@ -2844,11 +3271,17 @@ export default function AdminPage() {
 
 			{/* Tab bar */}
 			<div className="border-b border-stone-200 dark:border-stone-700/60 bg-white dark:bg-stone-900/80 px-6 shrink-0">
-				<nav className="-mb-px flex gap-1" aria-label="Admin tabs">
+				<div
+					className="-mb-px flex gap-1"
+					role="tablist"
+					aria-label="Admin tabs"
+				>
 					{tabs.map((tab) => (
 						<button
 							key={tab.id}
 							type="button"
+							role="tab"
+							aria-selected={activeTab === tab.id}
 							onClick={() => setActiveTab(tab.id)}
 							className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
 								activeTab === tab.id
@@ -2859,7 +3292,7 @@ export default function AdminPage() {
 							{tab.label}
 						</button>
 					))}
-				</nav>
+				</div>
 			</div>
 
 			{/* Tab content */}
