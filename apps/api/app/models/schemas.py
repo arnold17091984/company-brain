@@ -351,9 +351,9 @@ class PromptTemplateUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=1000)
     content: str | None = Field(default=None, min_length=1)
-    category: Literal[
-        "cs", "marketing", "development", "accounting", "general_affairs", "general"
-    ] | None = None
+    category: (
+        Literal["cs", "marketing", "development", "accounting", "general_affairs", "general"] | None
+    ) = None
 
 
 class PromptTemplateResponse(BaseModel):
@@ -604,3 +604,65 @@ class ROIReportResponse(BaseModel):
     kpi_correlation: dict
     report_markdown: str
     created_at: str
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Knowledge Harvesting
+# ---------------------------------------------------------------------------
+
+
+class HarvestSessionCreate(BaseModel):
+    """Request to start a knowledge harvest session."""
+
+    target_user_id: str
+    departure_date: str  # ISO date
+
+
+class HarvestSessionSummary(BaseModel):
+    """Summary of a harvest session for the dashboard list."""
+
+    id: str
+    target_user_name: str
+    target_user_email: str
+    status: str
+    total_questions: int
+    answered_questions: int
+    progress_percent: float
+    created_at: str
+    departure_date: str | None
+
+
+class HarvestQuestionDetail(BaseModel):
+    """Detail of a single harvest question with answer."""
+
+    id: str
+    category: str
+    question: str
+    answer: str | None
+    answer_quality: float | None
+    source: str | None
+    asked_at: str
+    answered_at: str | None
+
+
+class HarvestSessionDetail(BaseModel):
+    """Full session detail including all questions."""
+
+    id: str
+    target_user_name: str
+    target_user_email: str
+    status: str
+    total_questions: int
+    answered_questions: int
+    progress_percent: float
+    created_at: str
+    departure_date: str | None
+    questions: list[HarvestQuestionDetail]
+
+
+class HarvestAnswerSubmit(BaseModel):
+    """Request to submit an answer to a harvest question."""
+
+    question_id: str
+    answer: str
+    source: str = "web"

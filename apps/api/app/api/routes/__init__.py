@@ -9,11 +9,12 @@ from app.api.routes.admin import router as admin_router
 from app.api.routes.analytics import router as analytics_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.chat import router as chat_router
+from app.api.routes.departments import router as departments_router
 from app.api.routes.documents import router as documents_router
+from app.api.routes.harvest import router as harvest_router
 from app.api.routes.hr import router as hr_router
 from app.api.routes.knowledge import router as knowledge_router
 from app.api.routes.knowledge_admin import router as knowledge_admin_router
-from app.api.routes.departments import router as departments_router
 from app.api.routes.recipes import router as recipes_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.users import router as users_router
@@ -32,3 +33,4 @@ api_router.include_router(recipes_router)
 api_router.include_router(users_router)
 api_router.include_router(departments_router)
 api_router.include_router(knowledge_admin_router)
+api_router.include_router(harvest_router)
