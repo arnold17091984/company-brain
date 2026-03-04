@@ -91,6 +91,12 @@ class User(Base):
     chat_sessions: Mapped[list["ChatSession"]] = relationship("ChatSession", back_populates="user")
     feedbacks: Mapped[list["Feedback"]] = relationship("Feedback", back_populates="user")
     audit_logs: Mapped[list["AuditLog"]] = relationship("AuditLog", back_populates="user")
+    harvest_sessions_as_target: Mapped[list["HarvestSession"]] = relationship(
+        "HarvestSession", foreign_keys="HarvestSession.target_user_id", back_populates="target_user"
+    )
+    harvest_sessions_as_creator: Mapped[list["HarvestSession"]] = relationship(
+        "HarvestSession", foreign_keys="HarvestSession.created_by", back_populates="creator"
+    )
 
 
 class Document(Base):
