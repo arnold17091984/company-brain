@@ -145,6 +145,7 @@ def _make_user(
     name: str = "Test User",
     department_name: str | None = "engineering",
     access_level: str = "restricted",
+    telegram_id: int | None = None,
     created_at: datetime | None = None,
 ) -> Any:
     """Build a minimal fake user row returned by a DB query."""
@@ -158,6 +159,7 @@ def _make_user(
     row.name = name
     row.department_name = department_name
     row.access_level = access_level
+    row.telegram_id = telegram_id
     row.created_at = created_at or datetime(2026, 1, 1, tzinfo=UTC)
     return row
 

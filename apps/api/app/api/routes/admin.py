@@ -270,6 +270,7 @@ async def list_users(
             DBUser.name,
             Department.name.label("department_name"),
             DBUser.access_level,
+            DBUser.telegram_id,
             DBUser.created_at,
         )
         .outerjoin(Department, DBUser.department_id == Department.id)
@@ -286,6 +287,7 @@ async def list_users(
             name=row.name,
             department=row.department_name,
             access_level=row.access_level,
+            telegram_id=row.telegram_id,
             created_at=row.created_at.isoformat(),
         )
         for row in rows

@@ -148,6 +148,7 @@ def _make_user_orm(
     role: str = "employee",
     department_id: uuid.UUID | None = None,
     access_level: str = "restricted",
+    telegram_id: int | None = None,
     created_at: datetime | None = None,
     updated_at: datetime | None = None,
 ) -> Any:
@@ -163,6 +164,7 @@ def _make_user_orm(
     u.role = role
     u.department_id = department_id
     u.access_level = access_level
+    u.telegram_id = telegram_id
     u.created_at = created_at or datetime(2026, 1, 1, tzinfo=UTC)
     u.updated_at = updated_at or datetime(2026, 1, 2, tzinfo=UTC)
     return u
@@ -175,6 +177,7 @@ def _make_user_row(
     name: str = "Test User",
     department_name: str | None = "engineering",
     access_level: str = "restricted",
+    telegram_id: int | None = None,
     created_at: datetime | None = None,
 ) -> Any:
     """Build a minimal flat DB row for list_users (returns plain row objects)."""
@@ -188,6 +191,7 @@ def _make_user_row(
     r.name = name
     r.department_name = department_name
     r.access_level = access_level
+    r.telegram_id = telegram_id
     r.created_at = created_at or datetime(2026, 1, 1, tzinfo=UTC)
     return r
 
@@ -442,8 +446,8 @@ class TestUpdateUser:
 
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=user_obj),   # initial fetch by id
-                result_after,                    # re-fetch after commit
+                _FakeResult(scalar=user_obj),  # initial fetch by id
+                result_after,  # re-fetch after commit
             ]
         )
         async with await _client(db) as client:
@@ -690,7 +694,7 @@ class TestCreateDepartment:
         new_dept = _make_dept_orm(name="Customer Success", slug="customer-success")
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=None),   # slug uniqueness check (no existing)
+                _FakeResult(scalar=None),  # slug uniqueness check (no existing)
             ]
         )
         # After flush db.added will contain the new dept
@@ -775,8 +779,8 @@ class TestUpdateDepartment:
         dept = _make_dept_orm(dept_id=did, name="Old Name", slug="old-name")
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=dept),   # fetch department
-                _FakeResult(scalar=0),       # user count
+                _FakeResult(scalar=dept),  # fetch department
+                _FakeResult(scalar=0),  # user count
             ]
         )
         async with await _client(db) as client:
@@ -808,7 +812,7 @@ class TestUpdateDepartment:
         conflicting = _make_dept_orm(slug="hr")
         db = _FakeSession(
             execute_results=[
-                _FakeResult(scalar=dept),        # fetch department
+                _FakeResult(scalar=dept),  # fetch department
                 _FakeResult(scalar=conflicting),  # slug uniqueness check finds conflict
             ]
         )
@@ -862,7 +866,7 @@ class TestDeleteDepartment:
         db = _FakeSession(
             execute_results=[
                 _FakeResult(scalar=dept),  # fetch department
-                _FakeResult(scalar=0),      # user count = 0
+                _FakeResult(scalar=0),  # user count = 0
             ]
         )
         async with await _client(db) as client:
@@ -880,7 +884,7 @@ class TestDeleteDepartment:
         db = _FakeSession(
             execute_results=[
                 _FakeResult(scalar=dept),  # fetch department
-                _FakeResult(scalar=3),      # user_count = 3 (non-zero)
+                _FakeResult(scalar=3),  # user_count = 3 (non-zero)
             ]
         )
         async with await _client(db) as client:

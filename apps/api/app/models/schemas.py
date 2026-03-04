@@ -249,6 +249,7 @@ class UserSummary(BaseModel):
     name: str
     department: str | None = None
     access_level: str
+    telegram_id: int | None = None
     created_at: str
 
 
@@ -286,6 +287,16 @@ UserRole = Literal["admin", "ceo", "executive", "hr", "manager", "employee"]
 AccessLevel = Literal["all", "department", "restricted"]
 
 
+class UserCreate(BaseModel):
+    """Request to create a new user (admin pre-provisioning)."""
+
+    email: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., min_length=1, max_length=255)
+    role: UserRole = "employee"
+    department_id: str | None = None
+    access_level: AccessLevel = "restricted"
+
+
 class UserUpdate(BaseModel):
     """Request to update user role, department, or access level."""
 
@@ -293,6 +304,7 @@ class UserUpdate(BaseModel):
     department_id: str | None = None
     access_level: AccessLevel | None = None
     name: str | None = None
+    telegram_id: int | None = None
 
 
 class UserDetailResponse(BaseModel):
@@ -305,6 +317,7 @@ class UserDetailResponse(BaseModel):
     department_id: str | None = None
     department_name: str | None = None
     access_level: str
+    telegram_id: int | None = None
     created_at: str
     updated_at: str
 

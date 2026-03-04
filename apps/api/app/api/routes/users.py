@@ -13,7 +13,7 @@ from app.core.auth import User, get_admin_user
 from app.core.database import get_db
 from app.models.database import Department
 from app.models.database import User as DBUser
-from app.models.schemas import UserDetailResponse, UserSummary, UserUpdate
+from app.models.schemas import UserCreate, UserDetailResponse, UserSummary, UserUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ async def list_users(
             DBUser.name,
             Department.name.label("department_name"),
             DBUser.access_level,
+            DBUser.telegram_id,
             DBUser.created_at,
         )
         .outerjoin(Department, DBUser.department_id == Department.id)
@@ -47,10 +48,121 @@ async def list_users(
             name=row.name,
             department=row.department_name,
             access_level=row.access_level,
+            telegram_id=row.telegram_id,
             created_at=row.created_at.isoformat(),
         )
         for row in rows
     ]
+
+
+@router.post("", response_model=UserDetailResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    body: UserCreate,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserDetailResponse:
+    """Pre-provision a new user account.
+
+    Creates a user with google_id=None. When the user first signs in
+    via Google OAuth, the existing get_or_create_user() flow will
+    automatically link their Google account by matching email.
+    """
+    # Check for duplicate email
+    existing = await db.execute(select(DBUser).where(DBUser.email == body.email))
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists.",
+        )
+
+    # Validate department if provided
+    dept_uuid = None
+    if body.department_id:
+        try:
+            dept_uuid = uuid.UUID(body.department_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid department_id format.",
+            ) from None
+        dept_result = await db.execute(select(Department).where(Department.id == dept_uuid))
+        if dept_result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=404, detail="Department not found.")
+
+    new_user = DBUser(
+        email=body.email,
+        name=body.name,
+        role=body.role,
+        department_id=dept_uuid,
+        access_level=body.access_level,
+        google_id=None,
+    )
+    db.add(new_user)
+    await db.flush()
+    await db.commit()
+
+    # Re-fetch with department name
+    stmt = (
+        select(DBUser, Department.name.label("department_name"))
+        .outerjoin(Department, DBUser.department_id == Department.id)
+        .where(DBUser.id == new_user.id)
+    )
+    result = await db.execute(stmt)
+    row = result.one()
+    user_obj = row[0]
+    dept_name = row.department_name
+
+    logger.info("User %s created by %s", body.email, current_user.email)
+
+    return UserDetailResponse(
+        id=str(user_obj.id),
+        email=user_obj.email,
+        name=user_obj.name,
+        role=user_obj.role,
+        department_id=(str(user_obj.department_id) if user_obj.department_id else None),
+        department_name=dept_name,
+        access_level=user_obj.access_level,
+        telegram_id=user_obj.telegram_id,
+        created_at=user_obj.created_at.isoformat(),
+        updated_at=user_obj.updated_at.isoformat(),
+    )
+
+
+@router.get("/by-telegram/{telegram_id}", response_model=UserDetailResponse)
+async def get_user_by_telegram(
+    telegram_id: int,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserDetailResponse:
+    """Look up a user by their Telegram ID."""
+    stmt = (
+        select(DBUser, Department.name.label("department_name"))
+        .outerjoin(Department, DBUser.department_id == Department.id)
+        .where(DBUser.telegram_id == telegram_id)
+    )
+    result = await db.execute(stmt)
+    row = result.one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No user linked to this Telegram ID.",
+        )
+
+    user_obj = row[0]
+    dept_name = row.department_name
+
+    return UserDetailResponse(
+        id=str(user_obj.id),
+        email=user_obj.email,
+        name=user_obj.name,
+        role=user_obj.role,
+        department_id=(str(user_obj.department_id) if user_obj.department_id else None),
+        department_name=dept_name,
+        access_level=user_obj.access_level,
+        telegram_id=user_obj.telegram_id,
+        created_at=user_obj.created_at.isoformat(),
+        updated_at=user_obj.updated_at.isoformat(),
+    )
 
 
 @router.get("/{user_id}", response_model=UserDetailResponse)
@@ -86,6 +198,7 @@ async def get_user(
         department_id=str(user_obj.department_id) if user_obj.department_id else None,
         department_name=dept_name,
         access_level=user_obj.access_level,
+        telegram_id=user_obj.telegram_id,
         created_at=user_obj.created_at.isoformat(),
         updated_at=user_obj.updated_at.isoformat(),
     )
@@ -126,6 +239,21 @@ async def update_user(
             raise HTTPException(status_code=404, detail="Department not found.")
         user_obj.department_id = dept_uuid
 
+    if body.telegram_id is not None:
+        # Check for duplicate telegram_id
+        dup_result = await db.execute(
+            select(DBUser).where(
+                DBUser.telegram_id == body.telegram_id,
+                DBUser.id != uid,
+            )
+        )
+        if dup_result.scalar_one_or_none() is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This Telegram ID is already linked to another user.",
+            )
+        user_obj.telegram_id = body.telegram_id
+
     await db.flush()
     await db.commit()
 
@@ -150,6 +278,7 @@ async def update_user(
         department_id=str(updated_user.department_id) if updated_user.department_id else None,
         department_name=dept_name,
         access_level=updated_user.access_level,
+        telegram_id=updated_user.telegram_id,
         created_at=updated_user.created_at.isoformat(),
         updated_at=updated_user.updated_at.isoformat(),
     )

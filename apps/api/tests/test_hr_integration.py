@@ -200,6 +200,7 @@ def _make_user_obj(
     name: str = "Test User",
     department_name: str | None = "engineering",
     access_level: str = "restricted",
+    telegram_id: int | None = None,
     role: str = "employee",
     created_at: datetime | None = None,
 ) -> Any:
@@ -214,6 +215,7 @@ def _make_user_obj(
     row.name = name
     row.department_name = department_name
     row.access_level = access_level
+    row.telegram_id = telegram_id
     row.role = role
     row.created_at = created_at or datetime(2026, 1, 1, tzinfo=UTC)
     return row
