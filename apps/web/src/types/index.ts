@@ -212,7 +212,7 @@ export interface HarvestSession {
 	answered_questions: number;
 	progress_percent: number;
 	created_at: string;
-	departure_date: string | null;
+	suspension_date: string | null;
 }
 
 export interface HarvestQuestion {

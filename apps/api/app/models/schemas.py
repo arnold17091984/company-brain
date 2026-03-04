@@ -615,7 +615,7 @@ class HarvestSessionCreate(BaseModel):
     """Request to start a knowledge harvest session."""
 
     target_user_id: str
-    departure_date: str  # ISO date
+    suspension_date: str  # ISO date
 
 
 class HarvestSessionSummary(BaseModel):
@@ -629,7 +629,7 @@ class HarvestSessionSummary(BaseModel):
     answered_questions: int
     progress_percent: float
     created_at: str
-    departure_date: str | None
+    suspension_date: str | None
 
 
 class HarvestQuestionDetail(BaseModel):
@@ -656,7 +656,7 @@ class HarvestSessionDetail(BaseModel):
     answered_questions: int
     progress_percent: float
     created_at: str
-    departure_date: str | None
+    suspension_date: str | None
     questions: list[HarvestQuestionDetail]
 
 

@@ -86,7 +86,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # ── Harvest ─────────────────────────────────────────────────────────────
         "harvest_greeting": (
             "You have a knowledge harvest session in progress. Let me ask you some questions "
-            "to preserve your expertise before you leave."
+            "to preserve your expertise during your suspension period."
         ),
         "harvest_question": "Question ({current}/{total}) - {category}:\n\n{question}",
         "harvest_answer_received": "Thank you for your answer! Your knowledge is valuable.",
@@ -168,7 +168,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # ── Harvest ─────────────────────────────────────────────────────────────
         "harvest_greeting": (
             "ナレッジ回収セッションが進行中です。"
-            "退職前にあなたの専門知識を残すためにいくつか質問させてください。"
+            "サスペンション期間中にあなたの専門知識を残すためにいくつか質問させてください。"
         ),
         "harvest_question": "質問 ({current}/{total}) - {category}:\n\n{question}",
         "harvest_answer_received": "回答ありがとうございます！あなたの知識は貴重です。",
@@ -252,7 +252,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # ── Harvest ─────────────────────────────────────────────────────────────
         "harvest_greeting": (
             "지식 수집 세션이 진행 중입니다. "
-            "퇴사 전에 전문 지식을 보존하기 위해 몇 가지 질문을 드리겠습니다."
+            "정직 기간 동안 전문 지식을 보존하기 위해 몇 가지 질문을 드리겠습니다."
         ),
         "harvest_question": "질문 ({current}/{total}) - {category}:\n\n{question}",
         "harvest_answer_received": "답변 감사합니다! 귀하의 지식은 소중합니다.",
@@ -337,7 +337,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # ── Harvest ─────────────────────────────────────────────────────────────
         "harvest_greeting": (
             "May aktibong knowledge harvest session ka. "
-            "Magtanong ako ng ilang katanungan upang mapreserba ang iyong kaalaman bago ka umalis."
+            "Magtanong ako ng ilang katanungan upang mapreserba ang iyong kaalaman sa panahon ng iyong suspension."
         ),
         "harvest_question": "Tanong ({current}/{total}) - {category}:\n\n{question}",
         "harvest_answer_received": "Salamat sa iyong sagot! Mahalaga ang iyong kaalaman.",

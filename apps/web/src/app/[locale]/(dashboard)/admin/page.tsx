@@ -2161,7 +2161,7 @@ interface HarvestSessionLocal {
 	answered_questions: number;
 	progress_percent: number;
 	created_at: string;
-	departure_date: string | null;
+	suspension_date: string | null;
 }
 
 interface HarvestQuestionLocal {
@@ -2282,7 +2282,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 				},
 				body: JSON.stringify({
 					target_user_id: formUserId,
-					departure_date: formDate || null,
+					suspension_date: formDate || null,
 				}),
 			});
 			if (!res.ok) throw new Error(`${res.status}`);
@@ -2587,7 +2587,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 									htmlFor="harvest-date"
 									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
 								>
-									{t("departureDate")}
+									{t("suspensionDate")}
 								</label>
 								<input
 									id="harvest-date"
@@ -2660,9 +2660,9 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 									<p className="text-xs text-stone-500 dark:text-stone-400 truncate">
 										{session.target_user_email}
 									</p>
-									{session.departure_date && (
+									{session.suspension_date && (
 										<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
-											{t("departureDate")}: {session.departure_date}
+											{t("suspensionDate")}: {session.suspension_date}
 										</p>
 									)}
 								</div>

@@ -64,11 +64,11 @@ class User(Base):
     access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
     role: Mapped[str] = mapped_column(String(50), nullable=False, default="employee")
     employment_status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
-    departure_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    departure_flagged_by: Mapped[uuid.UUID | None] = mapped_column(
+    suspension_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    suspension_flagged_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    departure_flagged_at: Mapped[datetime | None] = mapped_column(
+    suspension_flagged_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     job_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -508,7 +508,7 @@ class SystemSetting(Base):
 
 
 class HarvestSession(Base):
-    """Knowledge harvest session for a departing employee."""
+    """Knowledge harvest session for a suspended employee."""
 
     __tablename__ = "harvest_sessions"
 

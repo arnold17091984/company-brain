@@ -18,15 +18,15 @@ async def create_session(
     db: AsyncSession,
     target_user_id: str,
     created_by: str,
-    departure_date: str,
+    suspension_date: str,
 ) -> HarvestSession:
-    """Create a new harvest session and flag user as departing.
+    """Create a new harvest session and flag user as suspended.
 
     Args:
         db: Active database session.
-        target_user_id: UUID string of the departing employee.
+        target_user_id: UUID string of the suspended employee.
         created_by: UUID string of the user initiating the session.
-        departure_date: ISO date string (e.g. "2026-06-30").
+        suspension_date: ISO date string (e.g. "2026-06-30").
 
     Returns:
         The newly created HarvestSession ORM object (not yet committed).
@@ -34,15 +34,15 @@ async def create_session(
     target_uid = uuid.UUID(target_user_id)
     creator_uid = uuid.UUID(created_by)
 
-    # Flag user as departing
+    # Flag user as suspended
     await db.execute(
         update(User)
         .where(User.id == target_uid)
         .values(
-            employment_status="departing",
-            departure_date=date.fromisoformat(departure_date),
-            departure_flagged_by=creator_uid,
-            departure_flagged_at=datetime.now(UTC),
+            employment_status="suspended",
+            suspension_date=date.fromisoformat(suspension_date),
+            suspension_flagged_by=creator_uid,
+            suspension_flagged_at=datetime.now(UTC),
         )
     )
 

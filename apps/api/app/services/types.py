@@ -73,8 +73,8 @@ class EmploymentStatus(StrEnum):
     """Employee lifecycle status."""
 
     ACTIVE = "active"
-    DEPARTING = "departing"
-    DEPARTED = "departed"
+    SUSPENDED = "suspended"
+    SUSPENSION_ENDED = "suspension_ended"
 
 
 class HarvestStatus(StrEnum):

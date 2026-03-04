@@ -96,9 +96,9 @@
 	},
 	"harvest": {
 		"title": "ナレッジ回収",
-		"description": "退職する社員からの知識収集を管理",
+		"description": "サスペンション対象社員からの知識収集を管理",
 		"flagUser": "回収開始",
-		"departureDate": "最終出勤日",
+		"suspensionDate": "サスペンション日",
 		"selectUser": "社員を選択",
 		"progress": "進捗",
 		"questions": "質問",
@@ -116,7 +116,7 @@
 			"completed": "完了",
 			"paused": "一時停止"
 		},
-		"noSessions": "回収セッションはまだありません。退職予定の社員を登録してください。",
+		"noSessions": "回収セッションはまだありません。サスペンション対象の社員を登録してください。",
 		"createSession": "ナレッジ回収を開始",
 		"pauseSession": "一時停止",
 		"resumeSession": "再開",

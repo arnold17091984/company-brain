@@ -1,4 +1,4 @@
-"""Harvest API endpoints for knowledge collection from departing employees."""
+"""Harvest API endpoints for knowledge collection from suspended employees."""
 
 from __future__ import annotations
 
@@ -84,13 +84,13 @@ async def create_session(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> HarvestSessionSummary:
-    """Create a knowledge harvest session for a departing employee.
+    """Create a knowledge harvest session for a suspended employee.
 
-    Flags the target employee as departing, generates AI-powered questions
+    Flags the target employee as suspended, generates AI-powered questions
     using Claude Sonnet, and persists the session in a single transaction.
 
     Args:
-        body: Target user ID and departure date.
+        body: Target user ID and suspension date.
         current_user: Authenticated caller (must have harvest permission).
         db: Database session.
 
@@ -103,7 +103,7 @@ async def create_session(
         db,
         target_user_id=body.target_user_id,
         created_by=current_user.id,
-        departure_date=body.departure_date,
+        suspension_date=body.suspension_date,
     )
 
     target = await _load_target_user(db, session.target_user_id)
@@ -126,7 +126,7 @@ async def create_session(
         answered_questions=0,
         progress_percent=0.0,
         created_at=str(session.created_at),
-        departure_date=body.departure_date,
+        suspension_date=body.suspension_date,
     )
 
 
@@ -161,8 +161,8 @@ async def list_sessions(
                 answered_questions=s.answered_questions,
                 progress_percent=_progress_pct(s.answered_questions, s.total_questions),
                 created_at=str(s.created_at),
-                departure_date=(
-                    str(target.departure_date) if target and target.departure_date else None
+                suspension_date=(
+                    str(target.suspension_date) if target and target.suspension_date else None
                 ),
             )
         )
@@ -210,7 +210,7 @@ async def get_session_detail(
         answered_questions=session.answered_questions,
         progress_percent=_progress_pct(session.answered_questions, session.total_questions),
         created_at=str(session.created_at),
-        departure_date=(str(target.departure_date) if target and target.departure_date else None),
+        suspension_date=(str(target.suspension_date) if target and target.suspension_date else None),
         questions=[
             HarvestQuestionDetail(
                 id=str(q.id),

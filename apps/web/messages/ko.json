@@ -96,9 +96,9 @@
 	},
 	"harvest": {
 		"title": "지식 수집",
-		"description": "퇴사 직원의 지식 수집 관리",
+		"description": "정직 대상 직원의 지식 수집 관리",
 		"flagUser": "수집 시작",
-		"departureDate": "마지막 근무일",
+		"suspensionDate": "정직 날짜",
 		"selectUser": "직원 선택",
 		"progress": "진행률",
 		"questions": "질문",
@@ -116,7 +116,7 @@
 			"completed": "완료",
 			"paused": "일시 중지"
 		},
-		"noSessions": "수집 세션이 아직 없습니다. 퇴사 예정 직원을 등록하세요.",
+		"noSessions": "수집 세션이 아직 없습니다. 정직 대상 직원을 등록하세요.",
 		"createSession": "지식 수집 시작",
 		"pauseSession": "일시 중지",
 		"resumeSession": "재개",

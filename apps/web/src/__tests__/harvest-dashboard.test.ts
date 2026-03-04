@@ -15,13 +15,13 @@ describe("HarvestSession type", () => {
 			answered_questions: 5,
 			progress_percent: 25.0,
 			created_at: "2026-03-01T00:00:00Z",
-			departure_date: "2026-06-30",
+			suspension_date: "2026-06-30",
 		};
 		expect(session.status).toBe("active");
 		expect(session.progress_percent).toBe(25.0);
 	});
 
-	it("accepts null departure_date", () => {
+	it("accepts null suspension_date", () => {
 		const session: HarvestSession = {
 			id: "s2",
 			target_user_name: "Bob",
@@ -31,9 +31,9 @@ describe("HarvestSession type", () => {
 			answered_questions: 15,
 			progress_percent: 100.0,
 			created_at: "2026-02-01T00:00:00Z",
-			departure_date: null,
+			suspension_date: null,
 		};
-		expect(session.departure_date).toBeNull();
+		expect(session.suspension_date).toBeNull();
 	});
 
 	it("accepts paused status", () => {
@@ -46,7 +46,7 @@ describe("HarvestSession type", () => {
 			answered_questions: 10,
 			progress_percent: 40.0,
 			created_at: "2026-03-04T00:00:00Z",
-			departure_date: "2026-07-15",
+			suspension_date: "2026-07-15",
 		};
 		expect(session.status).toBe("paused");
 	});
@@ -112,7 +112,7 @@ describe("HarvestSessionDetail type", () => {
 			answered_questions: 1,
 			progress_percent: 50.0,
 			created_at: "2026-03-01T00:00:00Z",
-			departure_date: "2026-06-30",
+			suspension_date: "2026-06-30",
 			questions: [
 				{
 					id: "q1",
@@ -151,7 +151,7 @@ describe("HarvestSessionDetail type", () => {
 			answered_questions: 0,
 			progress_percent: 0,
 			created_at: "2026-03-04T00:00:00Z",
-			departure_date: null,
+			suspension_date: null,
 			questions: [],
 		};
 		expect(detail.questions).toHaveLength(0);

@@ -27,9 +27,9 @@ from app.services.llm.provider import LLMResponse
 
 class TestHarvestSchemas:
     def test_session_create_valid(self) -> None:
-        s = HarvestSessionCreate(target_user_id="abc-123", departure_date="2026-06-30")
+        s = HarvestSessionCreate(target_user_id="abc-123", suspension_date="2026-06-30")
         assert s.target_user_id == "abc-123"
-        assert s.departure_date == "2026-06-30"
+        assert s.suspension_date == "2026-06-30"
 
     def test_session_summary_fields(self) -> None:
         s = HarvestSessionSummary(
@@ -41,7 +41,7 @@ class TestHarvestSchemas:
             answered_questions=5,
             progress_percent=25.0,
             created_at="2026-03-01",
-            departure_date="2026-06-30",
+            suspension_date="2026-06-30",
         )
         assert s.progress_percent == 25.0
         assert s.status == "active"
@@ -84,7 +84,7 @@ class TestHarvestSchemas:
             answered_questions=1,
             progress_percent=50.0,
             created_at="2026-03-01",
-            departure_date=None,
+            suspension_date=None,
             questions=[
                 HarvestQuestionDetail(
                     id="q1",
@@ -108,7 +108,7 @@ class TestHarvestSchemas:
         a = HarvestAnswerSubmit(question_id="q1", answer="My answer")
         assert a.source == "web"
 
-    def test_session_summary_null_departure(self) -> None:
+    def test_session_summary_null_suspension(self) -> None:
         s = HarvestSessionSummary(
             id="s2",
             target_user_name="Bob",
@@ -118,9 +118,9 @@ class TestHarvestSchemas:
             answered_questions=10,
             progress_percent=100.0,
             created_at="2026-03-01",
-            departure_date=None,
+            suspension_date=None,
         )
-        assert s.departure_date is None
+        assert s.suspension_date is None
 
 
 # ---------------------------------------------------------------------------
@@ -233,8 +233,8 @@ class TestEnumTypes:
         from app.services.types import EmploymentStatus
 
         assert EmploymentStatus.ACTIVE == "active"
-        assert EmploymentStatus.DEPARTING == "departing"
-        assert EmploymentStatus.DEPARTED == "departed"
+        assert EmploymentStatus.SUSPENDED == "suspended"
+        assert EmploymentStatus.SUSPENSION_ENDED == "suspension_ended"
 
     def test_harvest_status_values(self) -> None:
         from app.services.types import HarvestStatus

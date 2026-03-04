@@ -96,9 +96,9 @@
 	},
 	"harvest": {
 		"title": "Knowledge Harvest",
-		"description": "Manage knowledge collection from departing employees",
+		"description": "Manage knowledge collection from suspended employees",
 		"flagUser": "Start Harvest",
-		"departureDate": "Last Working Day",
+		"suspensionDate": "Suspension Date",
 		"selectUser": "Select Employee",
 		"progress": "Progress",
 		"questions": "Questions",
@@ -116,7 +116,7 @@
 			"completed": "Completed",
 			"paused": "Paused"
 		},
-		"noSessions": "No harvest sessions yet. Start by flagging a departing employee.",
+		"noSessions": "No harvest sessions yet. Start by flagging a suspended employee.",
 		"createSession": "Start Knowledge Harvest",
 		"pauseSession": "Pause",
 		"resumeSession": "Resume",

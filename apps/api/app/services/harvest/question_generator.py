@@ -11,7 +11,7 @@ from app.services.llm.claude_service import ClaudeService
 
 logger = logging.getLogger(__name__)
 
-_QUESTION_PROMPT = """You are generating knowledge-capture questions for a departing employee.
+_QUESTION_PROMPT = """You are generating knowledge-capture questions for a suspended employee.
 
 Employee info:
 - Name: {name}
