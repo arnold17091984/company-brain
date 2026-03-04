@@ -10,33 +10,14 @@ import asyncio
 import logging
 import time
 from collections.abc import AsyncIterator
-from dataclasses import dataclass, field
 
 import anthropic
 from anthropic import AsyncAnthropic
 
 from app.core.config import settings
+from app.services.llm.provider import LLMResponse, StreamMetrics
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class LLMResponse:
-    """Extended response from the LLM including usage metrics."""
-
-    text: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    latency_ms: float = 0.0
-
-
-@dataclass
-class StreamMetrics:
-    """Accumulated metrics collected during streaming."""
-
-    input_tokens: int = 0
-    output_tokens: int = 0
-    latency_ms: float = 0.0
 
 _DEFAULT_SONNET = "claude-sonnet-4-6"
 _DEFAULT_HAIKU = "claude-haiku-4-5-20251001"
@@ -115,6 +96,8 @@ class ClaudeService:
     either interface is expected.
     """
 
+    provider_name = "anthropic"
+
     def __init__(self, default_model: str = _DEFAULT_SONNET) -> None:
         self._client = _build_client()
         self._default_model = default_model
@@ -167,7 +150,21 @@ class ClaudeService:
             input_tokens=getattr(usage, "input_tokens", 0) if usage else 0,
             output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
             latency_ms=round(latency_ms, 1),
+            model_id=resolved_model,
+            provider=self.provider_name,
         )
+
+    def supports_thinking(self, model_id: str) -> bool:
+        """Return True if the given model supports extended thinking.
+
+        Args:
+            model_id: The provider-specific model identifier to check.
+
+        Returns:
+            ``True`` when the model is a Sonnet variant that supports
+            extended thinking mode, ``False`` otherwise.
+        """
+        return "sonnet" in model_id.lower()
 
     async def stream(
         self,
