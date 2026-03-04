@@ -94,6 +94,38 @@
 		"milestonesTitle": "팀 마일스톤",
 		"milestonesSub": "팀의 성과와 집단적 발전을 함께 축하합니다"
 	},
+	"harvest": {
+		"title": "지식 수집",
+		"description": "퇴사 직원의 지식 수집 관리",
+		"flagUser": "수집 시작",
+		"departureDate": "마지막 근무일",
+		"selectUser": "직원 선택",
+		"progress": "진행률",
+		"questions": "질문",
+		"answered": "답변 완료",
+		"pending": "미답변",
+		"categories": {
+			"project": "프로젝트 지식",
+			"process": "업무 프로세스",
+			"client": "고객 관계",
+			"tool": "도구 및 시스템",
+			"team": "팀 지식"
+		},
+		"status": {
+			"active": "진행 중",
+			"completed": "완료",
+			"paused": "일시 중지"
+		},
+		"noSessions": "수집 세션이 아직 없습니다. 퇴사 예정 직원을 등록하세요.",
+		"createSession": "지식 수집 시작",
+		"pauseSession": "일시 중지",
+		"resumeSession": "재개",
+		"viewDetails": "세부 정보 보기",
+		"backToList": "목록으로 돌아가기",
+		"answerVia": "{source}을(를) 통해 답변",
+		"noAnswer": "아직 답변 없음",
+		"allCategories": "전체"
+	},
 	"admin": {
 		"pageTitle": "관리",
 		"subtitle": "데이터 소스 관리 및 사용 현황 분석 검토",
@@ -189,6 +221,7 @@
 		"cancel": "취소",
 		"actions": "작업",
 		"tabKnowledge": "지식",
+		"tabHarvest": "지식 수집",
 		"knowledgeTitle": "지식 승격",
 		"knowledgeSub": "높은 평가를 받은 채팅 Q&A를 RAG 검색용 지식 베이스로 승격",
 		"knowledgeEmpty": "승격 가능한 Q&A가 없습니다. 좋아요를 받은 질문이 여기에 표시됩니다.",

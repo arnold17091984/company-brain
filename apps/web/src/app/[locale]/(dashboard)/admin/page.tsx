@@ -26,7 +26,8 @@ type TabId =
 	| "health"
 	| "safety"
 	| "recipes"
-	| "knowledge";
+	| "knowledge"
+	| "harvest";
 
 interface SystemSettings {
 	rag: {
@@ -2149,6 +2150,584 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 	);
 }
 
+// ---- Harvest Tab ---------------------------------------------------------
+
+interface HarvestSessionLocal {
+	id: string;
+	target_user_name: string;
+	target_user_email: string;
+	status: "active" | "completed" | "paused";
+	total_questions: number;
+	answered_questions: number;
+	progress_percent: number;
+	created_at: string;
+	departure_date: string | null;
+}
+
+interface HarvestQuestionLocal {
+	id: string;
+	category: string;
+	question: string;
+	answer: string | null;
+	answer_quality: number | null;
+	source: string | null;
+	asked_at: string;
+	answered_at: string | null;
+}
+
+interface HarvestSessionDetailLocal extends HarvestSessionLocal {
+	questions: HarvestQuestionLocal[];
+}
+
+function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
+	const t = useTranslations("harvest");
+	const tAdmin = useTranslations("admin");
+
+	const [sessions, setSessions] = useState<HarvestSessionLocal[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+
+	// Detail view
+	const [selectedSession, setSelectedSession] =
+		useState<HarvestSessionDetailLocal | null>(null);
+	const [detailLoading, setDetailLoading] = useState(false);
+	const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+	// Create session modal
+	const [showCreate, setShowCreate] = useState(false);
+	const [users, setUsers] = useState<UserSummary[]>([]);
+	const [usersLoading, setUsersLoading] = useState(false);
+	const [formUserId, setFormUserId] = useState("");
+	const [formDate, setFormDate] = useState("");
+	const [creating, setCreating] = useState(false);
+	const [createError, setCreateError] = useState<string | null>(null);
+
+	// Pause/Resume
+	const [togglingId, setTogglingId] = useState<string | null>(null);
+
+	const fetchSessions = useCallback(async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/harvest/sessions`, {
+				headers: { Authorization: `Bearer ${getAccessToken()}` },
+			});
+			if (!res.ok) throw new Error(`${res.status}`);
+			const data: HarvestSessionLocal[] = await res.json();
+			setSessions(data);
+		} catch {
+			setError(tAdmin("loadError"));
+		} finally {
+			setLoading(false);
+		}
+	}, [getAccessToken, tAdmin]);
+
+	useEffect(() => {
+		fetchSessions();
+	}, [fetchSessions]);
+
+	const fetchDetail = async (id: string) => {
+		setDetailLoading(true);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/harvest/sessions/${id}`, {
+				headers: { Authorization: `Bearer ${getAccessToken()}` },
+			});
+			if (!res.ok) throw new Error(`${res.status}`);
+			const data: HarvestSessionDetailLocal = await res.json();
+			setSelectedSession(data);
+			setCategoryFilter("all");
+		} catch {
+			// silently keep list view on error
+		} finally {
+			setDetailLoading(false);
+		}
+	};
+
+	const fetchUsers = async () => {
+		setUsersLoading(true);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
+				headers: { Authorization: `Bearer ${getAccessToken()}` },
+			});
+			if (res.ok) {
+				const data: UserSummary[] = await res.json();
+				setUsers(data);
+			}
+		} finally {
+			setUsersLoading(false);
+		}
+	};
+
+	const openCreate = () => {
+		setShowCreate(true);
+		setFormUserId("");
+		setFormDate("");
+		setCreateError(null);
+		fetchUsers();
+	};
+
+	const handleCreate = async () => {
+		if (!formUserId) {
+			setCreateError(t("selectUser"));
+			return;
+		}
+		setCreating(true);
+		setCreateError(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/harvest/sessions`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					target_user_id: formUserId,
+					departure_date: formDate || null,
+				}),
+			});
+			if (!res.ok) throw new Error(`${res.status}`);
+			setShowCreate(false);
+			fetchSessions();
+		} catch {
+			setCreateError(tAdmin("loadError"));
+		} finally {
+			setCreating(false);
+		}
+	};
+
+	const handleToggle = async (session: HarvestSessionLocal) => {
+		setTogglingId(session.id);
+		const action = session.status === "paused" ? "resume" : "pause";
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/api/v1/harvest/sessions/${session.id}/${action}`,
+				{
+					method: "PATCH",
+					headers: { Authorization: `Bearer ${getAccessToken()}` },
+				},
+			);
+			if (!res.ok) throw new Error(`${res.status}`);
+			setSessions((prev) =>
+				prev.map((s) =>
+					s.id === session.id
+						? { ...s, status: action === "pause" ? "paused" : "active" }
+						: s,
+				),
+			);
+			if (selectedSession?.id === session.id) {
+				setSelectedSession((prev) =>
+					prev
+						? {
+								...prev,
+								status: action === "pause" ? "paused" : "active",
+							}
+						: null,
+				);
+			}
+		} catch {
+			// silently ignore
+		} finally {
+			setTogglingId(null);
+		}
+	};
+
+	const statusBadgeClass = (status: string) => {
+		if (status === "active")
+			return "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-800";
+		if (status === "completed")
+			return "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-800";
+		return "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800";
+	};
+
+	const categoryLabel = (cat: string) => {
+		if (cat === "project") return t("categories.project");
+		if (cat === "process") return t("categories.process");
+		if (cat === "client") return t("categories.client");
+		if (cat === "tool") return t("categories.tool");
+		if (cat === "team") return t("categories.team");
+		return cat;
+	};
+
+	const statusLabel = (status: string) => {
+		if (status === "active") return t("status.active");
+		if (status === "completed") return t("status.completed");
+		return t("status.paused");
+	};
+
+	// Detail view
+	if (selectedSession) {
+		const categories = [
+			"all",
+			...Array.from(new Set(selectedSession.questions.map((q) => q.category))),
+		];
+		const filtered =
+			categoryFilter === "all"
+				? selectedSession.questions
+				: selectedSession.questions.filter(
+						(q) => q.category === categoryFilter,
+					);
+
+		return (
+			<div className="space-y-6">
+				{/* Header */}
+				<div className="flex items-center justify-between">
+					<div>
+						<button
+							type="button"
+							onClick={() => setSelectedSession(null)}
+							className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-1 flex items-center gap-1"
+						>
+							<svg
+								className="w-4 h-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+								aria-hidden="true"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+								/>
+							</svg>
+							{t("backToList")}
+						</button>
+						<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+							{selectedSession.target_user_name}
+						</h2>
+						<p className="text-sm text-stone-500 dark:text-stone-400">
+							{selectedSession.target_user_email}
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<span
+							className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(selectedSession.status)}`}
+						>
+							{statusLabel(selectedSession.status)}
+						</span>
+						{selectedSession.status !== "completed" && (
+							<button
+								type="button"
+								onClick={() => handleToggle(selectedSession)}
+								disabled={togglingId === selectedSession.id}
+								className="px-3 py-1.5 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+							>
+								{selectedSession.status === "paused"
+									? t("resumeSession")
+									: t("pauseSession")}
+							</button>
+						)}
+					</div>
+				</div>
+
+				{/* Progress card */}
+				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
+					<div className="flex items-center justify-between mb-2">
+						<span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+							{t("progress")}
+						</span>
+						<span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+							{selectedSession.answered_questions} /{" "}
+							{selectedSession.total_questions}
+						</span>
+					</div>
+					<div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+						<div
+							className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
+							style={{ width: `${selectedSession.progress_percent}%` }}
+						/>
+					</div>
+					<p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+						{Math.round(selectedSession.progress_percent)}%
+					</p>
+				</div>
+
+				{/* Category filters */}
+				<div className="flex flex-wrap gap-2">
+					{categories.map((cat) => (
+						<button
+							key={cat}
+							type="button"
+							onClick={() => setCategoryFilter(cat)}
+							className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+								categoryFilter === cat
+									? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
+									: "border-stone-200 dark:border-stone-600 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-500"
+							}`}
+						>
+							{cat === "all" ? t("allCategories") : categoryLabel(cat)}
+						</button>
+					))}
+				</div>
+
+				{/* Questions list */}
+				<div className="space-y-4">
+					{filtered.map((q) => (
+						<div
+							key={q.id}
+							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-5 shadow-sm dark:shadow-none"
+						>
+							<div className="flex items-start justify-between gap-3 mb-3">
+								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-600">
+									{categoryLabel(q.category)}
+								</span>
+								{q.answered_at ? (
+									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+										{q.source
+											? t("answerVia", { source: q.source })
+											: t("answered")}
+									</span>
+								) : (
+									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-600">
+										{t("noAnswer")}
+									</span>
+								)}
+							</div>
+							<p className="text-sm font-medium text-stone-900 dark:text-stone-100 mb-2">
+								{q.question}
+							</p>
+							{q.answer && (
+								<p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-wrap">
+									{q.answer}
+								</p>
+							)}
+						</div>
+					))}
+				</div>
+			</div>
+		);
+	}
+
+	// List view
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+						{t("title")}
+					</h2>
+					<p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+						{t("description")}
+					</p>
+				</div>
+				<button
+					type="button"
+					onClick={openCreate}
+					className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2"
+				>
+					<svg
+						className="w-4 h-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M12 4.5v15m7.5-7.5h-15"
+						/>
+					</svg>
+					{t("flagUser")}
+				</button>
+			</div>
+
+			{error && (
+				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+					{error}
+				</div>
+			)}
+
+			{/* Create session modal */}
+			{showCreate && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-xl w-full max-w-md mx-4">
+						<h3 className="text-base font-semibold text-stone-900 dark:text-stone-100 mb-4">
+							{t("createSession")}
+						</h3>
+
+						{createError && (
+							<div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+								{createError}
+							</div>
+						)}
+
+						<div className="space-y-4">
+							<div>
+								<label
+									htmlFor="harvest-user"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("selectUser")}
+								</label>
+								{usersLoading ? (
+									<div className="h-9 rounded-lg bg-stone-100 dark:bg-stone-700 animate-pulse" />
+								) : (
+									<select
+										id="harvest-user"
+										value={formUserId}
+										onChange={(e) => setFormUserId(e.target.value)}
+										className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									>
+										<option value="">— {t("selectUser")} —</option>
+										{users.map((u) => (
+											<option key={u.id} value={u.id}>
+												{u.name} ({u.email})
+											</option>
+										))}
+									</select>
+								)}
+							</div>
+
+							<div>
+								<label
+									htmlFor="harvest-date"
+									className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+								>
+									{t("departureDate")}
+								</label>
+								<input
+									id="harvest-date"
+									type="date"
+									value={formDate}
+									onChange={(e) => setFormDate(e.target.value)}
+									className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								/>
+							</div>
+						</div>
+
+						<div className="flex justify-end gap-3 mt-6">
+							<button
+								type="button"
+								onClick={() => setShowCreate(false)}
+								className="px-4 py-2 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
+							>
+								{tAdmin("cancel")}
+							</button>
+							<button
+								type="button"
+								onClick={handleCreate}
+								disabled={creating}
+								className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+							>
+								{creating ? "..." : t("createSession")}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Sessions list */}
+			{loading ? (
+				<div className="space-y-4">
+					{(["s0", "s1", "s2"] as const).map((key) => (
+						<div
+							key={key}
+							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 animate-pulse"
+						>
+							<div className="flex items-center justify-between mb-4">
+								<div className="space-y-2">
+									<div className="h-4 w-36 bg-stone-200 dark:bg-stone-700 rounded" />
+									<div className="h-3 w-48 bg-stone-100 dark:bg-stone-600 rounded" />
+								</div>
+								<div className="h-6 w-16 bg-stone-100 dark:bg-stone-600 rounded-full" />
+							</div>
+							<div className="h-2 rounded-full bg-stone-100 dark:bg-stone-700" />
+						</div>
+					))}
+				</div>
+			) : sessions.length === 0 ? (
+				<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-12 text-center shadow-sm dark:shadow-none">
+					<p className="text-stone-500 dark:text-stone-400 text-sm">
+						{t("noSessions")}
+					</p>
+				</div>
+			) : (
+				<div className="space-y-4">
+					{sessions.map((session) => (
+						<div
+							key={session.id}
+							className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none"
+						>
+							<div className="flex items-start justify-between gap-4 mb-4">
+								<div className="min-w-0">
+									<h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 truncate">
+										{session.target_user_name}
+									</h3>
+									<p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+										{session.target_user_email}
+									</p>
+									{session.departure_date && (
+										<p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+											{t("departureDate")}: {session.departure_date}
+										</p>
+									)}
+								</div>
+								<div className="flex items-center gap-2 shrink-0">
+									<span
+										className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(session.status)}`}
+									>
+										{statusLabel(session.status)}
+									</span>
+								</div>
+							</div>
+
+							{/* Progress bar */}
+							<div className="mb-4">
+								<div className="flex items-center justify-between mb-1">
+									<span className="text-xs text-stone-500 dark:text-stone-400">
+										{t("progress")}
+									</span>
+									<span className="text-xs font-medium text-stone-700 dark:text-stone-300">
+										{session.answered_questions}/{session.total_questions}{" "}
+										{t("answered")}
+									</span>
+								</div>
+								<div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+									<div
+										className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
+										style={{ width: `${session.progress_percent}%` }}
+									/>
+								</div>
+							</div>
+
+							{/* Actions */}
+							<div className="flex items-center gap-2">
+								<button
+									type="button"
+									onClick={() => {
+										if (!detailLoading) {
+											fetchDetail(session.id);
+										}
+									}}
+									className="px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+								>
+									{t("viewDetails")}
+								</button>
+								{session.status !== "completed" && (
+									<button
+										type="button"
+										onClick={() => handleToggle(session)}
+										disabled={togglingId === session.id}
+										className="px-3 py-1.5 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+									>
+										{session.status === "paused"
+											? t("resumeSession")
+											: t("pauseSession")}
+									</button>
+								)}
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 // ---- Page ----------------------------------------------------------------
 
 export default function AdminPage() {
@@ -2232,6 +2811,7 @@ export default function AdminPage() {
 		{ id: "safety", label: t("tabSafety") },
 		{ id: "recipes", label: t("tabRecipes") },
 		{ id: "knowledge", label: t("tabKnowledge") },
+		{ id: "harvest", label: t("tabHarvest") },
 	];
 
 	// Role guard - only admin users can access this page
@@ -2312,6 +2892,9 @@ export default function AdminPage() {
 					)}
 					{activeTab === "knowledge" && (
 						<KnowledgeTab getAccessToken={getAccessToken} />
+					)}
+					{activeTab === "harvest" && (
+						<HarvestTab getAccessToken={getAccessToken} />
 					)}
 				</div>
 			</div>

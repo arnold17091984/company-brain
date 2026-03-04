@@ -94,6 +94,38 @@
 		"milestonesTitle": "Team Milestones",
 		"milestonesSub": "Celebrating team achievements and collective progress"
 	},
+	"harvest": {
+		"title": "Knowledge Harvest",
+		"description": "Manage knowledge collection from departing employees",
+		"flagUser": "Start Harvest",
+		"departureDate": "Last Working Day",
+		"selectUser": "Select Employee",
+		"progress": "Progress",
+		"questions": "Questions",
+		"answered": "Answered",
+		"pending": "Pending",
+		"categories": {
+			"project": "Project Knowledge",
+			"process": "Business Processes",
+			"client": "Client Relations",
+			"tool": "Tools & Systems",
+			"team": "Team Knowledge"
+		},
+		"status": {
+			"active": "Active",
+			"completed": "Completed",
+			"paused": "Paused"
+		},
+		"noSessions": "No harvest sessions yet. Start by flagging a departing employee.",
+		"createSession": "Start Knowledge Harvest",
+		"pauseSession": "Pause",
+		"resumeSession": "Resume",
+		"viewDetails": "View Details",
+		"backToList": "Back to List",
+		"answerVia": "Answered via {source}",
+		"noAnswer": "Not yet answered",
+		"allCategories": "All"
+	},
 	"admin": {
 		"pageTitle": "Admin",
 		"subtitle": "Manage data sources and review usage analytics",
@@ -189,6 +221,7 @@
 		"cancel": "Cancel",
 		"actions": "Actions",
 		"tabKnowledge": "Knowledge",
+		"tabHarvest": "Harvest",
 		"knowledgeTitle": "Knowledge Promotion",
 		"knowledgeSub": "Promote high-quality Q&A from chat into the knowledge base for RAG search",
 		"knowledgeEmpty": "No promotable Q&A found. Questions with thumbs-up feedback will appear here.",

@@ -200,3 +200,32 @@ export interface DocumentItem {
 		overridden?: boolean;
 	};
 }
+
+// Feature: Knowledge Harvesting
+
+export interface HarvestSession {
+	id: string;
+	target_user_name: string;
+	target_user_email: string;
+	status: "active" | "completed" | "paused";
+	total_questions: number;
+	answered_questions: number;
+	progress_percent: number;
+	created_at: string;
+	departure_date: string | null;
+}
+
+export interface HarvestQuestion {
+	id: string;
+	category: string;
+	question: string;
+	answer: string | null;
+	answer_quality: number | null;
+	source: string | null;
+	asked_at: string;
+	answered_at: string | null;
+}
+
+export interface HarvestSessionDetail extends HarvestSession {
+	questions: HarvestQuestion[];
+}
