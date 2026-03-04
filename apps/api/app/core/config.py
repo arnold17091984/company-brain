@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     # Token lifetime in minutes (default 24 hours)
     jwt_expiration_minutes: int = 1440
+    # Fernet key for encrypting sensitive values stored in the DB.
+    # Generate with:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    encryption_key: str = ""
 
     # ── Runtime ────────────────────────────────────────────────────────────────
     app_env: Literal["development", "staging", "production"] = "development"

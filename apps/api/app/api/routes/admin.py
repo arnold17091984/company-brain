@@ -16,11 +16,16 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import User, get_admin_user, get_current_user
+from app.core.api_keys import MANAGED_KEYS, mask_key
+from app.core.auth import User, get_admin_user
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.encryption import decrypt_value, encrypt_value
 from app.models.database import Department, SafetyViolation, SystemSetting, UsageMetricsDaily
 from app.models.database import User as DBUser
 from app.models.schemas import (
+    APIKeyStatus,
+    APIKeyUpdate,
     HealthCheck,
     PerformanceMetrics,
     SafetyStats,
@@ -119,9 +124,7 @@ async def update_settings(
         ("agent", body.agent),
     ]:
         if section_data:
-            result = await db.execute(
-                select(SystemSetting).where(SystemSetting.key == section_key)
-            )
+            result = await db.execute(select(SystemSetting).where(SystemSetting.key == section_key))
             setting = result.scalar_one_or_none()
             if setting:
                 merged = {**setting.value, **section_data}
@@ -133,6 +136,107 @@ async def update_settings(
 
     data = await _load_settings(db)
     return SystemSettings(**data)
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/admin/api-keys
+# ---------------------------------------------------------------------------
+
+
+@router.get("/api-keys", response_model=list[APIKeyStatus])
+async def get_api_keys(
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[APIKeyStatus]:
+    """Return the status of all managed API keys."""
+    logger.info(
+        "Admin API keys status requested",
+        extra={"user": current_user.email},
+    )
+
+    statuses: list[APIKeyStatus] = []
+    for key_name in MANAGED_KEYS:
+        # Check DB
+        result = await db.execute(
+            select(SystemSetting).where(SystemSetting.key == f"api_key:{key_name}")
+        )
+        db_row = result.scalar_one_or_none()
+        if db_row and db_row.value.get("encrypted_value"):
+            try:
+                plaintext = decrypt_value(db_row.value["encrypted_value"])
+                statuses.append(
+                    APIKeyStatus(
+                        key_name=key_name,
+                        source="db",
+                        masked_value=mask_key(plaintext),
+                    )
+                )
+                continue
+            except (ValueError, RuntimeError):
+                pass
+
+        # Check env
+        env_val = getattr(settings, key_name, "")
+        if env_val:
+            statuses.append(
+                APIKeyStatus(
+                    key_name=key_name,
+                    source="env",
+                    masked_value=mask_key(env_val),
+                )
+            )
+        else:
+            statuses.append(
+                APIKeyStatus(
+                    key_name=key_name,
+                    source="none",
+                    masked_value=None,
+                )
+            )
+
+    return statuses
+
+
+# ---------------------------------------------------------------------------
+# PUT /api/v1/admin/api-keys
+# ---------------------------------------------------------------------------
+
+
+@router.put("/api-keys", response_model=list[APIKeyStatus])
+async def update_api_keys(
+    body: APIKeyUpdate,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[APIKeyStatus]:
+    """Update API keys. Empty string deletes DB value (reverts to env)."""
+    logger.info("Admin API keys update", extra={"user": current_user.email})
+
+    updates = body.model_dump(exclude_unset=True)
+    for key_name, value in updates.items():
+        db_key = f"api_key:{key_name}"
+        result = await db.execute(select(SystemSetting).where(SystemSetting.key == db_key))
+        existing = result.scalar_one_or_none()
+
+        if value == "":
+            # Delete DB entry -> revert to env fallback
+            if existing:
+                await db.delete(existing)
+        elif value is not None:
+            encrypted = encrypt_value(value)
+            if existing:
+                existing.value = {"encrypted_value": encrypted}
+            else:
+                db.add(
+                    SystemSetting(
+                        key=db_key,
+                        value={"encrypted_value": encrypted},
+                    )
+                )
+
+    await db.commit()
+
+    # Return fresh status
+    return await get_api_keys(current_user=current_user, db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -217,9 +321,7 @@ async def get_metrics(
     stmt = select(
         func.coalesce(func.sum(UsageMetricsDaily.query_count), 0).label("queries_today"),
         func.coalesce(
-            func.sum(
-                UsageMetricsDaily.total_input_tokens + UsageMetricsDaily.total_output_tokens
-            ),
+            func.sum(UsageMetricsDaily.total_input_tokens + UsageMetricsDaily.total_output_tokens),
             0,
         ).label("total_tokens_today"),
         func.coalesce(func.avg(UsageMetricsDaily.avg_latency_ms), 0.0).label("avg_latency_ms"),
@@ -357,9 +459,8 @@ async def list_safety_violations(
     """
     logger.info("Admin safety violations list requested", extra={"user": current_user.email})
 
-    base_stmt = (
-        select(SafetyViolation, DBUser.email.label("user_email"))
-        .outerjoin(DBUser, SafetyViolation.user_id == DBUser.id)
+    base_stmt = select(SafetyViolation, DBUser.email.label("user_email")).outerjoin(
+        DBUser, SafetyViolation.user_id == DBUser.id
     )
 
     if risk_level is not None:
@@ -437,16 +538,15 @@ async def get_safety_stats(
 
     # Violations recorded today
     today_result = await db.execute(
-        select(func.count(SafetyViolation.id)).where(
-            func.date(SafetyViolation.created_at) == today
-        )
+        select(func.count(SafetyViolation.id)).where(func.date(SafetyViolation.created_at) == today)
     )
     violations_today: int = today_result.scalar_one()
 
     # Count per action_taken
     action_result = await db.execute(
-        select(SafetyViolation.action_taken, func.count(SafetyViolation.id).label("cnt"))
-        .group_by(SafetyViolation.action_taken)
+        select(SafetyViolation.action_taken, func.count(SafetyViolation.id).label("cnt")).group_by(
+            SafetyViolation.action_taken
+        )
     )
     action_counts: dict[str, int] = {row.action_taken: row.cnt for row in action_result.all()}
 
@@ -461,8 +561,7 @@ async def get_safety_stats(
         .limit(5)
     )
     top_violation_types = [
-        {"violation_type": row.violation_type, "count": row.cnt}
-        for row in top_types_result.all()
+        {"violation_type": row.violation_type, "count": row.cnt} for row in top_types_result.all()
     ]
 
     return SafetyStats(

@@ -253,6 +253,32 @@ class UserSummary(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Admin: API Key Management
+# ---------------------------------------------------------------------------
+
+
+class APIKeyStatus(BaseModel):
+    """Status of a single managed API key."""
+
+    key_name: str
+    source: Literal["db", "env", "none"]
+    masked_value: str | None = None
+
+
+class APIKeyUpdate(BaseModel):
+    """Request to update API keys via the admin panel."""
+
+    anthropic_api_key: str | None = None
+    gemini_api_key: str | None = None
+    openai_api_key: str | None = None
+    together_ai_api_key: str | None = None
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    telegram_bot_token: str | None = None
+    notion_integration_token: str | None = None
+
+
+# ---------------------------------------------------------------------------
 # User Management
 # ---------------------------------------------------------------------------
 
