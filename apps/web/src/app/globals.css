@@ -3,7 +3,7 @@
 /* ─── Dark Mode — class-based ─────────────────────────────── */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Design System — Linear/Vercel Zinc ─────────────────── */
+/* ─── Design System — Dark Premium ────────────────────────── */
 
 :root {
 	/* Primary — Indigo */
@@ -12,12 +12,12 @@
 	--color-primary-light: #e0e7ff;
 	--color-primary-foreground: #ffffff;
 
-	/* Accent — removed (unified under primary) */
-
 	/* Neutral backgrounds — cool zinc tones */
 	--color-bg-base: #ffffff;
 	--color-bg-subtle: #fafafa;
 	--color-bg-muted: #f4f4f5;
+	--color-bg-surface: #ffffff;
+	--color-bg-elevated: #ffffff;
 	--color-bg-sidebar: #09090b;
 
 	/* Neutral foregrounds — cool grays */
@@ -42,26 +42,52 @@
 	--radius-xl: 1rem;
 
 	/* Shadows — minimal */
-	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-	--shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.05);
-	--shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.08);
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -1px
+		rgb(0 0 0 / 0.04);
+	--shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.08), 0 4px 8px -2px
+		rgb(0 0 0 / 0.05);
 	--shadow-glow: 0 0 20px rgb(99 102 241 / 0.12);
+
+	/* Glow tokens */
+	--color-glow-primary: rgb(99 102 241 / 0.08);
+	--color-glow-primary-strong: rgb(99 102 241 / 0.15);
+
+	/* CJK Font Stack */
+	--font-sans: var(--font-inter), var(--font-noto-jp), var(--font-noto-kr),
+		ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ─── Dark Mode Tokens ─────────────────────────────────────── */
+/* ─── Dark Mode Tokens — Premium ──────────────────────────── */
 
 .dark {
-	--color-bg-base: #09090b;
-	--color-bg-subtle: #18181b;
-	--color-bg-muted: #27272a;
-	--color-bg-surface: #27272a;
-	--color-fg-base: #fafafa;
-	--color-fg-muted: #a1a1aa;
-	--color-fg-subtle: #52525b;
-	--color-fg-on-dark: #fafafa;
-	--color-border: #3f3f46;
-	--color-border-strong: #52525b;
-	--color-sidebar-bg: #09090b;
+	/* Background hierarchy: near-black → surface → elevated */
+	--color-bg-base: #0a0a0c;
+	--color-bg-subtle: #111114;
+	--color-bg-muted: #1a1a1f;
+	--color-bg-surface: #1e1e24;
+	--color-bg-elevated: #252530;
+	--color-bg-sidebar: #0a0a0c;
+
+	/* Foreground — softer whites (ChatGPT-style) */
+	--color-fg-base: #ececf1;
+	--color-fg-muted: #8e8ea0;
+	--color-fg-subtle: #4e4e5c;
+	--color-fg-on-dark: #ececf1;
+
+	/* Borders — subtler */
+	--color-border: #2a2a35;
+	--color-border-strong: #3a3a48;
+
+	/* Shadows — deeper */
+	--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+	--shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+	--shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.6);
+	--shadow-glow: 0 0 30px rgb(124 108 240 / 0.15);
+
+	/* Glow tokens */
+	--color-glow-primary: rgb(124 108 240 / 0.15);
+	--color-glow-primary-strong: rgb(124 108 240 / 0.25);
 }
 
 html {
@@ -71,20 +97,20 @@ html {
 /* ─── Custom Scrollbar ─────────────────────────────────────── */
 
 .chat-scroll::-webkit-scrollbar {
-	width: 6px;
+	width: 5px;
 }
 .chat-scroll::-webkit-scrollbar-track {
 	background: transparent;
 }
 .chat-scroll::-webkit-scrollbar-thumb {
-	background: var(--color-border-strong);
-	border-radius: 3px;
+	background: rgb(255 255 255 / 0.08);
+	border-radius: 10px;
 }
 .chat-scroll::-webkit-scrollbar-thumb:hover {
-	background: var(--color-fg-subtle);
+	background: rgb(255 255 255 / 0.16);
 }
 
-/* ─── Gradients ────────────────────────────────────────────── */
+/* ─── Premium Dark Gradients ──────────────────────────────── */
 
 .bg-warm-gradient {
 	background: var(--color-bg-subtle);
@@ -93,9 +119,8 @@ html {
 .bg-sidebar-gradient {
 	background: #09090b;
 }
-
 .dark .bg-sidebar-gradient {
-	background: #09090b;
+	background: linear-gradient(180deg, #0e0e12 0%, #0a0a0c 100%);
 }
 
 .bg-hero-gradient {
@@ -104,6 +129,81 @@ html {
 			rgb(99 102 241 / 0.06) 0%,
 			transparent 60%
 		), var(--color-bg-subtle);
+}
+
+/* Main content area — subtle top glow */
+.bg-premium-dark {
+	background: var(--color-bg-subtle);
+}
+.dark .bg-premium-dark {
+	background: radial-gradient(
+			ellipse 80% 50% at 50% -20%,
+			rgb(124 108 240 / 0.08) 0%,
+			transparent 60%
+		), var(--color-bg-base);
+}
+
+/* Empty state — centered glow */
+.bg-hero-glow {
+	background: transparent;
+}
+.dark .bg-hero-glow {
+	background: radial-gradient(
+		circle at 50% 40%,
+		rgb(124 108 240 / 0.1) 0%,
+		rgb(124 108 240 / 0.03) 30%,
+		transparent 60%
+	);
+}
+
+/* ─── Card Hover Glow ─────────────────────────────────────── */
+
+.card-glow {
+	position: relative;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dark .card-glow:hover {
+	border-color: rgb(124 108 240 / 0.35);
+	box-shadow: 0 0 20px rgb(124 108 240 / 0.08), 0 0 40px rgb(124 108 240 / 0.03);
+}
+
+/* ─── Input Premium Glow ──────────────────────────────────── */
+
+.input-premium {
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dark .input-premium:focus-within {
+	border-color: rgb(124 108 240 / 0.6);
+	box-shadow: 0 0 0 4px rgb(124 108 240 / 0.12), 0 0 24px
+		rgb(124 108 240 / 0.08);
+}
+
+/* ─── Gradient Border (hover reveal) ─────────────────────── */
+
+.gradient-border {
+	position: relative;
+}
+.dark .gradient-border::before {
+	content: "";
+	position: absolute;
+	inset: -1px;
+	border-radius: inherit;
+	padding: 1px;
+	background: linear-gradient(
+		135deg,
+		rgb(124 108 240 / 0.25),
+		transparent 50%,
+		rgb(124 108 240 / 0.12)
+	);
+	mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	-webkit-mask-composite: xor;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.dark .gradient-border:hover::before {
+	opacity: 1;
 }
 
 /* ─── Glass Morphism ───────────────────────────────────────── */
@@ -116,16 +216,13 @@ html {
 }
 
 .dark .glass {
-	background: rgba(24, 24, 27, 0.8);
-	border: 1px solid rgba(63, 63, 70, 0.5);
+	background: rgba(14, 14, 18, 0.88);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	backdrop-filter: blur(20px) saturate(180%);
+	-webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
-/* ─── CJK Font Stack ───────────────────────────────────────── */
-
-:root {
-	--font-sans: var(--font-inter), var(--font-noto-jp), var(--font-noto-kr),
-		ui-sans-serif, system-ui, sans-serif;
-}
+/* ─── CJK Font Stack (merged into :root above) ────────────── */
 
 /* ─── Animations ───────────────────────────────────────────── */
 
@@ -169,16 +266,44 @@ html {
 	}
 }
 
+@keyframes glow-pulse {
+	0%,
+	100% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+@keyframes float {
+	0%,
+	100% {
+		transform: translateY(0px);
+	}
+	50% {
+		transform: translateY(-6px);
+	}
+}
+
 .animate-fade-in {
-	animation: fade-in 0.15s ease-out both;
+	animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in-scale {
-	animation: fade-in-scale 0.15s ease-out both;
+	animation: fade-in-scale 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .animate-slide-in-left {
-	animation: slide-in-left 0.25s ease-out both;
+	animation: slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-glow-pulse {
+	animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-float {
+	animation: float 6s ease-in-out infinite;
 }
 
 .skeleton {

@@ -495,7 +495,7 @@ export default function AnalyticsPage() {
 													key={report.period}
 													type="button"
 													onClick={() => setSelectedReport(report)}
-													className="text-left bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group"
+													className="text-left bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-[border-color] duration-150 group"
 												>
 													<div className="flex items-start justify-between gap-2 mb-3">
 														<div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center shrink-0">

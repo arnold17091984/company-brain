@@ -99,10 +99,10 @@ export function MessageInput({
 	return (
 		<div className="max-w-3xl mx-auto">
 			<div
-				className={`flex items-end gap-3 rounded-2xl border bg-white dark:bg-zinc-800 px-4 py-3 transition-colors ${
+				className={`input-premium flex items-end gap-3 rounded-2xl border px-4 py-3.5 transition-[border-color,box-shadow] duration-150 ${
 					disabled
-						? "border-zinc-200 dark:border-zinc-700 opacity-60"
-						: "border-zinc-200 dark:border-zinc-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10"
+						? "border-zinc-200/60 dark:border-white/[0.05] bg-white/60 dark:bg-[#1a1a1f]/60 opacity-70 cursor-not-allowed"
+						: "border-zinc-200/80 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1f] shadow-sm dark:shadow-xl dark:shadow-black/30"
 				}`}
 			>
 				<textarea
@@ -114,7 +114,7 @@ export function MessageInput({
 					disabled={disabled}
 					placeholder={resolvedPlaceholder}
 					rows={1}
-					className="flex-1 resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none min-h-[24px] max-h-[200px] py-0.5 leading-6"
+					className="flex-1 resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400/70 dark:placeholder:text-zinc-600 focus:outline-none min-h-[24px] max-h-[200px] py-1 leading-relaxed"
 					aria-label="Chat message"
 				/>
 
@@ -124,10 +124,10 @@ export function MessageInput({
 						onClick={handleMicClick}
 						aria-label={isRecording ? t("voiceStop") : t("voiceStart")}
 						aria-pressed={isRecording}
-						className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
+						className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-[colors,transform,box-shadow] duration-150 ${
 							isRecording
-								? "bg-red-500 text-white animate-pulse"
-								: "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+								? "bg-red-500/90 text-white shadow-md shadow-red-500/30 ring-4 ring-red-500/20"
+								: "bg-zinc-100/80 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/80 dark:hover:bg-white/[0.09] hover:text-zinc-700 dark:hover:text-zinc-300"
 						}`}
 					>
 						<svg
@@ -157,10 +157,10 @@ export function MessageInput({
 					onClick={handleSend}
 					disabled={!canSend}
 					aria-label={t("sendMessage")}
-					className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-colors ${
+					className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-xl transition-[colors,transform,box-shadow] duration-150 ${
 						canSend
-							? "bg-indigo-700 text-white hover:bg-indigo-800 active:bg-indigo-900 shadow-sm shadow-indigo-500/20"
-							: "bg-zinc-100 dark:bg-zinc-700 text-zinc-300 dark:text-zinc-500 cursor-not-allowed"
+							? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white hover:brightness-110 shadow-lg shadow-indigo-500/30 active:scale-[0.93] active:shadow-md"
+							: "bg-zinc-100/60 dark:bg-white/[0.05] text-zinc-300 dark:text-zinc-700 cursor-not-allowed"
 					}`}
 				>
 					<svg
@@ -180,7 +180,7 @@ export function MessageInput({
 				</button>
 			</div>
 
-			<p className="text-center text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+			<p className="text-center text-[11px] text-zinc-400/60 dark:text-zinc-700 mt-2 select-none tracking-wide">
 				{t("sendHint")}
 			</p>
 		</div>

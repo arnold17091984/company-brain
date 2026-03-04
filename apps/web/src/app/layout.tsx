@@ -44,7 +44,7 @@ export default async function RootLayout({
 	// Read theme cookie for SSR dark mode class application
 	const cookieStore = await cookies();
 	const themeCookie = cookieStore.get("theme")?.value;
-	const isDark = themeCookie === "dark";
+	const isDark = themeCookie !== "light";
 
 	const fontVariables = [inter.variable, notoJP.variable, notoKR.variable].join(
 		" ",

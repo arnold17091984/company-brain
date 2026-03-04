@@ -5,7 +5,7 @@ import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { createContext, useCallback, useContext, useState } from "react";
 
 // ─── Sidebar Context ────────────────────────────────────────
@@ -229,7 +229,7 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 	if (isLoading && sessions.length === 0) {
 		return (
 			<div className="px-3 py-2">
-				<div className="h-3 w-24 bg-zinc-800 rounded animate-pulse" />
+				<div className="h-3 w-24 bg-white/[0.06] rounded animate-pulse" />
 			</div>
 		);
 	}
@@ -243,11 +243,8 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 	}
 
 	// Check if we're on a chat page with a specific session
-	const urlParams =
-		typeof window !== "undefined"
-			? new URLSearchParams(window.location.search)
-			: null;
-	const activeSessionId = urlParams?.get("session");
+	const searchParams = useSearchParams();
+	const activeSessionId = searchParams.get("session");
 
 	return (
 		<div className="space-y-0.5">
@@ -258,10 +255,10 @@ function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
 						key={s.id}
 						href={`/chat?session=${s.id}`}
 						onClick={onNavigate}
-						className={`block px-3 py-1.5 rounded-md text-xs truncate transition-colors ${
+						className={`block px-3 py-2 rounded-lg text-xs truncate transition-colors duration-150 ${
 							isActive
-								? "bg-zinc-800 text-white"
-								: "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+								? "bg-white/[0.09] text-zinc-100"
+								: "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.05]"
 						}`}
 						title={s.title || "Untitled"}
 					>
@@ -294,15 +291,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 	return (
 		<>
 			{/* Brand */}
-			<div className="flex items-center gap-2.5 px-4 py-5 border-b border-zinc-800">
+			<div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.05]">
 				<BrainLogo size="sm" />
-				<span className="text-sm font-semibold text-white">
+				<span className="text-sm font-semibold text-white/95 tracking-[-0.01em]">
 					{tCommon("companyBrain")}
 				</span>
 			</div>
 
 			{/* Navigation */}
-			<nav className="px-3 py-4 space-y-1" aria-label="Main navigation">
+			<nav className="px-3 pt-5 pb-3 space-y-0.5" aria-label="Main navigation">
 				{NAV_ITEMS.map((item) => {
 					const isActive =
 						normalizedPath === item.href ||
@@ -313,10 +310,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 							key={item.href}
 							href={item.href}
 							onClick={onNavigate}
-							className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
 								isActive
-									? "bg-zinc-800 text-white border-l-2 border-indigo-500"
-									: "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border-l-2 border-transparent"
+									? "bg-white/[0.09] text-white ring-1 ring-white/[0.08] shadow-sm"
+									: "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.06] active:bg-white/[0.04]"
 							}`}
 							aria-current={isActive ? "page" : undefined}
 						>
@@ -329,9 +326,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 			{/* Recent Chats */}
 			{isOnChatPage && (
-				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-zinc-800">
+				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06]">
 					<div className="flex items-center justify-between px-1 pt-3 pb-2">
-						<p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+						<p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.08em]">
 							{tChat("recentChats")}
 						</p>
 						<Link
@@ -364,11 +361,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 			{!isOnChatPage && <div className="flex-1" />}
 
 			{/* Footer / user area */}
-			<div className="border-t border-zinc-800 px-3 py-4">
+			<div className="border-t border-white/[0.06] px-3 py-4">
 				<div className="flex items-center gap-3 px-3 py-2 rounded-lg">
-					<div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
+					<div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 ring-1 ring-white/[0.12]">
 						<svg
-							className="w-4 h-4 text-zinc-400"
+							className="w-3.5 h-3.5 text-white/80"
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
@@ -392,7 +389,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 				<button
 					type="button"
 					onClick={() => signOut({ callbackUrl: "/login" })}
-					className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors"
+					className="w-full mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-zinc-500 hover:text-red-400/80 hover:bg-red-500/[0.06] transition-colors duration-150"
 				>
 					<svg
 						className="w-4 h-4"
@@ -419,7 +416,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar() {
 	return (
-		<aside className="hidden lg:flex flex-col w-60 shrink-0 bg-zinc-950 text-zinc-300 border-r border-zinc-800">
+		<aside className="hidden lg:flex flex-col w-64 shrink-0 bg-sidebar-gradient text-zinc-300 border-r border-white/[0.05]">
 			<SidebarContent />
 		</aside>
 	);
@@ -443,7 +440,7 @@ export function MobileSidebar() {
 			/>
 
 			{/* Drawer */}
-			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-zinc-950 text-zinc-300 border-r border-zinc-800 lg:hidden animate-slide-in-left">
+			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar-gradient text-zinc-300 border-r border-white/[0.05] lg:hidden animate-slide-in-left shadow-2xl shadow-black/60">
 				{/* Close button */}
 				<button
 					type="button"

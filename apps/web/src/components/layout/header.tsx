@@ -15,7 +15,7 @@ function HamburgerButton() {
 		<button
 			type="button"
 			onClick={toggle}
-			className="lg:hidden p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+			className="lg:hidden p-2 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-colors duration-150"
 			aria-label="Toggle sidebar"
 		>
 			<svg
@@ -46,7 +46,7 @@ function DarkModeToggle() {
 		<button
 			type="button"
 			onClick={toggleTheme}
-			className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+			className="p-2 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-colors duration-150"
 			aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
 		>
 			{isDark ? (
@@ -129,7 +129,7 @@ function LanguageSwitcher() {
 				ref={buttonRef}
 				type="button"
 				onClick={() => setIsOpen((prev) => !prev)}
-				className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+				className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-colors duration-150"
 				aria-haspopup="listbox"
 				aria-expanded={isOpen}
 				aria-label="Switch language"
@@ -176,7 +176,7 @@ function LanguageSwitcher() {
 					/>
 					<ul
 						aria-label="Select language"
-						className="absolute right-0 top-full mt-1.5 z-20 min-w-30 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg shadow-zinc-900/10 py-1 overflow-hidden"
+						className="absolute right-0 top-full mt-2 z-20 min-w-[8rem] bg-white dark:bg-[#1e1e24] border border-zinc-200/80 dark:border-white/[0.07] rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black/60 py-1.5 overflow-hidden"
 					>
 						{Object.entries(LOCALE_LABELS).map(([code, labels]) => (
 							<li key={code}>
@@ -185,8 +185,8 @@ function LanguageSwitcher() {
 									onClick={() => switchLocale(code)}
 									className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-sm transition-colors ${
 										code === locale
-											? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium"
-											: "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
+											? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium"
+											: "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
 									}`}
 								>
 									<span>{labels.long}</span>
@@ -220,11 +220,11 @@ function LanguageSwitcher() {
 
 export function Header() {
 	return (
-		<header className="relative z-30 flex items-center justify-between h-12 px-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+		<header className="relative z-30 flex items-center justify-between h-14 px-5 bg-white/80 dark:bg-[#0e0e12]/90 backdrop-blur-xl border-b border-zinc-200/60 dark:border-white/[0.04] shrink-0">
 			{/* Left: hamburger (mobile) + brand */}
 			<div className="flex items-center gap-3">
 				<HamburgerButton />
-				<span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+				<span className="text-sm font-medium text-zinc-400 dark:text-zinc-500 hidden sm:block">
 					Company Brain
 				</span>
 			</div>
@@ -233,9 +233,9 @@ export function Header() {
 			<div className="flex items-center gap-1">
 				<LanguageSwitcher />
 				<DarkModeToggle />
-				<div className="ml-1 w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+				<div className="ml-2 w-8 h-8 rounded-full bg-indigo-100 dark:bg-gradient-to-br dark:from-indigo-500 dark:to-violet-600 flex items-center justify-center ring-2 ring-white/[0.12] dark:ring-white/[0.12] hover:ring-indigo-400/40 transition-shadow duration-150 cursor-pointer">
 					<svg
-						className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"
+						className="w-3.5 h-3.5 text-indigo-600 dark:text-white/90"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"

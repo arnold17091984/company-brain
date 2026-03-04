@@ -16,7 +16,7 @@ function SourceTypeIcon({ sourceType }: { sourceType?: string }) {
 	if (!sourceType) return null;
 	const letter = SOURCE_TYPE_ICONS[sourceType] ?? sourceType[0]?.toUpperCase();
 	return (
-		<span className="shrink-0 w-5 h-5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold flex items-center justify-center">
+		<span className="shrink-0 w-5 h-5 rounded bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold flex items-center justify-center">
 			{letter}
 		</span>
 	);
@@ -32,7 +32,7 @@ function SourceCard({ source }: { source: Source }) {
 	return (
 		<a
 			href={source.url}
-			className="group flex flex-col gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-left hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+			className="card-glow group flex flex-col gap-1 rounded-xl border border-zinc-200/80 dark:border-white/[0.06] bg-zinc-50 dark:bg-[#1a1a1f] px-3 py-2.5 text-left hover:border-indigo-300 dark:hover:border-indigo-400/30 transition-[border-color,box-shadow] duration-150"
 		>
 			<span className="flex items-center gap-1.5">
 				<SourceTypeIcon sourceType={source.sourceType} />
@@ -57,7 +57,7 @@ function SourceCard({ source }: { source: Source }) {
 
 function AssistantIcon() {
 	return (
-		<div className="shrink-0 w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center shadow-sm">
+		<div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/25 ring-1 ring-white/[0.12]">
 			<svg
 				className="w-4 h-4 text-amber-300"
 				fill="none"
@@ -78,7 +78,7 @@ function AssistantIcon() {
 
 function UserIcon() {
 	return (
-		<div className="shrink-0 w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+		<div className="shrink-0 w-8 h-8 rounded-full bg-zinc-200 dark:bg-white/[0.08] flex items-center justify-center ring-1 ring-zinc-300/80 dark:ring-white/[0.08]">
 			<svg
 				className="w-4 h-4 text-zinc-500 dark:text-zinc-400"
 				fill="none"
@@ -101,17 +101,17 @@ function TypingIndicator() {
 	return (
 		<div className="flex gap-3">
 			<AssistantIcon />
-			<div className="flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl rounded-tl-sm px-4 py-3">
+			<div className="flex items-center gap-1.5 bg-white dark:bg-[#1a1a1f] border border-zinc-200/80 dark:border-white/[0.06] rounded-2xl rounded-tl-sm px-4 py-3">
 				<span
-					className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+					className="w-1.5 h-1.5 rounded-full bg-indigo-400/80 animate-bounce"
 					style={{ animationDelay: "0ms" }}
 				/>
 				<span
-					className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+					className="w-1.5 h-1.5 rounded-full bg-indigo-400/80 animate-bounce"
 					style={{ animationDelay: "150ms" }}
 				/>
 				<span
-					className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+					className="w-1.5 h-1.5 rounded-full bg-indigo-400/80 animate-bounce"
 					style={{ animationDelay: "300ms" }}
 				/>
 			</div>
@@ -159,7 +159,7 @@ function MarkdownContent({ content }: { content: string }) {
 					if (isBlock) {
 						return (
 							<code
-								className="block bg-zinc-100 dark:bg-zinc-900 rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
+								className="block bg-zinc-100 dark:bg-[#0e0e12] border border-transparent dark:border-white/[0.04] rounded-lg px-3 py-2 my-2 text-xs font-mono overflow-x-auto whitespace-pre"
 								{...props}
 							>
 								{children}
@@ -168,7 +168,7 @@ function MarkdownContent({ content }: { content: string }) {
 					}
 					return (
 						<code
-							className="bg-zinc-100 dark:bg-zinc-900 rounded px-1.5 py-0.5 text-xs font-mono"
+							className="bg-zinc-100 dark:bg-[#0e0e12] rounded px-1.5 py-0.5 text-xs font-mono"
 							{...props}
 						>
 							{children}
@@ -199,12 +199,12 @@ function MarkdownContent({ content }: { content: string }) {
 					</div>
 				),
 				th: ({ children }) => (
-					<th className="border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-900 px-2 py-1 text-left font-semibold">
+					<th className="border border-zinc-300 dark:border-white/[0.06] bg-zinc-100 dark:bg-[#0e0e12] px-2 py-1 text-left font-semibold">
 						{children}
 					</th>
 				),
 				td: ({ children }) => (
-					<td className="border border-zinc-300 dark:border-zinc-600 px-2 py-1">
+					<td className="border border-zinc-300 dark:border-white/[0.06] px-2 py-1">
 						{children}
 					</td>
 				),
@@ -220,7 +220,7 @@ function ThinkingAccordion({ thinking }: { thinking: string }) {
 	const t = useTranslations("chat");
 
 	return (
-		<div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 overflow-hidden">
+		<div className="rounded-xl border border-zinc-200/80 dark:border-white/[0.06] bg-zinc-50 dark:bg-[#1a1a1f]/50 overflow-hidden">
 			<button
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
@@ -243,7 +243,7 @@ function ThinkingAccordion({ thinking }: { thinking: string }) {
 				{t("thinkingProcess")}
 			</button>
 			{isOpen && (
-				<div className="px-3 pb-3 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed border-t border-zinc-200 dark:border-zinc-700 pt-2">
+				<div className="px-3 pb-3 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed border-t border-zinc-200/80 dark:border-white/[0.06] pt-2">
 					<MarkdownContent content={thinking} />
 				</div>
 			)}
@@ -289,8 +289,8 @@ function ChatMessage({ message }: { message: Message }) {
 				<div
 					className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
 						isUser
-							? "bg-indigo-700 text-white rounded-tr-sm shadow-sm shadow-indigo-500/20"
-							: "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-tl-sm"
+							? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-tr-sm shadow-md shadow-indigo-500/25"
+							: "bg-white dark:bg-[#1a1a1f] border border-zinc-200/80 dark:border-white/[0.06] text-zinc-800 dark:text-[#ececf1] rounded-tl-sm"
 					}`}
 				>
 					{isUser ? (

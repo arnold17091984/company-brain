@@ -19,8 +19,8 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function getInitialTheme(): Theme {
-	// SSR guard
-	if (typeof window === "undefined") return "light";
+	// SSR guard — default to dark for premium feel
+	if (typeof window === "undefined") return "dark";
 
 	// 1. Check cookie (set by SSR-aware logic)
 	const cookieMatch = document.cookie.match(/(?:^|;\s*)theme=([^;]+)/);
@@ -36,7 +36,7 @@ function getInitialTheme(): Theme {
 	// 3. Respect OS preference
 	if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
 
-	return "light";
+	return "dark";
 }
 
 function applyTheme(theme: Theme) {
@@ -56,13 +56,19 @@ function persistTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-	const [theme, setThemeState] = useState<Theme>("light");
+	// Use lazy initializer so the first client render matches SSR output
+	const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
-	// Apply the initial theme on mount (client only)
+	// Ensure DOM class is in sync on mount + one-time migration to dark premium
 	useEffect(() => {
-		const initial = getInitialTheme();
-		setThemeState(initial);
-		applyTheme(initial);
+		if (!localStorage.getItem("theme-v2-migrated")) {
+			localStorage.setItem("theme-v2-migrated", "1");
+			setThemeState("dark");
+			applyTheme("dark");
+			persistTheme("dark");
+			return;
+		}
+		applyTheme(theme);
 	}, []);
 
 	const setTheme = useCallback((newTheme: Theme) => {

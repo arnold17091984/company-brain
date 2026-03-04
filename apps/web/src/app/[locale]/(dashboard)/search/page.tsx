@@ -108,7 +108,7 @@ function ResultCard({ result }: { result: SearchResult }) {
 			href={result.url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all"
+			className="group flex flex-col gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:border-zinc-300 dark:hover:border-zinc-600 transition-[border-color] duration-150"
 		>
 			<div className="flex items-start gap-3">
 				<div className="shrink-0 w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 flex items-center justify-center">
