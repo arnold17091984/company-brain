@@ -938,3 +938,207 @@ class TestDeleteDepartment:
             response = await client.delete(f"{API}/admin/departments/{did}")
 
         assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/admin/users  (create user)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestCreateUser:
+    async def test_create_user_returns_201(self) -> None:
+        """POST /admin/users returns 201 when creating a new user."""
+        user_obj = _make_user_orm(email="new@example.com", name="New User")
+        re_fetch_row = _make_user_dept_row(user_obj, None)
+        re_fetch_result = _FakeResult()
+        re_fetch_result.one = lambda: re_fetch_row
+
+        db = _FakeSession(
+            execute_results=[
+                _FakeResult(scalar=None),  # email uniqueness check
+                re_fetch_result,  # re-fetch with department join
+            ]
+        )
+        async with await _client(db) as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={"email": "new@example.com", "name": "New User"},
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 201
+
+    async def test_create_user_response_has_expected_fields(self) -> None:
+        """Created user response includes id, email, name, role, etc."""
+        user_obj = _make_user_orm(email="new@example.com", name="New User")
+        re_fetch_row = _make_user_dept_row(user_obj, None)
+        re_fetch_result = _FakeResult()
+        re_fetch_result.one = lambda: re_fetch_row
+
+        db = _FakeSession(
+            execute_results=[
+                _FakeResult(scalar=None),
+                re_fetch_result,
+            ]
+        )
+        async with await _client(db) as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={"email": "new@example.com", "name": "New User"},
+                headers=AUTH_HEADERS,
+            )
+
+        body = response.json()
+        for field in ("id", "email", "name", "role", "access_level", "created_at", "updated_at"):
+            assert field in body, f"Missing field: {field}"
+
+    async def test_create_user_duplicate_email_409(self) -> None:
+        """POST /admin/users with duplicate email returns 409."""
+        existing = _make_user_orm(email="dup@example.com")
+        db = _FakeSession(
+            execute_results=[
+                _FakeResult(scalar=existing),  # email check finds existing
+            ]
+        )
+        async with await _client(db) as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={"email": "dup@example.com", "name": "Dup User"},
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 409
+
+    async def test_create_user_invalid_department_404(self) -> None:
+        """POST /admin/users with non-existent department returns 404."""
+        dept_id = str(uuid.uuid4())
+        db = _FakeSession(
+            execute_results=[
+                _FakeResult(scalar=None),  # email uniqueness (no dup)
+                _FakeResult(scalar=None),  # department check (not found)
+            ]
+        )
+        async with await _client(db) as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={
+                    "email": "a@b.com",
+                    "name": "A",
+                    "department_id": dept_id,
+                },
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 404
+
+    async def test_create_user_requires_auth_401(self) -> None:
+        """POST /admin/users without auth returns 401."""
+        async with await _client() as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={"email": "a@b.com", "name": "A"},
+            )
+
+        assert response.status_code == 401
+
+    async def test_create_user_non_admin_403(self) -> None:
+        """Non-admin POST /admin/users returns 403."""
+        _override_as_employee()
+        try:
+            async with await _client() as client:
+                response = await client.post(
+                    f"{API}/admin/users",
+                    json={"email": "a@b.com", "name": "A"},
+                    headers=AUTH_HEADERS,
+                )
+            assert response.status_code == 403
+        finally:
+            _clear_user_override()
+
+    async def test_create_user_missing_fields_422(self) -> None:
+        """POST /admin/users with empty body returns 422."""
+        async with await _client() as client:
+            response = await client.post(
+                f"{API}/admin/users",
+                json={},
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/admin/users/by-telegram/{telegram_id}
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestGetUserByTelegram:
+    async def test_get_by_telegram_returns_200(self) -> None:
+        """GET /admin/users/by-telegram/{id} returns 200 when user exists."""
+        user_obj = _make_user_orm(telegram_id=12345)
+        row = _make_user_dept_row(user_obj, "engineering")
+        result = _FakeResult()
+        result.one_or_none = lambda: row
+
+        db = _FakeSession(execute_results=[result])
+        async with await _client(db) as client:
+            response = await client.get(
+                f"{API}/admin/users/by-telegram/12345",
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 200
+
+    async def test_get_by_telegram_response_has_expected_fields(self) -> None:
+        """Response includes id, email, name, role, etc."""
+        user_obj = _make_user_orm(telegram_id=12345)
+        row = _make_user_dept_row(user_obj, "engineering")
+        result = _FakeResult()
+        result.one_or_none = lambda: row
+
+        db = _FakeSession(execute_results=[result])
+        async with await _client(db) as client:
+            response = await client.get(
+                f"{API}/admin/users/by-telegram/12345",
+                headers=AUTH_HEADERS,
+            )
+
+        body = response.json()
+        for field in ("id", "email", "name", "role", "access_level", "created_at", "updated_at"):
+            assert field in body, f"Missing field: {field}"
+
+    async def test_get_by_telegram_not_found_404(self) -> None:
+        """GET /admin/users/by-telegram/{id} returns 404 when not found."""
+        result = _FakeResult()
+        result.one_or_none = lambda: None
+
+        db = _FakeSession(execute_results=[result])
+        async with await _client(db) as client:
+            response = await client.get(
+                f"{API}/admin/users/by-telegram/99999",
+                headers=AUTH_HEADERS,
+            )
+
+        assert response.status_code == 404
+
+    async def test_get_by_telegram_requires_auth_401(self) -> None:
+        """Unauthenticated request returns 401."""
+        async with await _client() as client:
+            response = await client.get(f"{API}/admin/users/by-telegram/12345")
+
+        assert response.status_code == 401
+
+    async def test_get_by_telegram_non_admin_403(self) -> None:
+        """Non-admin GET /admin/users/by-telegram/{id} returns 403."""
+        _override_as_employee()
+        try:
+            async with await _client() as client:
+                response = await client.get(
+                    f"{API}/admin/users/by-telegram/12345",
+                    headers=AUTH_HEADERS,
+                )
+            assert response.status_code == 403
+        finally:
+            _clear_user_override()
