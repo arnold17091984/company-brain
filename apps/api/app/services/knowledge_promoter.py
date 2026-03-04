@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.database import ChatMessage, Document
+from app.services.document_classifier import ClassificationResult, DocumentClassifier
 from app.services.ingestion.chunker import TextChunkingService
 from app.services.rag.collection import COLLECTION_NAME, _DENSE_VECTOR_NAME
 from app.services.rag.embedder import TogetherEmbeddingService
@@ -38,10 +39,12 @@ class KnowledgePromoter:
         self,
         embedding_service: TogetherEmbeddingService,
         qdrant_client: AsyncQdrantClient,
+        document_classifier: DocumentClassifier | None = None,
     ) -> None:
         self._embedding_service = embedding_service
         self._qdrant_client = qdrant_client
         self._chunker = TextChunkingService()
+        self._classifier = document_classifier
 
     async def promote(
         self,
@@ -108,6 +111,29 @@ class KnowledgePromoter:
         content = f"## Question\n{question}\n\n## Answer\n{assistant_msg.content}"
         content_hash = hashlib.sha256(content.encode()).hexdigest()
 
+        # Auto-classify if category is still "general"
+        ai_classification_meta: dict[str, Any] | None = None
+        if category == "general" and self._classifier is not None:
+            try:
+                cls_result: ClassificationResult = await self._classifier.classify(
+                    title=auto_title,
+                    content_preview=content[:2000],
+                )
+                category = cls_result.category
+                ai_classification_meta = {
+                    "category": cls_result.category,
+                    "confidence": cls_result.confidence,
+                    "suggested_department": cls_result.suggested_department,
+                    "classified_at": datetime.now(tz=UTC).isoformat(),
+                }
+                logger.info(
+                    "AI classified promoted Q&A as category=%s (confidence=%.2f)",
+                    cls_result.category,
+                    cls_result.confidence,
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("AI classification failed for promoted Q&A: %s", exc)
+
         # 5. Build a RawDocument for the chunker
         raw_doc = RawDocument(
             source_type=ConnectorType.CHAT_LEARNED,
@@ -154,6 +180,14 @@ class KnowledgePromoter:
 
         # 10. Create Document record in PostgreSQL
         now = datetime.now(tz=UTC)
+        doc_metadata: dict[str, Any] = {
+            "chunks_count": len(chunks),
+            "original_message_id": message_id,
+            "question": question[:500],
+        }
+        if ai_classification_meta is not None:
+            doc_metadata["ai_classification"] = ai_classification_meta
+
         doc = Document(
             id=doc_uuid,
             source_type="chat_learned",
@@ -163,11 +197,7 @@ class KnowledgePromoter:
             access_level=access_level,
             category=category,
             department_id=dept_uuid,
-            metadata_={
-                "chunks_count": len(chunks),
-                "original_message_id": message_id,
-                "question": question[:500],
-            },
+            metadata_=doc_metadata,
             indexed_at=now,
         )
         db.add(doc)

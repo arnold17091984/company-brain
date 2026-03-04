@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, or_, select
@@ -21,6 +22,8 @@ from app.models.schemas import (
     DocumentUpdate,
     DocumentUploadResponse,
 )
+from app.services.document_classifier import DocumentClassifier
+from app.services.llm.claude_service import ClaudeService
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +60,9 @@ _HR_PREFIX = "hr_"
 # Valid categories
 _VALID_CATEGORIES = frozenset(
     {
+        # General
         "general",
+        # HR categories (access-controlled)
         "hr_evaluation",
         "hr_compensation",
         "hr_contract",
@@ -65,6 +70,15 @@ _VALID_CATEGORIES = frozenset(
         "hr_skills",
         "hr_org",
         "hr_compliance",
+        # Departmental / operational categories
+        "engineering",
+        "sales",
+        "marketing",
+        "finance",
+        "policy",
+        "onboarding",
+        "project",
+        "meeting_notes",
     }
 )
 # Compensation category (restricted even from hr role)
@@ -112,6 +126,7 @@ def _to_summary(doc: Document) -> DocumentSummary:
         indexed_at=doc.indexed_at.isoformat() if doc.indexed_at else None,
         file_size=meta.get("file_size"),
         mime_type=meta.get("mime_type"),
+        ai_classification=meta.get("ai_classification"),
     )
 
 
@@ -430,6 +445,14 @@ async def update_document(
                 detail=f"Invalid category {body.category!r}. Valid: {sorted(_VALID_CATEGORIES)}",
             )
         doc.category = body.category
+
+        # Mark AI classification as manually overridden when it exists
+        current_meta: dict = dict(doc.metadata_ or {})
+        if "ai_classification" in current_meta:
+            ai_cls: dict = dict(current_meta["ai_classification"])
+            ai_cls["overridden"] = True
+            current_meta["ai_classification"] = ai_cls
+            doc.metadata_ = current_meta
     if body.access_level is not None:
         doc.access_level = body.access_level
     if body.related_employee_id is not None:
@@ -746,6 +769,45 @@ async def upload_document(
 
     await db.commit()
 
+    # ── Auto-classify when the user left category as "general" ───────────
+    if category == "general":
+        try:
+            claude_svc = ClaudeService()
+            classifier = DocumentClassifier(claude_svc)
+
+            # Decode raw bytes to text for the preview (ignore decode errors)
+            content_preview = raw.decode("utf-8", errors="replace")[:2000]
+
+            result = await classifier.classify(
+                title=filename,
+                content_preview=content_preview,
+                filename=filename,
+            )
+
+            if result.category != "general" or result.confidence > 0.0:
+                doc.category = result.category
+                current_meta: dict = dict(doc.metadata_ or {})
+                current_meta["ai_classification"] = {
+                    "category": result.category,
+                    "confidence": result.confidence,
+                    "suggested_department": result.suggested_department,
+                    "classified_at": datetime.now(UTC).isoformat(),
+                }
+                doc.metadata_ = current_meta
+                await db.commit()
+
+                logger.info(
+                    "Auto-classified document %s as %r (confidence=%.2f)",
+                    str(doc.id),
+                    result.category,
+                    result.confidence,
+                )
+        except Exception:
+            logger.exception(
+                "Auto-classification failed for document %s; keeping category='general'",
+                str(doc.id),
+            )
+
     logger.info(
         "Document uploaded",
         extra={
@@ -753,7 +815,7 @@ async def upload_document(
             "document_id": str(doc.id),
             "filename": filename,
             "file_size": len(raw),
-            "category": category,
+            "category": doc.category,
             "acl_count": len(acl_entries),
         },
     )

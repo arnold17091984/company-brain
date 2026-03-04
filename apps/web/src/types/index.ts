@@ -36,7 +36,15 @@ export type DocumentCategory =
 	| "hr_attendance"
 	| "hr_skills"
 	| "hr_org"
-	| "hr_compliance";
+	| "hr_compliance"
+	| "engineering"
+	| "sales"
+	| "marketing"
+	| "finance"
+	| "policy"
+	| "onboarding"
+	| "project"
+	| "meeting_notes";
 
 export type UserRole =
 	| "employee"
@@ -184,4 +192,11 @@ export interface DocumentItem {
 	mimeType?: string;
 	category?: DocumentCategory;
 	relatedEmployeeId?: string;
+	aiClassification?: {
+		category: string;
+		confidence: number;
+		suggestedDepartment?: string;
+		classifiedAt?: string;
+		overridden?: boolean;
+	};
 }

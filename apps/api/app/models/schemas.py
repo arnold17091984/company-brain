@@ -148,6 +148,7 @@ class DocumentSummary(BaseModel):
     indexed_at: str | None = None
     file_size: int | None = None
     mime_type: str | None = None
+    ai_classification: dict | None = None
 
 
 class DocumentListResponse(BaseModel):

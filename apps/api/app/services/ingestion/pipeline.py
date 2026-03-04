@@ -35,6 +35,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.database import Department, Document
+from app.services.document_classifier import ClassificationResult, DocumentClassifier
 from app.services.ingestion.chunker import TextChunkingService
 from app.services.rag.collection import COLLECTION_NAME
 from app.services.rag.embedder import TogetherEmbeddingService
@@ -107,11 +108,13 @@ class DefaultIngestionPipeline:
         db_session_factory: Callable[..., Any],
         embedding_service: TogetherEmbeddingService,
         qdrant_client: AsyncQdrantClient,
+        document_classifier: DocumentClassifier | None = None,
     ) -> None:
         self._session_factory = db_session_factory
         self._embedding_service = embedding_service
         self._qdrant_client = qdrant_client
         self._chunker = TextChunkingService()
+        self._classifier = document_classifier
 
     # -----------------------------------------------------------------------
     # Public API
@@ -330,6 +333,36 @@ class DefaultIngestionPipeline:
 
             is_new = existing_doc_id is None
 
+            # --- AI Classification ------------------------------------------------
+            ai_category: str | None = None
+            ai_classification_meta: dict[str, Any] | None = None
+            if self._classifier is not None:
+                try:
+                    content_preview = raw_doc.content[:2000]
+                    cls_result: ClassificationResult = await self._classifier.classify(
+                        title=raw_doc.title,
+                        content_preview=content_preview,
+                    )
+                    ai_category = cls_result.category
+                    ai_classification_meta = {
+                        "category": cls_result.category,
+                        "confidence": cls_result.confidence,
+                        "suggested_department": cls_result.suggested_department,
+                        "classified_at": datetime.now(tz=UTC).isoformat(),
+                    }
+                    logger.info(
+                        "AI classified source_id=%s as category=%s (confidence=%.2f)",
+                        raw_doc.source_id,
+                        cls_result.category,
+                        cls_result.confidence,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "AI classification failed for source_id=%s: %s",
+                        raw_doc.source_id,
+                        exc,
+                    )
+
             # --- Chunking -----------------------------------------------------
             chunks = await self._chunker.chunk(raw_doc)
             if not chunks:
@@ -366,6 +399,8 @@ class DefaultIngestionPipeline:
                 raw_doc=raw_doc,
                 department_id=department_id,
                 chunks_count=len(chunks),
+                ai_category=ai_category,
+                ai_classification_meta=ai_classification_meta,
             )
             await session.commit()
 
@@ -448,6 +483,8 @@ class DefaultIngestionPipeline:
         raw_doc: RawDocument,
         department_id: uuid.UUID | None,
         chunks_count: int,
+        ai_category: str | None = None,
+        ai_classification_meta: dict[str, Any] | None = None,
     ) -> None:
         """Insert or update the :class:`~app.models.database.Document` record.
 
@@ -460,6 +497,8 @@ class DefaultIngestionPipeline:
             raw_doc: Source data to persist.
             department_id: Resolved department UUID (may be ``None``).
             chunks_count: Number of chunks produced (stored in metadata).
+            ai_category: AI-predicted category label (may be ``None``).
+            ai_classification_meta: Full classification payload (may be ``None``).
         """
         now = datetime.now(tz=UTC)
         metadata: dict[str, Any] = {
@@ -467,31 +506,41 @@ class DefaultIngestionPipeline:
             "chunks_count": chunks_count,
             "language": raw_doc.language,
         }
+        if ai_classification_meta is not None:
+            metadata["ai_classification"] = ai_classification_meta
+
+        values_dict: dict[str, Any] = {
+            "id": doc_uuid,
+            "source_type": raw_doc.source_type.value,
+            "source_id": raw_doc.source_id,
+            "title": raw_doc.title,
+            "content_hash": raw_doc.content_hash,
+            "access_level": raw_doc.access_level,
+            "department_id": department_id,
+            "metadata_": metadata,
+            "indexed_at": now,
+        }
+        if ai_category is not None:
+            values_dict["category"] = ai_category
+
+        conflict_set: dict[str, Any] = {
+            "title": raw_doc.title,
+            "content_hash": raw_doc.content_hash,
+            "access_level": raw_doc.access_level,
+            "department_id": department_id,
+            "metadata_": metadata,
+            "indexed_at": now,
+            "updated_at": now,
+        }
+        if ai_category is not None:
+            conflict_set["category"] = ai_category
 
         stmt = (
             pg_insert(Document)
-            .values(
-                id=doc_uuid,
-                source_type=raw_doc.source_type.value,
-                source_id=raw_doc.source_id,
-                title=raw_doc.title,
-                content_hash=raw_doc.content_hash,
-                access_level=raw_doc.access_level,
-                department_id=department_id,
-                metadata_=metadata,
-                indexed_at=now,
-            )
+            .values(**values_dict)
             .on_conflict_do_update(
                 index_elements=["id"],
-                set_={
-                    "title": raw_doc.title,
-                    "content_hash": raw_doc.content_hash,
-                    "access_level": raw_doc.access_level,
-                    "department_id": department_id,
-                    "metadata_": metadata,
-                    "indexed_at": now,
-                    "updated_at": now,
-                },
+                set_=conflict_set,
             )
         )
         await session.execute(stmt)

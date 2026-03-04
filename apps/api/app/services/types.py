@@ -48,6 +48,14 @@ class DocumentCategory(StrEnum):
     HR_SKILLS = "hr_skills"
     HR_ORG = "hr_org"
     HR_COMPLIANCE = "hr_compliance"
+    ENGINEERING = "engineering"
+    SALES = "sales"
+    MARKETING = "marketing"
+    FINANCE = "finance"
+    POLICY = "policy"
+    ONBOARDING = "onboarding"
+    PROJECT = "project"
+    MEETING_NOTES = "meeting_notes"
 
 
 class UserRole(StrEnum):

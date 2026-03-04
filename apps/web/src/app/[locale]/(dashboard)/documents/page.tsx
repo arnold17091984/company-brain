@@ -20,6 +20,17 @@ const HR_CATEGORIES: DocumentCategory[] = [
 	"hr_compliance",
 ];
 
+const BUSINESS_CATEGORIES: DocumentCategory[] = [
+	"engineering",
+	"sales",
+	"marketing",
+	"finance",
+	"policy",
+	"onboarding",
+	"project",
+	"meeting_notes",
+];
+
 const HR_ROLES: Array<{ value: UserRole; labelKey: string }> = [
 	{ value: "ceo", labelKey: "roleCeo" },
 	{ value: "executive", labelKey: "roleExecutive" },
@@ -158,6 +169,64 @@ function StatusBadge({
 	);
 }
 
+// ---- Category label helper --------------------------------------------------
+
+function getCategoryLabel(
+	cat: DocumentCategory,
+	t: ReturnType<typeof useTranslations>,
+): string {
+	const keyMap: Record<DocumentCategory, string> = {
+		general: t("categoryGeneral"),
+		hr_evaluation: t("categoryHrEvaluation"),
+		hr_compensation: t("categoryHrCompensation"),
+		hr_contract: t("categoryHrContract"),
+		hr_attendance: t("categoryHrAttendance"),
+		hr_skills: t("categoryHrSkills"),
+		hr_org: t("categoryHrOrg"),
+		hr_compliance: t("categoryHrCompliance"),
+		engineering: t("categoryEngineering"),
+		sales: t("categorySales"),
+		marketing: t("categoryMarketing"),
+		finance: t("categoryFinance"),
+		policy: t("categoryPolicy"),
+		onboarding: t("categoryOnboarding"),
+		project: t("categoryProject"),
+		meeting_notes: t("categoryMeetingNotes"),
+	};
+	return keyMap[cat] ?? cat;
+}
+
+// ---- AI Classification Badge ------------------------------------------------
+
+function AiClassificationBadge({
+	aiClassification,
+	t,
+}: {
+	aiClassification: DocumentItem["aiClassification"];
+	t: ReturnType<typeof useTranslations>;
+}) {
+	if (!aiClassification) return null;
+	const confidence = Math.round(aiClassification.confidence * 100);
+	return (
+		<span
+			className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 border ${
+				aiClassification.overridden
+					? "bg-stone-50 border-stone-200 text-stone-500 dark:bg-stone-700/40 dark:border-stone-600 dark:text-stone-400"
+					: "bg-violet-50 border-violet-200 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800 dark:text-violet-400"
+			}`}
+			title={t("aiConfidence", { confidence: String(confidence) })}
+		>
+			<span aria-hidden="true" className="text-[10px]">
+				🤖
+			</span>
+			{t("aiClassified")}
+			{!aiClassification.overridden && (
+				<span className="text-[10px] opacity-70">{confidence}%</span>
+			)}
+		</span>
+	);
+}
+
 // ---- Upload zone ------------------------------------------------------------
 
 function UploadZone({
@@ -281,19 +350,8 @@ function UploadZone({
 		onUpload,
 	]);
 
-	const categoryLabel = (cat: DocumentCategory): string => {
-		const keyMap: Record<DocumentCategory, string> = {
-			general: t("categoryGeneral"),
-			hr_evaluation: t("categoryHrEvaluation"),
-			hr_compensation: t("categoryHrCompensation"),
-			hr_contract: t("categoryHrContract"),
-			hr_attendance: t("categoryHrAttendance"),
-			hr_skills: t("categoryHrSkills"),
-			hr_org: t("categoryHrOrg"),
-			hr_compliance: t("categoryHrCompliance"),
-		};
-		return keyMap[cat];
-	};
+	const categoryLabel = (cat: DocumentCategory): string =>
+		getCategoryLabel(cat, t);
 
 	return (
 		<div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 p-6 shadow-sm dark:shadow-none">
@@ -386,11 +444,20 @@ function UploadZone({
 							className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
 						>
 							<option value="general">{t("categoryGeneral")}</option>
-							{HR_CATEGORIES.map((cat) => (
-								<option key={cat} value={cat}>
-									{categoryLabel(cat)}
-								</option>
-							))}
+							<optgroup label="HR">
+								{HR_CATEGORIES.map((cat) => (
+									<option key={cat} value={cat}>
+										{categoryLabel(cat)}
+									</option>
+								))}
+							</optgroup>
+							<optgroup label="Business">
+								{BUSINESS_CATEGORIES.map((cat) => (
+									<option key={cat} value={cat}>
+										{categoryLabel(cat)}
+									</option>
+								))}
+							</optgroup>
 						</select>
 					</div>
 
@@ -616,6 +683,9 @@ function TableSkeleton() {
 						<div className="h-3.5 w-16 bg-stone-100 dark:bg-stone-600 rounded" />
 					</td>
 					<td className="px-4 py-3">
+						<div className="h-3.5 w-20 bg-stone-100 dark:bg-stone-600 rounded" />
+					</td>
+					<td className="px-4 py-3">
 						<div className="h-5 w-20 bg-stone-100 dark:bg-stone-600 rounded-full" />
 					</td>
 					<td className="px-4 py-3">
@@ -809,6 +879,9 @@ export default function DocumentsPage() {
 		return t("statusError");
 	};
 
+	const categoryLabel = (cat: DocumentCategory): string =>
+		getCategoryLabel(cat, t);
+
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
@@ -934,6 +1007,9 @@ export default function DocumentsPage() {
 											{t("columnType")}
 										</th>
 										<th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+											{t("category")}
+										</th>
+										<th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
 											{t("columnStatus")}
 										</th>
 										<th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
@@ -949,7 +1025,7 @@ export default function DocumentsPage() {
 										<TableSkeleton />
 									) : documents.length === 0 ? (
 										<tr>
-											<td colSpan={5} className="px-4 py-16 text-center">
+											<td colSpan={6} className="px-4 py-16 text-center">
 												<div className="flex flex-col items-center gap-3">
 													<div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 flex items-center justify-center">
 														<svg
@@ -992,6 +1068,12 @@ export default function DocumentsPage() {
 														>
 															{doc.title}
 														</span>
+														{doc.aiClassification && (
+															<AiClassificationBadge
+																aiClassification={doc.aiClassification}
+																t={t}
+															/>
+														)}
 													</div>
 												</td>
 
@@ -1001,6 +1083,11 @@ export default function DocumentsPage() {
 														? "Google Drive"
 														: doc.sourceType.charAt(0).toUpperCase() +
 															doc.sourceType.slice(1)}
+												</td>
+
+												{/* Category */}
+												<td className="px-4 py-3 text-stone-500 dark:text-stone-400 whitespace-nowrap text-xs">
+													{doc.category ? categoryLabel(doc.category) : "-"}
 												</td>
 
 												{/* Status */}
