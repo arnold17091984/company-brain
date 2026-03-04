@@ -6,7 +6,7 @@ LLM response metadata, etc.).
 """
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint, func
@@ -63,6 +63,18 @@ class User(Base):
     )
     access_level: Mapped[str] = mapped_column(String(50), nullable=False, default="restricted")
     role: Mapped[str] = mapped_column(String(50), nullable=False, default="employee")
+    employment_status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    departure_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    departure_flagged_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    departure_flagged_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    job_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    manager_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -294,9 +306,7 @@ class PromptTemplateVote(Base):
     """A single like/vote on a prompt template (one per user per template)."""
 
     __tablename__ = "prompt_template_votes"
-    __table_args__ = (
-        UniqueConstraint("template_id", "user_id", name="uq_template_vote_user"),
-    )
+    __table_args__ = (UniqueConstraint("template_id", "user_id", name="uq_template_vote_user"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     template_id: Mapped[uuid.UUID] = mapped_column(
@@ -400,9 +410,7 @@ class UsageMetricsDaily(Base):
     """Daily aggregated usage metrics per user."""
 
     __tablename__ = "usage_metrics_daily"
-    __table_args__ = (
-        UniqueConstraint("user_id", "date", name="uq_usage_metrics_user_date"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "date", name="uq_usage_metrics_user_date"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -461,9 +469,7 @@ class MonthlyROIReport(Base):
     department_breakdown: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default=dict
     )
-    kpi_correlation: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict
-    )
+    kpi_correlation: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     report_markdown: Mapped[str] = mapped_column(String, nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -488,3 +494,59 @@ class SystemSetting(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Knowledge Harvesting
+# ---------------------------------------------------------------------------
+
+
+class HarvestSession(Base):
+    """Knowledge harvest session for a departing employee."""
+
+    __tablename__ = "harvest_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    target_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    total_questions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    answered_questions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    target_user: Mapped["User"] = relationship("User", foreign_keys=[target_user_id])
+    creator: Mapped["User"] = relationship("User", foreign_keys=[created_by])
+    questions: Mapped[list["HarvestQuestion"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan"
+    )
+
+
+class HarvestQuestion(Base):
+    """Individual question in a knowledge harvest session."""
+
+    __tablename__ = "harvest_questions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("harvest_sessions.id", ondelete="CASCADE"), nullable=False
+    )
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    question: Mapped[str] = mapped_column(String, nullable=False)
+    answer: Mapped[str | None] = mapped_column(String, nullable=True)
+    answer_quality: Mapped[float | None] = mapped_column(Float, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)  # telegram / web
+    asked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    session: Mapped["HarvestSession"] = relationship(back_populates="questions")

@@ -69,6 +69,32 @@ class UserRole(StrEnum):
     ADMIN = "admin"
 
 
+class EmploymentStatus(StrEnum):
+    """Employee lifecycle status."""
+
+    ACTIVE = "active"
+    DEPARTING = "departing"
+    DEPARTED = "departed"
+
+
+class HarvestStatus(StrEnum):
+    """Knowledge harvest session status."""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    PAUSED = "paused"
+
+
+class HarvestCategory(StrEnum):
+    """Knowledge harvest question categories."""
+
+    PROJECT = "project"
+    PROCESS = "process"
+    CLIENT = "client"
+    TOOL = "tool"
+    TEAM = "team"
+
+
 # ---------------------------------------------------------------------------
 # RAG value objects
 # ---------------------------------------------------------------------------
