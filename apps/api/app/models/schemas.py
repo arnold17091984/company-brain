@@ -616,6 +616,22 @@ class KPIRecordCreate(BaseModel):
     actual_value: float
 
 
+class ConnectorConfig(BaseModel):
+    """Configuration for a data connector's ingestion scope."""
+
+    folder_ids: list[str] = Field(
+        default_factory=list,
+        description="Google Drive folder IDs to scope ingestion.",
+    )
+
+
+class ConnectorConfigResponse(BaseModel):
+    """Response for connector configuration."""
+
+    connector_type: str
+    config: dict
+
+
 class KPIRecordResponse(BaseModel):
     """Response for a single KPI record."""
 

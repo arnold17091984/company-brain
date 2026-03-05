@@ -45,9 +45,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.connectors import get_connector
 from app.connectors.chunker import DefaultChunkingService
+from app.connectors.google_drive import GoogleDriveConnector
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
-from app.models.database import Department, Document
+from app.models.database import Department, Document, SystemSetting
 from app.services.types import (
     ConnectorType,
     DocumentChunk,
@@ -336,6 +337,21 @@ async def ingestion_sync_fn(
         url=settings.qdrant_url,
         api_key=settings.qdrant_api_key or None,
     )
+
+    # Load connector-specific config from DB and apply
+    if isinstance(connector, GoogleDriveConnector):
+        connector.folder_ids = None  # reset before loading
+    async with AsyncSessionLocal() as config_session:
+        config_key = f"connector:{connector_type_str}"
+        config_result = await config_session.execute(
+            select(SystemSetting).where(SystemSetting.key == config_key)
+        )
+        config_setting = config_result.scalar_one_or_none()
+        if config_setting and config_setting.value:
+            folder_ids = config_setting.value.get("folder_ids", [])
+            if isinstance(connector, GoogleDriveConnector) and folder_ids:
+                connector.folder_ids = folder_ids
+                logger.info("Applied folder scope: %d folder(s)", len(folder_ids))
 
     async with AsyncSessionLocal() as session:
         try:

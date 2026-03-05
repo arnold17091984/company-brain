@@ -107,6 +107,7 @@ class GoogleDriveConnector:
 
     _access_token: str | None = None
     _token_expires_at: float = 0.0
+    folder_ids: list[str] | None = None
 
     @property
     def connector_type(self) -> ConnectorType:
@@ -138,6 +139,65 @@ class GoogleDriveConnector:
     def _auth_headers(self, token: str) -> dict[str, str]:
         return {"Authorization": f"Bearer {token}"}
 
+    # ── Folder tree resolution ────────────────────────────────────────────────
+
+    async def _resolve_folder_tree(
+        self,
+        client: httpx.AsyncClient,
+        token: str,
+        root_folder_ids: list[str],
+        max_depth: int = 10,
+    ) -> set[str]:
+        """Recursively discover all subfolder IDs starting from *root_folder_ids*.
+
+        Returns a set of ALL folder IDs (roots + descendants) whose direct
+        children should be included in the ingestion scope.
+        """
+        all_ids: set[str] = set(root_folder_ids)
+        frontier = list(root_folder_ids)
+        depth = 0
+
+        while frontier and depth < max_depth:
+            parent_clauses = " or ".join(f"'{fid}' in parents" for fid in frontier)
+            query = (
+                f"mimeType='application/vnd.google-apps.folder' "
+                f"and trashed=false and ({parent_clauses})"
+            )
+
+            next_frontier: list[str] = []
+            page_token: str | None = None
+            while True:
+                params: dict[str, Any] = {
+                    "q": query,
+                    "pageSize": _PAGE_SIZE,
+                    "fields": "nextPageToken,files(id)",
+                }
+                if page_token:
+                    params["pageToken"] = page_token
+
+                resp = await client.get(
+                    f"{_DRIVE_API}/files",
+                    headers=self._auth_headers(token),
+                    params=params,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+
+                for f in data.get("files", []):
+                    fid = f["id"]
+                    if fid not in all_ids:
+                        all_ids.add(fid)
+                        next_frontier.append(fid)
+
+                page_token = data.get("nextPageToken")
+                if not page_token:
+                    break
+
+            frontier = next_frontier
+            depth += 1
+
+        return all_ids
+
     # ── File listing ─────────────────────────────────────────────────────────
 
     async def _list_files(
@@ -145,44 +205,73 @@ class GoogleDriveConnector:
         client: httpx.AsyncClient,
         token: str,
         since: datetime | None,
+        scoped_folder_ids: set[str] | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
-        """Yield file metadata pages from the Drive API."""
+        """Yield file metadata pages from the Drive API.
+
+        When *scoped_folder_ids* is provided, only files whose parent is in the
+        set are returned.  If the set is large (>50), multiple batched queries
+        are issued to avoid Drive API query-length limits.
+        """
         mime_filter = " or ".join(
             f"mimeType='{m}'" for m in list(_EXPORTABLE_MIME) + list(_DIRECT_MIME)
         )
-        query = f"trashed=false and ({mime_filter})"
+        base_query = f"trashed=false and ({mime_filter})"
         if since:
             ts = since.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-            query += f" and modifiedTime > '{ts}'"
+            base_query += f" and modifiedTime > '{ts}'"
 
-        page_token: str | None = None
-        while True:
-            params: dict[str, Any] = {
-                "q": query,
-                "pageSize": _PAGE_SIZE,
-                "fields": (
-                    "nextPageToken,"
-                    "files(id,name,mimeType,modifiedTime,webViewLink,"
-                    "parents,description)"
-                ),
-            }
-            if page_token:
-                params["pageToken"] = page_token
+        # Split folder IDs into batches to keep query length manageable
+        folder_batches: list[set[str] | None]
+        if scoped_folder_ids:
+            ids_list = list(scoped_folder_ids)
+            batch_size = 50
+            folder_batches = [
+                set(ids_list[i : i + batch_size])
+                for i in range(0, len(ids_list), batch_size)
+            ]
+        else:
+            folder_batches = [None]
 
-            resp = await client.get(
-                f"{_DRIVE_API}/files",
-                headers=self._auth_headers(token),
-                params=params,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+        seen_ids: set[str] = set()
 
-            for file_meta in data.get("files", []):
-                yield file_meta
+        for batch in folder_batches:
+            query = base_query
+            if batch:
+                parent_clauses = " or ".join(f"'{fid}' in parents" for fid in batch)
+                query += f" and ({parent_clauses})"
 
-            page_token = data.get("nextPageToken")
-            if not page_token:
-                break
+            page_token: str | None = None
+            while True:
+                params: dict[str, Any] = {
+                    "q": query,
+                    "pageSize": _PAGE_SIZE,
+                    "fields": (
+                        "nextPageToken,"
+                        "files(id,name,mimeType,modifiedTime,webViewLink,"
+                        "parents,description)"
+                    ),
+                }
+                if page_token:
+                    params["pageToken"] = page_token
+
+                resp = await client.get(
+                    f"{_DRIVE_API}/files",
+                    headers=self._auth_headers(token),
+                    params=params,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+
+                for file_meta in data.get("files", []):
+                    fid = file_meta["id"]
+                    if fid not in seen_ids:
+                        seen_ids.add(fid)
+                        yield file_meta
+
+                page_token = data.get("nextPageToken")
+                if not page_token:
+                    break
 
     # ── Content export ───────────────────────────────────────────────────────
 
@@ -267,7 +356,19 @@ class GoogleDriveConnector:
         async with httpx.AsyncClient(timeout=60.0) as client:
             token = await self._get_access_token(client)
 
-            async for file_meta in self._list_files(client, token, since):
+            # Resolve folder scope (recursive subfolder discovery)
+            scoped_folders: set[str] | None = None
+            if self.folder_ids:
+                scoped_folders = await self._resolve_folder_tree(
+                    client, token, self.folder_ids
+                )
+                logger.info(
+                    "Folder scope: %d root(s) resolved to %d total folder(s)",
+                    len(self.folder_ids),
+                    len(scoped_folders),
+                )
+
+            async for file_meta in self._list_files(client, token, since, scoped_folders):
                 file_id: str = file_meta["id"]
                 mime_type: str = file_meta["mimeType"]
                 title: str = file_meta.get("name", file_id)
