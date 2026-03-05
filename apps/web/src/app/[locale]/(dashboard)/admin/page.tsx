@@ -687,13 +687,13 @@ function SettingsTab({
 					setApiKeys(await res.json());
 				}
 			} catch {
-				// silent fail
+				setError(t("loadError"));
 			} finally {
 				setApiKeysLoading(false);
 			}
 		}
 		loadKeys();
-	}, [getAccessToken]);
+	}, [getAccessToken, t]);
 
 	const handleSave = async () => {
 		if (!settings) return;
@@ -737,7 +737,7 @@ function SettingsTab({
 				setKeyValue("");
 			}
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setKeySaving(false);
 		}
@@ -758,7 +758,7 @@ function SettingsTab({
 				setApiKeys(await res.json());
 			}
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setKeySaving(false);
 		}
@@ -1253,7 +1253,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 			});
 			if (listRes.ok) setUsers(await listRes.json());
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setCreating(false);
 		}
