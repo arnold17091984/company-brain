@@ -258,7 +258,15 @@
 		"emailExists": "このメールアドレスのユーザーは既に存在します",
 		"telegramId": "Telegram ID",
 		"telegramIdHint": "TelegramのユーザーID（数値）",
-		"telegramIdConflict": "このTelegram IDは既に別のユーザーに紐付けられています"
+		"telegramIdConflict": "このTelegram IDは既に別のユーザーに紐付けられています",
+		"deptUsers": "ユーザー数",
+		"deptAdd": "追加",
+		"deptNamePlaceholder": "部署名を入力",
+		"deptSlugExists": "このスラッグは既に存在します",
+		"deptDeleteConfirm": "この部署を削除しますか？",
+		"deptHasUsers": "ユーザーが所属している部署は削除できません",
+		"edit": "編集",
+		"delete": "削除"
 	},
 	"agent": {
 		"pageTitle": "AIエージェントダッシュボード",

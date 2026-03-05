@@ -1947,6 +1947,300 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 					</div>
 				</div>
 			)}
+			{/* Department management section */}
+			<DepartmentManager
+				departments={departments}
+				onUpdate={async () => {
+					try {
+						const res = await fetch(
+							`${API_BASE_URL}/api/v1/admin/departments`,
+							{
+								headers: {
+									Authorization: `Bearer ${getAccessToken()}`,
+								},
+							},
+						);
+						if (res.ok) setDepartments(await res.json());
+					} catch {
+						/* non-critical */
+					}
+				}}
+				getAccessToken={getAccessToken}
+			/>
+		</div>
+	);
+}
+
+// ---- Department manager ---------------------------------------------------
+
+function DepartmentManager({
+	departments,
+	onUpdate,
+	getAccessToken,
+}: {
+	departments: Department[];
+	onUpdate: () => Promise<void>;
+	getAccessToken: () => string;
+}) {
+	const t = useTranslations("admin");
+	const [newName, setNewName] = useState("");
+	const [newSlug, setNewSlug] = useState("");
+	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [editName, setEditName] = useState("");
+	const [editSlug, setEditSlug] = useState("");
+	const [deletingId, setDeletingId] = useState<string | null>(null);
+
+	const handleCreate = async () => {
+		if (!newName.trim() || !newSlug.trim()) return;
+		setSaving(true);
+		setError(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/departments`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					name: newName.trim(),
+					slug: newSlug.trim(),
+				}),
+			});
+			if (res.status === 409) {
+				setError(t("deptSlugExists"));
+				return;
+			}
+			if (!res.ok) throw new Error(`${res.status}`);
+			setNewName("");
+			setNewSlug("");
+			await onUpdate();
+		} catch {
+			setError(t("loadError"));
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const handleUpdate = async (id: string) => {
+		if (!editName.trim() || !editSlug.trim()) return;
+		setSaving(true);
+		setError(null);
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/api/v1/admin/departments/${id}`,
+				{
+					method: "PATCH",
+					headers: {
+						Authorization: `Bearer ${getAccessToken()}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name: editName.trim(),
+						slug: editSlug.trim(),
+					}),
+				},
+			);
+			if (res.status === 409) {
+				setError(t("deptSlugExists"));
+				return;
+			}
+			if (!res.ok) throw new Error(`${res.status}`);
+			setEditingId(null);
+			await onUpdate();
+		} catch {
+			setError(t("loadError"));
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const handleDelete = async (id: string) => {
+		if (!window.confirm(t("deptDeleteConfirm"))) return;
+		setDeletingId(id);
+		setError(null);
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/api/v1/admin/departments/${id}`,
+				{
+					method: "DELETE",
+					headers: { Authorization: `Bearer ${getAccessToken()}` },
+				},
+			);
+			if (res.status === 409) {
+				setError(t("deptHasUsers"));
+				return;
+			}
+			if (!res.ok) throw new Error(`${res.status}`);
+			await onUpdate();
+		} catch {
+			setError(t("loadError"));
+		} finally {
+			setDeletingId(null);
+		}
+	};
+
+	const autoSlug = (name: string) =>
+		name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
+
+	return (
+		<div className="mt-8">
+			<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-3">
+				{t("departments")}
+			</h3>
+
+			{error && (
+				<div className="mb-3 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-2 text-sm text-red-700 dark:text-red-400">
+					{error}
+				</div>
+			)}
+
+			<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] overflow-hidden">
+				<table className="min-w-full divide-y divide-zinc-200 dark:divide-white/[0.04]">
+					<thead className="bg-zinc-50 dark:bg-white/[0.02]">
+						<tr>
+							{[
+								t("departmentName"),
+								t("departmentSlug"),
+								t("deptUsers"),
+								t("actions"),
+							].map((col) => (
+								<th
+									key={col}
+									className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+								>
+									{col}
+								</th>
+							))}
+						</tr>
+					</thead>
+					<tbody className="divide-y divide-zinc-100 dark:divide-white/[0.04]">
+						{departments.map((dept) => (
+							<tr key={dept.id}>
+								{editingId === dept.id ? (
+									<>
+										<td className="px-4 py-2">
+											<input
+												type="text"
+												value={editName}
+												onChange={(e) => setEditName(e.target.value)}
+												className="w-full px-2 py-1 text-sm rounded-lg border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+											/>
+										</td>
+										<td className="px-4 py-2">
+											<input
+												type="text"
+												value={editSlug}
+												onChange={(e) => setEditSlug(e.target.value)}
+												className="w-full px-2 py-1 text-sm rounded-lg border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
+											/>
+										</td>
+										<td className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400">
+											{dept.user_count}
+										</td>
+										<td className="px-4 py-2">
+											<div className="flex items-center gap-1">
+												<button
+													type="button"
+													onClick={() => handleUpdate(dept.id)}
+													disabled={saving}
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg hover:brightness-110 transition-[filter] disabled:opacity-50"
+												>
+													{t("saveConfig")}
+												</button>
+												<button
+													type="button"
+													onClick={() => setEditingId(null)}
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/[0.04] rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors"
+												>
+													{t("cancel")}
+												</button>
+											</div>
+										</td>
+									</>
+								) : (
+									<>
+										<td className="px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+											{dept.name}
+										</td>
+										<td className="px-4 py-2 text-sm text-zinc-500 dark:text-zinc-400 font-mono">
+											{dept.slug}
+										</td>
+										<td className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400">
+											{dept.user_count}
+										</td>
+										<td className="px-4 py-2">
+											<div className="flex items-center gap-1">
+												<button
+													type="button"
+													onClick={() => {
+														setEditingId(dept.id);
+														setEditName(dept.name);
+														setEditSlug(dept.slug);
+													}}
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors"
+												>
+													{t("edit")}
+												</button>
+												<button
+													type="button"
+													onClick={() => handleDelete(dept.id)}
+													disabled={
+														deletingId === dept.id || dept.user_count > 0
+													}
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/[0.08] rounded-lg hover:bg-red-100 dark:hover:bg-red-500/[0.15] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+												>
+													{t("delete")}
+												</button>
+											</div>
+										</td>
+									</>
+								)}
+							</tr>
+						))}
+
+						{/* Add new department row */}
+						<tr className="bg-zinc-50/50 dark:bg-white/[0.01]">
+							<td className="px-4 py-2">
+								<input
+									type="text"
+									value={newName}
+									onChange={(e) => {
+										setNewName(e.target.value);
+										if (!editingId) setNewSlug(autoSlug(e.target.value));
+									}}
+									placeholder={t("deptNamePlaceholder")}
+									className="w-full px-2 py-1 text-sm rounded-lg border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 placeholder:text-zinc-400"
+								/>
+							</td>
+							<td className="px-4 py-2">
+								<input
+									type="text"
+									value={newSlug}
+									onChange={(e) => setNewSlug(e.target.value)}
+									placeholder="slug"
+									className="w-full px-2 py-1 text-sm rounded-lg border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono placeholder:text-zinc-400"
+								/>
+							</td>
+							<td className="px-4 py-2" />
+							<td className="px-4 py-2">
+								<button
+									type="button"
+									onClick={handleCreate}
+									disabled={saving || !newName.trim() || !newSlug.trim()}
+									className="min-h-[32px] px-3 py-1 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg hover:brightness-110 transition-[filter] disabled:opacity-50 shadow-sm shadow-indigo-500/25"
+								>
+									{saving ? "..." : t("deptAdd")}
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
 	);
 }

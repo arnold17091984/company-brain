@@ -11,7 +11,7 @@ times without duplicating rows.
 
 Seed data
 ---------
-* 6 departments
+* 7 departments
 * 1 test user per department (access level varies by role)
 * 3–5 sample documents per connector type (google_drive, telegram, notion)
 * 1 sample chat session with a short conversation and thumbs-up feedback
@@ -58,6 +58,7 @@ _DEPT: dict[str, uuid.UUID] = {
     "bd": uuid.UUID("00000000-0000-4000-a000-000000000004"),
     "hr-admin": uuid.UUID("00000000-0000-4000-a000-000000000005"),
     "management": uuid.UUID("00000000-0000-4000-a000-000000000006"),
+    "designer": uuid.UUID("00000000-0000-4000-a000-000000000007"),
 }
 
 _USER: dict[str, uuid.UUID] = {
@@ -90,6 +91,7 @@ DEPARTMENTS: list[dict] = [
     {"id": _DEPT["bd"], "name": "Business Development", "slug": "bd"},
     {"id": _DEPT["hr-admin"], "name": "HR & Admin", "slug": "hr-admin"},
     {"id": _DEPT["management"], "name": "Management", "slug": "management"},
+    {"id": _DEPT["designer"], "name": "Designer (UI/UX/Graphic)", "slug": "designer"},
 ]
 
 USERS: list[dict] = [

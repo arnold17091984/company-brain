@@ -258,7 +258,15 @@
 		"emailExists": "A user with this email already exists",
 		"telegramId": "Telegram ID",
 		"telegramIdHint": "Numeric Telegram user ID",
-		"telegramIdConflict": "This Telegram ID is already linked to another user"
+		"telegramIdConflict": "This Telegram ID is already linked to another user",
+		"deptUsers": "Users",
+		"deptAdd": "Add",
+		"deptNamePlaceholder": "Department name",
+		"deptSlugExists": "This slug already exists",
+		"deptDeleteConfirm": "Are you sure you want to delete this department?",
+		"deptHasUsers": "Cannot delete department with assigned users",
+		"edit": "Edit",
+		"delete": "Delete"
 	},
 	"agent": {
 		"pageTitle": "AI Agent Dashboard",
