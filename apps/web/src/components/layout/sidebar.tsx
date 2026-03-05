@@ -565,19 +565,22 @@ function SidebarContent({
 				})}
 			</nav>
 
-			{/* Recent Chats — shown when on chat page and not collapsed */}
-			{isOnChatPage && !isCollapsed ? (
-				<div key="recent-chats" className="flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06] min-h-0">
-					<div className="flex items-center justify-between px-1 pt-3 pb-2">
-						<p className="text-[10px] font-semibold text-[var(--color-fg-subtle)] uppercase tracking-[0.08em]">
-							{tChat("recentChats")}
-						</p>
-					</div>
-					<RecentChats onNavigate={onNavigate} />
+			{/* Recent Chats — always mounted to keep hooks stable; hidden via CSS */}
+			<div
+				className={
+					isOnChatPage && !isCollapsed
+						? "flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06] min-h-0"
+						: "hidden"
+				}
+			>
+				<div className="flex items-center justify-between px-1 pt-3 pb-2">
+					<p className="text-[10px] font-semibold text-[var(--color-fg-subtle)] uppercase tracking-[0.08em]">
+						{tChat("recentChats")}
+					</p>
 				</div>
-			) : (
-				<div key="spacer" className="flex-1" />
-			)}
+				<RecentChats onNavigate={onNavigate} />
+			</div>
+			{(!isOnChatPage || isCollapsed) && <div className="flex-1" />}
 
 			{/* Footer / user area */}
 			<div
