@@ -280,17 +280,13 @@ const NAV_ITEMS: NavItem[] = [
 
 function RecentChats({
 	onNavigate,
-	isCollapsed,
 }: {
 	onNavigate?: () => void;
-	isCollapsed: boolean;
 }) {
 	const { sessions, isLoading } = useChatSessions();
 	const tChat = useTranslations("chat");
 	const searchParams = useSearchParams();
 	const activeSessionId = searchParams.get("session");
-
-	if (isCollapsed) return null;
 
 	if (isLoading && sessions.length === 0) {
 		return (
@@ -565,19 +561,18 @@ function SidebarContent({
 			</nav>
 
 			{/* Recent Chats — shown when on chat page and not collapsed */}
-			{isOnChatPage && !isCollapsed && (
+			{isOnChatPage && !isCollapsed ? (
 				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06] min-h-0">
 					<div className="flex items-center justify-between px-1 pt-3 pb-2">
 						<p className="text-[10px] font-semibold text-[var(--color-fg-subtle)] uppercase tracking-[0.08em]">
 							{tChat("recentChats")}
 						</p>
 					</div>
-					<RecentChats onNavigate={onNavigate} isCollapsed={isCollapsed} />
+					<RecentChats onNavigate={onNavigate} />
 				</div>
+			) : (
+				<div className="flex-1" />
 			)}
-
-			{/* Spacer when not on chat page or when collapsed */}
-			{(!isOnChatPage || isCollapsed) && <div className="flex-1" />}
 
 			{/* Footer / user area */}
 			<div
