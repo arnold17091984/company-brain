@@ -187,7 +187,8 @@ function DocumentPreviewModal({ doc, onClose, t }: DocumentPreviewModalProps) {
 	const sourceLabel =
 		doc.sourceType === "google_drive"
 			? "Google Drive"
-			: doc.sourceType.charAt(0).toUpperCase() + doc.sourceType.slice(1);
+			: (doc.sourceType ?? "").charAt(0).toUpperCase() +
+				(doc.sourceType ?? "").slice(1);
 
 	const statusVariant =
 		doc.status === "indexed"

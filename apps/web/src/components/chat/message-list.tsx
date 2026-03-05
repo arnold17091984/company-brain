@@ -443,20 +443,22 @@ function ChatMessage({
 					</div>
 				)}
 
-				{/* Message bubble */}
-				<div
-					className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-						isUser
-							? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-tr-sm shadow-md shadow-indigo-500/25"
-							: "bg-white dark:bg-[#1a1a1f] border border-zinc-200/80 dark:border-white/[0.06] text-zinc-800 dark:text-[#ececf1] rounded-tl-sm w-full"
-					}`}
-				>
-					{isUser ? (
-						message.content
-					) : (
-						<MarkdownRenderer content={message.content} />
-					)}
-				</div>
+				{/* Message bubble — hide empty assistant messages (shown as typing indicator instead) */}
+				{(isUser || message.content.length > 0) && (
+					<div
+						className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+							isUser
+								? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-tr-sm shadow-md shadow-indigo-500/25"
+								: "bg-white dark:bg-[#1a1a1f] border border-zinc-200/80 dark:border-white/[0.06] text-zinc-800 dark:text-[#ececf1] rounded-tl-sm w-full"
+						}`}
+					>
+						{isUser ? (
+							message.content
+						) : (
+							<MarkdownRenderer content={message.content} />
+						)}
+					</div>
+				)}
 
 				{/* Action bar — visible on hover for completed assistant messages */}
 				{!isUser && message.content.length > 0 && (
