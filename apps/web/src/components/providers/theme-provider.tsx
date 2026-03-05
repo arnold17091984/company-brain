@@ -8,7 +8,7 @@ import {
 	useState,
 } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light" | "dark" | "system";
 
 interface ThemeContextValue {
 	theme: Theme;
@@ -18,7 +18,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-function getInitialTheme(): Theme {
+function getStoredTheme(): Theme {
 	// SSR guard — default to dark for premium feel
 	if (typeof window === "undefined") return "dark";
 
@@ -26,17 +26,26 @@ function getInitialTheme(): Theme {
 	const cookieMatch = document.cookie.match(/(?:^|;\s*)theme=([^;]+)/);
 	if (cookieMatch) {
 		const val = cookieMatch[1];
-		if (val === "dark" || val === "light") return val;
+		if (val === "dark" || val === "light" || val === "system") return val;
 	}
 
 	// 2. Check localStorage
 	const stored = localStorage.getItem("theme");
-	if (stored === "dark" || stored === "light") return stored;
+	if (stored === "dark" || stored === "light" || stored === "system")
+		return stored;
 
-	// 3. Respect OS preference
-	if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-
+	// 3. Default to dark
 	return "dark";
+}
+
+function resolveTheme(theme: Theme): "light" | "dark" {
+	if (theme === "system") {
+		if (typeof window === "undefined") return "dark";
+		return window.matchMedia("(prefers-color-scheme: dark)").matches
+			? "dark"
+			: "light";
+	}
+	return theme;
 }
 
 function applyTheme(theme: Theme) {
@@ -56,10 +65,10 @@ function persistTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-	// Use lazy initializer so the first client render matches SSR output
-	const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+	// Always start with "dark" to match SSR output, then sync on mount
+	const [theme, setThemeState] = useState<Theme>("dark");
 
-	// Ensure DOM class is in sync on mount + one-time migration to dark premium
+	// Sync stored theme on mount (client only)
 	useEffect(() => {
 		if (!localStorage.getItem("theme-v2-migrated")) {
 			localStorage.setItem("theme-v2-migrated", "1");
@@ -68,13 +77,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			persistTheme("dark");
 			return;
 		}
-		// Apply current theme on mount; subsequent changes handled by setTheme
-		applyTheme(getInitialTheme());
+		const stored = getStoredTheme();
+		setThemeState(stored);
+		applyTheme(resolveTheme(stored));
 	}, []);
+
+	// Listen for OS preference changes when theme is "system"
+	useEffect(() => {
+		if (theme !== "system") return;
+		const mq = window.matchMedia("(prefers-color-scheme: dark)");
+		const handler = () => applyTheme(resolveTheme("system"));
+		mq.addEventListener("change", handler);
+		return () => mq.removeEventListener("change", handler);
+	}, [theme]);
 
 	const setTheme = useCallback((newTheme: Theme) => {
 		setThemeState(newTheme);
-		applyTheme(newTheme);
+		applyTheme(resolveTheme(newTheme));
 		persistTheme(newTheme);
 	}, []);
 

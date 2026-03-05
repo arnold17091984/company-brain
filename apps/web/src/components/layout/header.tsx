@@ -67,7 +67,7 @@ function SearchTrigger({ onOpen }: SearchTriggerProps) {
 				"transition-all duration-[var(--duration-normal)]",
 				"active:scale-[0.97]",
 				"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
-				"min-w-[180px]",
+				"min-w-[280px] lg:min-w-[360px]",
 			].join(" ")}
 			aria-label="Open command palette"
 		>
@@ -91,6 +91,120 @@ function SearchTrigger({ onOpen }: SearchTriggerProps) {
 			<kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-mono text-zinc-400 dark:text-zinc-500 bg-zinc-200/70 dark:bg-white/[0.06] border border-zinc-300/50 dark:border-white/[0.06] leading-none">
 				{modKey}K
 			</kbd>
+		</button>
+	);
+}
+
+// ─── Theme Toggle (inline) ───────────────────────────────────
+
+const THEME_CYCLE: ("light" | "dark" | "system")[] = [
+	"light",
+	"dark",
+	"system",
+];
+
+function ThemeToggle() {
+	const { theme, setTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+
+	const next = () => {
+		const idx = THEME_CYCLE.indexOf(theme);
+		setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
+	};
+
+	if (!mounted) {
+		return <span className="p-2 w-8 h-8 inline-block" aria-hidden="true" />;
+	}
+
+	return (
+		<button
+			type="button"
+			onClick={next}
+			className="p-2 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+			aria-label={`Theme: ${theme}`}
+			title={`Theme: ${theme}`}
+		>
+			{theme === "dark" ? (
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={1.75}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+					/>
+				</svg>
+			) : theme === "light" ? (
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={1.75}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+					/>
+				</svg>
+			) : (
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={1.75}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3"
+					/>
+				</svg>
+			)}
+		</button>
+	);
+}
+
+// ─── Language Toggle (inline) ────────────────────────────────
+
+const LOCALE_CYCLE = ["en", "ja", "ko"];
+
+function LanguageToggle() {
+	const locale = useLocale();
+	const router = useRouter();
+	const pathname = usePathname();
+
+	const next = () => {
+		const idx = LOCALE_CYCLE.indexOf(locale);
+		const nextLocale = LOCALE_CYCLE[(idx + 1) % LOCALE_CYCLE.length];
+		const segments = pathname.split("/");
+		if (segments[1] && LOCALE_CYCLE.includes(segments[1])) {
+			segments[1] = nextLocale;
+		} else {
+			segments.splice(1, 0, nextLocale);
+		}
+		router.push(segments.join("/"));
+	};
+
+	return (
+		<button
+			type="button"
+			onClick={next}
+			className="px-2 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+			aria-label={`Language: ${locale.toUpperCase()}`}
+			title={`Language: ${locale.toUpperCase()}`}
+		>
+			{locale.toUpperCase()}
 		</button>
 	);
 }
@@ -168,14 +282,7 @@ function UserMenu({ userName, userEmail, userInitial }: UserMenuProps) {
 
 	const handleThemeSelect = useCallback(
 		(selected: ThemeOption) => {
-			if (selected === "system") {
-				const prefersDark = window.matchMedia(
-					"(prefers-color-scheme: dark)",
-				).matches;
-				setTheme(prefersDark ? "dark" : "light");
-			} else {
-				setTheme(selected);
-			}
+			setTheme(selected);
 		},
 		[setTheme],
 	);
@@ -446,8 +553,10 @@ export function Header({ title, onOpenCommandPalette }: HeaderProps) {
 				</div>
 			)}
 
-			{/* Right: user avatar dropdown */}
-			<div className="flex items-center flex-1 justify-end">
+			{/* Right: theme, language, user avatar */}
+			<div className="flex items-center gap-1 flex-1 justify-end">
+				<ThemeToggle />
+				<LanguageToggle />
 				<UserMenu
 					userName={userName}
 					userEmail={userEmail}

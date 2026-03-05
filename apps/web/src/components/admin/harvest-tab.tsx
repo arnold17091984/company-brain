@@ -142,7 +142,7 @@ export function HarvestTab({
 	const fetchUsers = useCallback(async () => {
 		setUsersLoading(true);
 		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
 				headers: { Authorization: `Bearer ${getAccessToken()}` },
 			});
 			if (res.ok) {
@@ -154,12 +154,16 @@ export function HarvestTab({
 		}
 	}, [getAccessToken]);
 
+	// Track if we've attempted to fetch users
+	const [usersFetched, setUsersFetched] = useState(false);
+
 	// Fetch users when switching to status view
 	useEffect(() => {
-		if (viewMode === "status" && users.length === 0 && !usersLoading) {
+		if (viewMode === "status" && !usersFetched && !usersLoading) {
+			setUsersFetched(true);
 			fetchUsers();
 		}
-	}, [viewMode, users.length, usersLoading, fetchUsers]);
+	}, [viewMode, usersFetched, usersLoading, fetchUsers]);
 
 	// Join users + sessions to build harvest statuses
 	const userHarvestStatuses = useMemo<UserHarvestStatus[]>(() => {
