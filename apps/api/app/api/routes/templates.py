@@ -204,10 +204,11 @@ async def list_templates(
         base_stmt = base_stmt.where(PromptTemplate.category == category)
 
     if search:
+        escaped = search.replace("%", "\\%").replace("_", "\\_")
         base_stmt = base_stmt.where(
             or_(
-                PromptTemplate.title.ilike(f"%{search}%"),
-                PromptTemplate.description.ilike(f"%{search}%"),
+                PromptTemplate.title.ilike(f"%{escaped}%"),
+                PromptTemplate.description.ilike(f"%{escaped}%"),
             )
         )
 

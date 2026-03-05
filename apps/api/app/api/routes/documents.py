@@ -337,7 +337,8 @@ async def list_documents(
 
     # ── Optional filters ──────────────────────────────────────────────────
     if search:
-        base_stmt = base_stmt.where(Document.title.ilike(f"%{search}%"))
+        escaped = search.replace("%", "\\%").replace("_", "\\_")
+        base_stmt = base_stmt.where(Document.title.ilike(f"%{escaped}%"))
 
     if source_type:
         base_stmt = base_stmt.where(Document.source_type == source_type)
