@@ -1119,7 +1119,8 @@ export default function DocumentsPage() {
 				<span className="text-zinc-500 dark:text-zinc-400">
 					{doc.sourceType === "google_drive"
 						? "Google Drive"
-						: doc.sourceType.charAt(0).toUpperCase() + doc.sourceType.slice(1)}
+						: (doc.sourceType ?? "").charAt(0).toUpperCase() +
+							(doc.sourceType ?? "").slice(1)}
 				</span>
 			),
 		},
