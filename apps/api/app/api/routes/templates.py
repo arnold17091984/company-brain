@@ -149,7 +149,10 @@ async def list_templates(
     page: int = Query(default=1, ge=1, description="1-based page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     category: str | None = Query(default=None, description="Filter by category"),
-    search: str | None = Query(default=None, description="Full-text search on title and description"),
+    search: str | None = Query(
+        default=None,
+        description="Full-text search on title and description",
+    ),
     sort: Literal["popular", "recent", "my"] = Query(
         default="recent",
         description="Sort order: 'popular' (most votes), 'recent' (newest), 'my' (own templates)",
@@ -201,10 +204,11 @@ async def list_templates(
         base_stmt = base_stmt.where(PromptTemplate.category == category)
 
     if search:
+        escaped = search.replace("%", "\\%").replace("_", "\\_")
         base_stmt = base_stmt.where(
             or_(
-                PromptTemplate.title.ilike(f"%{search}%"),
-                PromptTemplate.description.ilike(f"%{search}%"),
+                PromptTemplate.title.ilike(f"%{escaped}%"),
+                PromptTemplate.description.ilike(f"%{escaped}%"),
             )
         )
 

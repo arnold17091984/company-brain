@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import type {
 	ACLEntry,
 	DocumentCategory,
@@ -727,10 +728,8 @@ export default function DocumentsPage() {
 
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	const showToast = useCallback(
@@ -757,7 +756,7 @@ export default function DocumentsPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/documents?${params.toString()}`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 
@@ -773,7 +772,7 @@ export default function DocumentsPage() {
 				setIsLoading(false);
 			}
 		},
-		[getAccessToken],
+		[getToken],
 	);
 
 	// Initial load and whenever page or search changes
@@ -813,7 +812,7 @@ export default function DocumentsPage() {
 
 				const res = await fetch(`${API_BASE_URL}/api/v1/documents/upload`, {
 					method: "POST",
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
+					headers: { Authorization: `Bearer ${getToken()}` },
 					body: formData,
 				});
 
@@ -831,7 +830,7 @@ export default function DocumentsPage() {
 				setIsUploading(false);
 			}
 		},
-		[getAccessToken, showToast, t, loadDocuments],
+		[getToken, showToast, t, loadDocuments],
 	);
 
 	// Delete handler
@@ -842,7 +841,7 @@ export default function DocumentsPage() {
 			try {
 				const res = await fetch(`${API_BASE_URL}/api/v1/documents/${id}`, {
 					method: "DELETE",
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
+					headers: { Authorization: `Bearer ${getToken()}` },
 				});
 
 				if (!res.ok) throw new Error(`${res.status}`);
@@ -858,7 +857,7 @@ export default function DocumentsPage() {
 				// no-op; user stays on same state
 			}
 		},
-		[getAccessToken, showToast, t, total, page, search, loadDocuments],
+		[getToken, showToast, t, total, page, search, loadDocuments],
 	);
 
 	const formatDate = (iso: string) => {

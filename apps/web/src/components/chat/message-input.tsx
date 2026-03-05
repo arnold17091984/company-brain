@@ -99,7 +99,7 @@ export function MessageInput({
 	return (
 		<div className="max-w-3xl mx-auto">
 			<div
-				className={`input-premium flex items-end gap-3 rounded-2xl border px-4 py-3.5 transition-[border-color,box-shadow] duration-150 ${
+				className={`input-premium flex items-end gap-3 rounded-2xl border px-4 py-3 transition-[border-color,box-shadow] duration-150 ${
 					disabled
 						? "border-zinc-200/60 dark:border-white/[0.05] bg-white/60 dark:bg-[#1a1a1f]/60 opacity-70 cursor-not-allowed"
 						: "border-zinc-200/80 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1f] shadow-sm dark:shadow-xl dark:shadow-black/30"
@@ -114,7 +114,7 @@ export function MessageInput({
 					disabled={disabled}
 					placeholder={resolvedPlaceholder}
 					rows={1}
-					className="flex-1 resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400/70 dark:placeholder:text-zinc-600 focus:outline-none min-h-[24px] max-h-[200px] py-1 leading-relaxed"
+					className="flex-1 resize-none bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400/70 dark:placeholder:text-zinc-600 focus:outline-none min-h-[36px] max-h-[200px] py-1.5 leading-6"
 					aria-label="Chat message"
 				/>
 

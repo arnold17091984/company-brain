@@ -1,7 +1,11 @@
 /**
  * Tests for harvest dashboard types and data transformations.
  */
-import type { HarvestQuestion, HarvestSession, HarvestSessionDetail } from "@/types";
+import type {
+	HarvestQuestion,
+	HarvestSession,
+	HarvestSessionDetail,
+} from "@/types";
 import { describe, expect, it } from "vitest";
 
 describe("HarvestSession type", () => {
@@ -175,7 +179,9 @@ describe("Progress calculation", () => {
 	});
 
 	it("handles zero total gracefully", () => {
-		const pct = 0 === 0 ? 0 : (0 / 0) * 100;
+		const total = 0;
+		const answered = 0;
+		const pct = total === 0 ? 0 : (answered / total) * 100;
 		expect(pct).toBe(0);
 	});
 });

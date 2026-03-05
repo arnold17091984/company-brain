@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -222,15 +223,221 @@ function ConnectorIcon({ id }: { id: string }) {
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
+		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse">
 			<div className="flex items-start gap-4">
-				<div className="shrink-0 w-10 h-10 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
+				<div className="shrink-0 w-10 h-10 rounded-lg bg-zinc-200 dark:bg-white/[0.06]" />
 				<div className="flex-1 min-w-0 space-y-2">
-					<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded" />
-					<div className="h-3 w-48 bg-zinc-100 dark:bg-zinc-600 rounded" />
-					<div className="h-3 w-24 bg-zinc-100 dark:bg-zinc-600 rounded" />
+					<div className="h-4 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+					<div className="h-3 w-48 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+					<div className="h-3 w-24 bg-zinc-100 dark:bg-white/[0.04] rounded" />
 				</div>
 			</div>
+		</div>
+	);
+}
+
+// ---- Google Drive folder scope config ------------------------------------
+
+function GoogleDriveFolderConfig({
+	getAccessToken,
+}: {
+	getAccessToken: () => string;
+}) {
+	const t = useTranslations("admin");
+	const [expanded, setExpanded] = useState(false);
+	const [folderIds, setFolderIds] = useState<string[]>([]);
+	const [newFolderId, setNewFolderId] = useState("");
+	const [loading, setLoading] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [saved, setSaved] = useState(false);
+
+	useEffect(() => {
+		if (!expanded) return;
+		let cancelled = false;
+		async function loadConfig() {
+			setLoading(true);
+			try {
+				const res = await fetch(
+					`${API_BASE_URL}/api/v1/admin/connectors/google_drive/config`,
+					{ headers: { Authorization: `Bearer ${getAccessToken()}` } },
+				);
+				if (res.ok) {
+					const data = await res.json();
+					if (!cancelled) setFolderIds(data.config?.folder_ids ?? []);
+				}
+			} catch {
+				/* ignore */
+			} finally {
+				if (!cancelled) setLoading(false);
+			}
+		}
+		loadConfig();
+		return () => {
+			cancelled = true;
+		};
+	}, [expanded, getAccessToken]);
+
+	const handleSave = async () => {
+		setSaving(true);
+		setSaved(false);
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/api/v1/admin/connectors/google_drive/config`,
+				{
+					method: "PUT",
+					headers: {
+						Authorization: `Bearer ${getAccessToken()}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ folder_ids: folderIds }),
+				},
+			);
+			if (res.ok) setSaved(true);
+		} catch {
+			/* ignore */
+		} finally {
+			setSaving(false);
+			setTimeout(() => setSaved(false), 3000);
+		}
+	};
+
+	const handleAdd = () => {
+		const trimmed = newFolderId.trim();
+		if (trimmed && !folderIds.includes(trimmed)) {
+			setFolderIds((prev) => [...prev, trimmed]);
+			setNewFolderId("");
+		}
+	};
+
+	const handleRemove = (id: string) => {
+		setFolderIds((prev) => prev.filter((f) => f !== id));
+	};
+
+	return (
+		<div className="mt-3 border-t border-zinc-200/60 dark:border-white/[0.04] pt-3">
+			<button
+				type="button"
+				onClick={() => setExpanded((v) => !v)}
+				className="min-h-[44px] flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+			>
+				<svg
+					className={`w-3.5 h-3.5 transition-transform ${expanded ? "rotate-90" : ""}`}
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={2}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M8.25 4.5l7.5 7.5-7.5 7.5"
+					/>
+				</svg>
+				{t("folderScope")}
+			</button>
+
+			{expanded && (
+				<div className="mt-2 space-y-2">
+					{loading ? (
+						<div className="h-8 w-full bg-zinc-100 dark:bg-white/[0.04] rounded-lg animate-pulse" />
+					) : (
+						<>
+							{folderIds.length === 0 && (
+								<p className="text-xs text-zinc-400 dark:text-zinc-500">
+									{t("noFolders")}
+								</p>
+							)}
+							{folderIds.map((fid) => (
+								<div
+									key={fid}
+									className="flex items-center gap-2 bg-zinc-50 dark:bg-white/[0.03] rounded-lg px-3 py-1.5"
+								>
+									<svg
+										className="w-3.5 h-3.5 text-zinc-400 shrink-0"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+										/>
+									</svg>
+									<span className="text-xs text-zinc-600 dark:text-zinc-300 truncate flex-1 font-mono">
+										{fid}
+									</span>
+									<button
+										type="button"
+										onClick={() => handleRemove(fid)}
+										className="min-h-[28px] min-w-[28px] flex items-center justify-center rounded-md text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/[0.08] transition-colors"
+										aria-label="Remove"
+									>
+										<svg
+											className="w-3.5 h-3.5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={2}
+											aria-hidden="true"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M6 18L18 6M6 6l12 12"
+											/>
+										</svg>
+									</button>
+								</div>
+							))}
+
+							<div className="flex items-center gap-2">
+								<input
+									type="text"
+									value={newFolderId}
+									onChange={(e) => setNewFolderId(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") handleAdd();
+									}}
+									placeholder={t("folderIdPlaceholder")}
+									className="min-h-[44px] flex-1 px-3 py-2 text-xs rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors font-mono"
+								/>
+								<button
+									type="button"
+									onClick={handleAdd}
+									disabled={!newFolderId.trim()}
+									className="min-h-[44px] px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors disabled:opacity-40"
+								>
+									{t("addFolder")}
+								</button>
+							</div>
+
+							<div className="flex items-center gap-2 pt-1">
+								<button
+									type="button"
+									onClick={handleSave}
+									disabled={saving}
+									className="min-h-[44px] px-3 py-2 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter] duration-150 disabled:opacity-50 shadow-sm shadow-indigo-500/25"
+								>
+									{saving ? "..." : t("saveConfig")}
+								</button>
+								{saved && (
+									<span className="text-xs text-green-600 dark:text-green-400 font-medium">
+										{t("configSaved")}
+									</span>
+								)}
+							</div>
+
+							<p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+								{t("folderScopeSub")}
+							</p>
+						</>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
@@ -241,10 +448,12 @@ function ConnectorCard({
 	source,
 	onIngest,
 	ingestState,
+	getAccessToken,
 }: {
 	source: KnowledgeSource;
 	onIngest: (id: string) => void;
 	ingestState: IngestState;
+	getAccessToken: () => string;
 }) {
 	const t = useTranslations("admin");
 
@@ -260,7 +469,7 @@ function ConnectorCard({
 		: t("neverSynced");
 
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 			<div className="flex items-start gap-4">
 				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					<ConnectorIcon id={source.id} />
@@ -275,7 +484,7 @@ function ConnectorCard({
 							className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 border ${
 								isActive
 									? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/40 dark:border-green-800"
-									: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600"
+									: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-[#1e1e24] dark:border-white/[0.06]"
 							}`}
 						>
 							<span
@@ -309,11 +518,11 @@ function ConnectorCard({
 						type="button"
 						disabled={ingestState === "loading"}
 						onClick={() => onIngest(source.id)}
-						className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
+						className="mt-3 min-h-[44px] inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl border transition-colors duration-150
 							bg-indigo-50 border-indigo-200 text-indigo-700
 							hover:bg-indigo-100 hover:border-indigo-300
-							dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300
-							dark:hover:bg-indigo-900/50 dark:hover:border-indigo-700
+							dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300
+							dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30
 							disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{ingestState === "loading" ? (
@@ -360,6 +569,10 @@ function ConnectorCard({
 							</>
 						)}
 					</button>
+
+					{source.id === "google_drive" && (
+						<GoogleDriveFolderConfig getAccessToken={getAccessToken} />
+					)}
 				</div>
 			</div>
 		</div>
@@ -382,7 +595,7 @@ function AnalyticsLinkCard({
 	icon: React.ReactNode;
 }) {
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 			<div className="flex items-start gap-4">
 				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
 					{icon}
@@ -396,7 +609,7 @@ function AnalyticsLinkCard({
 					</p>
 					<Link
 						href={href}
-						className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-1 hover:bg-indigo-100 transition-colors dark:text-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800 dark:hover:bg-indigo-900/50"
+						className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-1 hover:bg-indigo-100 transition-colors dark:text-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:hover:bg-indigo-500/[0.15]"
 					>
 						<svg
 							className="w-3.5 h-3.5"
@@ -474,13 +687,13 @@ function SettingsTab({
 					setApiKeys(await res.json());
 				}
 			} catch {
-				// silent fail
+				setError(t("loadError"));
 			} finally {
 				setApiKeysLoading(false);
 			}
 		}
 		loadKeys();
-	}, [getAccessToken]);
+	}, [getAccessToken, t]);
 
 	const handleSave = async () => {
 		if (!settings) return;
@@ -524,7 +737,7 @@ function SettingsTab({
 				setKeyValue("");
 			}
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setKeySaving(false);
 		}
@@ -545,7 +758,7 @@ function SettingsTab({
 				setApiKeys(await res.json());
 			}
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setKeySaving(false);
 		}
@@ -557,12 +770,12 @@ function SettingsTab({
 				{[1, 2, 3].map((i) => (
 					<div
 						key={i}
-						className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
+						className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
 					>
-						<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-4" />
+						<div className="h-4 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded mb-4" />
 						<div className="space-y-3">
-							<div className="h-8 bg-zinc-100 dark:bg-zinc-600 rounded" />
-							<div className="h-8 bg-zinc-100 dark:bg-zinc-600 rounded" />
+							<div className="h-8 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+							<div className="h-8 bg-zinc-100 dark:bg-white/[0.04] rounded" />
 						</div>
 					</div>
 				))}
@@ -584,13 +797,13 @@ function SettingsTab({
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
 
 			{/* RAG section */}
-			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+			<section className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("ragSettings")}
 				</h3>
@@ -626,7 +839,7 @@ function SettingsTab({
 			</section>
 
 			{/* LLM section */}
-			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+			<section className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("llmSettings")}
 				</h3>
@@ -664,7 +877,7 @@ function SettingsTab({
 			</section>
 
 			{/* Agent section */}
-			<section className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+			<section className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 				<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 					{t("agentSettings")}
 				</h3>
@@ -710,7 +923,7 @@ function SettingsTab({
 					type="button"
 					disabled={saving}
 					onClick={handleSave}
-					className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+					className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-sm font-medium hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/25"
 				>
 					{saving ? (
 						<svg
@@ -743,7 +956,7 @@ function SettingsTab({
 				)}
 			</div>
 			{/* API Keys */}
-			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+			<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 overflow-hidden">
 				<h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-1">
 					{t("apiKeysTitle")}
 				</h3>
@@ -757,24 +970,24 @@ function SettingsTab({
 						{apiKeys.map((ak) => (
 							<div
 								key={ak.key_name}
-								className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-zinc-50 dark:bg-zinc-700/40"
+								className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03]"
 							>
-								<div className="min-w-0 flex-1">
-									<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+								<div className="min-w-0 flex-1 overflow-hidden">
+									<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
 										{ak.key_name
 											.replace(/_/g, " ")
 											.replace(/\b\w/g, (c) => c.toUpperCase())
 											.replace("Api", "API")
 											.replace("Ai", "AI")}
 									</p>
-									<div className="flex items-center gap-2 mt-0.5">
+									<div className="flex items-center gap-2 mt-0.5 min-w-0 overflow-hidden">
 										<span
-											className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+											className={`shrink-0 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
 												ak.source === "db"
 													? "text-indigo-700 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-950/40"
 													: ak.source === "env"
 														? "text-green-700 bg-green-50 dark:text-green-300 dark:bg-green-950/40"
-														: "text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-600"
+														: "text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-white/[0.06]"
 											}`}
 										>
 											{t(
@@ -786,13 +999,13 @@ function SettingsTab({
 											)}
 										</span>
 										{ak.masked_value && (
-											<span className="text-xs text-zinc-400 font-mono">
+											<span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono truncate min-w-0">
 												{ak.masked_value}
 											</span>
 										)}
 									</div>
 								</div>
-								<div className="flex items-center gap-2">
+								<div className="flex flex-wrap items-center gap-2 shrink-0">
 									{editingKey === ak.key_name ? (
 										<>
 											<input
@@ -800,13 +1013,13 @@ function SettingsTab({
 												value={keyValue}
 												onChange={(e) => setKeyValue(e.target.value)}
 												placeholder="Enter new key..."
-												className="px-3 py-1.5 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-48"
+												className="min-h-[44px] px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 w-full sm:w-48 transition-colors"
 											/>
 											<button
 												type="button"
 												onClick={() => handleSaveKey(ak.key_name)}
 												disabled={keySaving || !keyValue}
-												className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+												className="min-h-[44px] px-3 py-2 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter] duration-150 disabled:opacity-50 shadow-sm shadow-indigo-500/25"
 											>
 												{t("saveSettings")}
 											</button>
@@ -816,7 +1029,7 @@ function SettingsTab({
 													setEditingKey(null);
 													setKeyValue("");
 												}}
-												className="px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-600 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-500"
+												className="min-h-[44px] px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150"
 											>
 												{t("cancel")}
 											</button>
@@ -829,7 +1042,7 @@ function SettingsTab({
 													setEditingKey(ak.key_name);
 													setKeyValue("");
 												}}
-												className="px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+												className="min-h-[44px] px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.15] rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.22] transition-colors duration-150"
 											>
 												{t("apiKeyUpdate")}
 											</button>
@@ -838,7 +1051,7 @@ function SettingsTab({
 													type="button"
 													onClick={() => handleResetKey(ak.key_name)}
 													disabled={keySaving}
-													className="px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-600 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-500 disabled:opacity-50"
+													className="min-h-[44px] px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150 disabled:opacity-50"
 												>
 													{t("apiKeyResetEnv")}
 												</button>
@@ -885,7 +1098,7 @@ function SettingsField({
 				value={value}
 				step={step}
 				onChange={(e) => onChange(e.target.value)}
-				className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+				className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 			/>
 		</div>
 	);
@@ -1040,7 +1253,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 			});
 			if (listRes.ok) setUsers(await listRes.json());
 		} catch {
-			// silent fail
+			setError(t("loadError"));
 		} finally {
 			setCreating(false);
 		}
@@ -1060,22 +1273,22 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 				<button
 					type="button"
 					onClick={() => setShowCreateModal(true)}
-					className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+					className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] shadow-md shadow-indigo-500/25"
 				>
 					{t("addUser")}
 				</button>
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
 
-			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+			<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] overflow-hidden">
 				<div className="overflow-x-auto">
-					<table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-						<thead className="bg-zinc-50 dark:bg-zinc-900/50">
+					<table className="min-w-full divide-y divide-zinc-200 dark:divide-white/[0.04]">
+						<thead className="bg-zinc-50 dark:bg-white/[0.02]">
 							<tr>
 								{[
 									t("userName"),
@@ -1095,14 +1308,14 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								))}
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
+						<tbody className="divide-y divide-zinc-100 dark:divide-white/[0.04]">
 							{loading ? (
 								(["r0", "r1", "r2", "r3"] as const).map((rowKey) => (
 									<tr key={rowKey} className="animate-pulse">
 										{(["c0", "c1", "c2", "c3", "c4", "c5", "c6"] as const).map(
 											(colKey) => (
 												<td key={colKey} className="px-4 py-3">
-													<div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
+													<div className="h-3 bg-zinc-200 dark:bg-white/[0.06] rounded w-24" />
 												</td>
 											),
 										)}
@@ -1121,7 +1334,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								users.map((user) => (
 									<tr
 										key={user.id}
-										className="hover:bg-zinc-50 dark:hover:bg-zinc-700/40 transition-colors"
+										className="hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors"
 									>
 										<td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
 											{user.name}
@@ -1147,7 +1360,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 											<button
 												type="button"
 												onClick={() => setEditingUser(user)}
-												className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
+												className="min-h-[44px] inline-flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
 											>
 												{t("editUser")}
 											</button>
@@ -1163,7 +1376,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 			{/* Edit user modal */}
 			{editingUser && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full max-w-md mx-4 p-6">
+					<div className="bg-white dark:bg-[#1e1e24] rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl dark:shadow-black/60 w-full max-w-md mx-4 p-6">
 						<div className="flex items-center justify-between mb-6">
 							<h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 								{t("editUser")}
@@ -1172,7 +1385,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => setEditingUser(null)}
 								aria-label={t("cancel")}
-								className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+								className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
 							>
 								<svg
 									className="w-5 h-5"
@@ -1221,7 +1434,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-role"
 									value={editRole}
 									onChange={(e) => setEditRole(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									{[
 										"admin",
@@ -1250,7 +1463,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-access-level"
 									value={editAccessLevel}
 									onChange={(e) => setEditAccessLevel(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									{["all", "department", "restricted"].map((l) => (
 										<option key={l} value={l}>
@@ -1272,7 +1485,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="edit-user-department"
 									value={editDepartmentId ?? ""}
 									onChange={(e) => setEditDepartmentId(e.target.value || null)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									<option value="">— None —</option>
 									{departments.map((d) => (
@@ -1297,7 +1510,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									value={editTelegramId}
 									onChange={(e) => setEditTelegramId(e.target.value)}
 									placeholder={t("telegramIdHint")}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								/>
 							</div>
 						</div>
@@ -1306,7 +1519,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setEditingUser(null)}
-								className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150"
 							>
 								{t("cancel")}
 							</button>
@@ -1314,7 +1527,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={handleSaveUser}
 								disabled={saving}
-								className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 shadow-md shadow-indigo-500/25"
 							>
 								{saving ? "..." : t("saveUser")}
 							</button>
@@ -1326,7 +1539,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 			{/* Create user modal */}
 			{showCreateModal && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full max-w-md mx-4 p-6">
+					<div className="bg-white dark:bg-[#1e1e24] rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl dark:shadow-black/60 w-full max-w-md mx-4 p-6">
 						<div className="flex items-center justify-between mb-6">
 							<h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
 								{t("addUserTitle")}
@@ -1335,7 +1548,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => setShowCreateModal(false)}
 								aria-label={t("cancel")}
-								className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+								className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
 							>
 								<svg
 									className="w-5 h-5"
@@ -1369,7 +1582,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="email"
 									value={createEmail}
 									onChange={(e) => setCreateEmail(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								/>
 							</div>
 							<div>
@@ -1384,7 +1597,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="text"
 									value={createName}
 									onChange={(e) => setCreateName(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								/>
 							</div>
 							<div>
@@ -1398,7 +1611,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="create-user-role"
 									value={createRole}
 									onChange={(e) => setCreateRole(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									{[
 										"admin",
@@ -1427,7 +1640,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									onChange={(e) =>
 										setCreateDepartmentId(e.target.value || null)
 									}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									<option value="">— None —</option>
 									{departments.map((d) => (
@@ -1448,7 +1661,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 									id="create-user-access"
 									value={createAccessLevel}
 									onChange={(e) => setCreateAccessLevel(e.target.value)}
-									className="w-full px-3 py-2 text-sm rounded-md border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors"
 								>
 									{["all", "department", "restricted"].map((l) => (
 										<option key={l} value={l}>
@@ -1462,7 +1675,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setShowCreateModal(false)}
-								className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150"
 							>
 								{t("cancel")}
 							</button>
@@ -1470,7 +1683,7 @@ function UsersTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={handleCreateUser}
 								disabled={creating || !createEmail || !createName}
-								className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 shadow-md shadow-indigo-500/25"
 							>
 								{creating ? "..." : t("addUser")}
 							</button>
@@ -1488,7 +1701,7 @@ function AccessBadge({ level }: { level: string }) {
 			? "text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
 			: level === "department"
 				? "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800"
-				: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
+				: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-[#1e1e24] dark:border-white/[0.06]";
 	return (
 		<span
 			className={`inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 border ${colour}`}
@@ -1506,7 +1719,7 @@ function RoleBadge({ role }: { role: string }) {
 				? "text-purple-700 bg-purple-50 border-purple-200 dark:text-purple-300 dark:bg-purple-950/40 dark:border-purple-800"
 				: role === "hr" || role === "manager"
 					? "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/40 dark:border-blue-800"
-					: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
+					: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-[#1e1e24] dark:border-white/[0.06]";
 	return (
 		<span
 			className={`inline-flex items-center text-xs font-medium rounded-full px-2 py-0.5 border ${colour}`}
@@ -1560,7 +1773,7 @@ function HealthTab({ getAccessToken }: { getAccessToken: () => string }) {
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
@@ -1570,13 +1783,13 @@ function HealthTab({ getAccessToken }: { getAccessToken: () => string }) {
 					? (["skel-pg", "skel-qdrant", "skel-redis"] as const).map((key) => (
 							<div
 								key={key}
-								className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
+								className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
 							>
 								<div className="flex items-center gap-3 mb-3">
-									<div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-									<div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-700 rounded" />
+									<div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-white/[0.06]" />
+									<div className="h-4 w-24 bg-zinc-200 dark:bg-white/[0.06] rounded" />
 								</div>
-								<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
+								<div className="h-3 w-16 bg-zinc-100 dark:bg-white/[0.04] rounded" />
 							</div>
 						))
 					: checks.map((check) => (
@@ -1620,7 +1833,7 @@ function HealthCard({ check }: { check: HealthCheck }) {
 
 	return (
 		<div
-			className={`bg-white dark:bg-zinc-800 rounded-lg border p-5 ${borderColour}`}
+			className={`bg-white dark:bg-[#1a1a1f] rounded-2xl border p-5 ${borderColour}`}
 		>
 			<div className="flex items-center gap-2.5 mb-3">
 				<span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColour}`} />
@@ -1719,7 +1932,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 			return "text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950/40 dark:border-red-800";
 		if (action === "masked")
 			return "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800";
-		return "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
+		return "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-[#1e1e24] dark:border-white/[0.06]";
 	};
 
 	const riskLabel = (level: string) => {
@@ -1740,7 +1953,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
@@ -1751,10 +1964,10 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 					(["s0", "s1", "s2", "s3"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
 						>
-							<div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-700 rounded mb-3" />
-							<div className="h-7 w-12 bg-zinc-100 dark:bg-zinc-600 rounded" />
+							<div className="h-3 w-24 bg-zinc-200 dark:bg-white/[0.06] rounded mb-3" />
+							<div className="h-7 w-12 bg-zinc-100 dark:bg-white/[0.04] rounded" />
 						</div>
 					))
 				) : stats ? (
@@ -1775,7 +1988,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 			{/* Top violation types */}
 			{!loading && stats && stats.top_violation_types.length > 0 && (
-				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 						{t("topTypes")}
 					</h3>
@@ -1793,7 +2006,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 											{count}
 										</span>
 									</div>
-									<div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
+									<div className="h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
 										<div
 											className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400"
 											style={{ width: `${pct}%` }}
@@ -1807,15 +2020,15 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 			)}
 
 			{/* Violations table */}
-			<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-				<div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-700">
+			<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] overflow-hidden">
+				<div className="px-6 py-4 border-b border-zinc-100 dark:border-white/[0.04]">
 					<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
 						{t("violations")}
 					</h3>
 				</div>
 				<div className="overflow-x-auto">
-					<table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-						<thead className="bg-zinc-50 dark:bg-zinc-900/50">
+					<table className="min-w-full divide-y divide-zinc-200 dark:divide-white/[0.04]">
+						<thead className="bg-zinc-50 dark:bg-white/[0.02]">
 							<tr>
 								{[
 									t("stats"),
@@ -1837,14 +2050,14 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 								))}
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
+						<tbody className="divide-y divide-zinc-100 dark:divide-white/[0.04]">
 							{loading ? (
 								(["vr0", "vr1", "vr2", "vr3"] as const).map((rowKey) => (
 									<tr key={rowKey} className="animate-pulse">
 										{(["vc0", "vc1", "vc2", "vc3", "vc4", "vc5"] as const).map(
 											(colKey) => (
 												<td key={colKey} className="px-4 py-3">
-													<div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-20" />
+													<div className="h-3 bg-zinc-200 dark:bg-white/[0.06] rounded w-20" />
 												</td>
 											),
 										)}
@@ -1863,7 +2076,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 								violations.map((v) => (
 									<tr
 										key={v.id}
-										className="hover:bg-zinc-50 dark:hover:bg-zinc-700/40 transition-colors"
+										className="hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors"
 									>
 										<td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap max-w-[160px] truncate">
 											{v.user_email}
@@ -1901,7 +2114,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 													type="button"
 													disabled={resolvingId === v.id}
 													onClick={() => handleResolve(v.id)}
-													className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50 dark:hover:border-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+													className="min-h-[44px] inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-xl border transition-colors duration-150 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
 												>
 													{resolvingId === v.id ? (
 														<svg
@@ -1942,7 +2155,7 @@ function SafetyTab({ getAccessToken }: { getAccessToken: () => string }) {
 
 function StatCard({ label, value }: { label: string; value: number }) {
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 			<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
 				{label}
 			</p>
@@ -2029,7 +2242,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 			return "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-800";
 		if (status === "draft")
 			return "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800";
-		return "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600";
+		return "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-[#1e1e24] dark:border-white/[0.06]";
 	};
 
 	const statusLabel = (status: string) => {
@@ -2060,7 +2273,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 						type="button"
 						disabled={extracting}
 						onClick={handleExtract}
-						className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-sm font-medium hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/25"
 					>
 						{extracting ? (
 							<svg
@@ -2090,7 +2303,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
@@ -2101,20 +2314,20 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{(["rc0", "rc1", "rc2", "rc3"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
 						>
-							<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
-							<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded mb-1" />
-							<div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-600 rounded mb-4" />
+							<div className="h-4 w-40 bg-zinc-200 dark:bg-white/[0.06] rounded mb-2" />
+							<div className="h-3 w-full bg-zinc-100 dark:bg-white/[0.04] rounded mb-1" />
+							<div className="h-3 w-3/4 bg-zinc-100 dark:bg-white/[0.04] rounded mb-4" />
 							<div className="flex gap-2">
-								<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
-								<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
+								<div className="h-5 w-16 bg-zinc-200 dark:bg-white/[0.06] rounded-full" />
+								<div className="h-5 w-16 bg-zinc-200 dark:bg-white/[0.06] rounded-full" />
 							</div>
 						</div>
 					))}
 				</div>
 			) : recipes.length === 0 ? (
-				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-12 text-center">
+				<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-12 text-center">
 					<p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
 						{t("noRecipes")}
 					</p>
@@ -2127,7 +2340,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{recipes.map((recipe) => (
 						<div
 							key={recipe.id}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 flex flex-col gap-3"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 flex flex-col gap-3"
 						>
 							{/* Title + status */}
 							<div className="flex items-start justify-between gap-2">
@@ -2212,7 +2425,7 @@ function RecipesTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="button"
 									disabled={deletingId === recipe.id}
 									onClick={() => handleDelete(recipe.id)}
-									className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/50 dark:hover:border-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="min-h-[44px] inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-xl border transition-colors duration-150 bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 dark:bg-red-500/[0.08] dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/[0.15] dark:hover:border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
 								>
 									{deletingId === recipe.id ? (
 										<svg
@@ -2271,6 +2484,7 @@ function DataSourcesTab({
 	ingestStates,
 	onIngest,
 	locale,
+	getAccessToken,
 }: {
 	sources: KnowledgeSource[];
 	sourcesLoading: boolean;
@@ -2278,6 +2492,7 @@ function DataSourcesTab({
 	ingestStates: Record<string, IngestState>;
 	onIngest: (id: string) => void;
 	locale: string;
+	getAccessToken: () => string;
 }) {
 	const t = useTranslations("admin");
 
@@ -2297,7 +2512,7 @@ function DataSourcesTab({
 				</div>
 
 				{sourcesError && (
-					<div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+					<div className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 						{sourcesError}
 					</div>
 				)}
@@ -2317,6 +2532,7 @@ function DataSourcesTab({
 								source={source}
 								onIngest={onIngest}
 								ingestState={ingestStates[source.id] ?? "idle"}
+								getAccessToken={getAccessToken}
 							/>
 						))
 					)}
@@ -2471,7 +2687,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 					<div className="overflow-x-auto">
 						<table className="w-full text-sm">
 							<thead>
-								<tr className="border-b border-zinc-200 dark:border-zinc-700 text-left text-zinc-500 dark:text-zinc-400">
+								<tr className="border-b border-zinc-200/60 dark:border-white/[0.04] text-left text-zinc-500 dark:text-zinc-400">
 									<th className="pb-2 font-medium">{t("knowledgeQuestion")}</th>
 									<th className="pb-2 font-medium">{t("knowledgeAnswer")}</th>
 									<th className="pb-2 font-medium text-center">
@@ -2486,7 +2702,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 								{items.map((item) => (
 									<tr
 										key={item.message_id}
-										className="border-b border-zinc-100 dark:border-zinc-800"
+										className="border-b border-zinc-100 dark:border-white/[0.04]"
 									>
 										<td className="py-3 pr-3 max-w-[240px]">
 											<p className="text-zinc-900 dark:text-zinc-100 truncate">
@@ -2524,7 +2740,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 													type="button"
 													onClick={() => handlePromote(item)}
 													disabled={promoting === item.message_id}
-													className="px-3 py-1 text-xs font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+													className="min-h-[44px] px-3 py-1 text-xs font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white hover:brightness-110 disabled:opacity-50 transition-[filter] duration-150 shadow-sm shadow-indigo-500/25"
 												>
 													{promoting === item.message_id
 														? "..."
@@ -2549,7 +2765,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => setPage((p) => Math.max(1, p - 1))}
 								disabled={page === 1}
-								className="px-3 py-1 text-sm rounded border border-zinc-300 dark:border-zinc-600 disabled:opacity-40"
+								className="min-h-[44px] px-3 py-1 text-sm rounded-xl border border-zinc-300 dark:border-white/[0.08] disabled:opacity-40"
 							>
 								&laquo;
 							</button>
@@ -2560,7 +2776,7 @@ function KnowledgeTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
 								disabled={page === totalPages}
-								className="px-3 py-1 text-sm rounded border border-zinc-300 dark:border-zinc-600 disabled:opacity-40"
+								className="min-h-[44px] px-3 py-1 text-sm rounded-xl border border-zinc-300 dark:border-white/[0.08] disabled:opacity-40"
 							>
 								&raquo;
 							</button>
@@ -2797,7 +3013,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 						<button
 							type="button"
 							onClick={() => setSelectedSession(null)}
-							className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-1 flex items-center gap-1"
+							className="min-h-[44px] text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-1 flex items-center gap-1"
 						>
 							<svg
 								className="w-4 h-4"
@@ -2833,7 +3049,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={() => handleToggle(selectedSession)}
 								disabled={togglingId === selectedSession.id}
-								className="px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+								className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
 							>
 								{selectedSession.status === "paused"
 									? t("resumeSession")
@@ -2844,7 +3060,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 				</div>
 
 				{/* Progress card */}
-				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+				<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 					<div className="flex items-center justify-between mb-2">
 						<span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
 							{t("progress")}
@@ -2854,7 +3070,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							{selectedSession.total_questions}
 						</span>
 					</div>
-					<div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+					<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
 						<div
 							className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
 							style={{ width: `${selectedSession.progress_percent}%` }}
@@ -2872,10 +3088,10 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							key={cat}
 							type="button"
 							onClick={() => setCategoryFilter(cat)}
-							className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+							className={`min-h-[44px] px-3 py-1 text-sm rounded-full border transition-colors ${
 								categoryFilter === cat
 									? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
-									: "border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-500"
+									: "border-zinc-200/80 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/[0.15]"
 							}`}
 						>
 							{cat === "all" ? t("allCategories") : categoryLabel(cat)}
@@ -2888,10 +3104,10 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{filtered.map((q) => (
 						<div
 							key={q.id}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 						>
 							<div className="flex items-start justify-between gap-3 mb-3">
-								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-600">
+								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
 									{categoryLabel(q.category)}
 								</span>
 								{q.answered_at ? (
@@ -2901,7 +3117,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 											: t("answered")}
 									</span>
 								) : (
-									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-600">
+									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
 										{t("noAnswer")}
 									</span>
 								)}
@@ -2937,7 +3153,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 				<button
 					type="button"
 					onClick={openCreate}
-					className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2"
+					className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2"
 				>
 					<svg
 						className="w-4 h-4"
@@ -2958,7 +3174,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 			</div>
 
 			{error && (
-				<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+				<div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 					{error}
 				</div>
 			)}
@@ -2966,13 +3182,13 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 			{/* Create session modal */}
 			{showCreate && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6 shadow-xl w-full max-w-md mx-4">
+					<div className="bg-white dark:bg-[#1e1e24] rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] p-6 shadow-2xl dark:shadow-black/60 w-full max-w-md mx-4">
 						<h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mb-4">
 							{t("createSession")}
 						</h3>
 
 						{createError && (
-							<div className="mb-4 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+							<div className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-950/30 px-3 py-2 text-sm text-red-700 dark:text-red-400">
 								{createError}
 							</div>
 						)}
@@ -2986,13 +3202,13 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 									{t("selectUser")}
 								</label>
 								{usersLoading ? (
-									<div className="h-9 rounded-lg bg-zinc-100 dark:bg-zinc-700 animate-pulse" />
+									<div className="h-9 rounded-lg bg-zinc-100 dark:bg-white/[0.04] animate-pulse" />
 								) : (
 									<select
 										id="harvest-user"
 										value={formUserId}
 										onChange={(e) => setFormUserId(e.target.value)}
-										className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+										className="w-full rounded-md border border-zinc-300 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 									>
 										<option value="">— {t("selectUser")} —</option>
 										{users.map((u) => (
@@ -3016,7 +3232,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 									type="date"
 									value={formDate}
 									onChange={(e) => setFormDate(e.target.value)}
-									className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+									className="w-full rounded-md border border-zinc-300 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								/>
 							</div>
 						</div>
@@ -3025,7 +3241,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 							<button
 								type="button"
 								onClick={() => setShowCreate(false)}
-								className="px-4 py-2 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
 							>
 								{tAdmin("cancel")}
 							</button>
@@ -3033,7 +3249,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 								type="button"
 								onClick={handleCreate}
 								disabled={creating}
-								className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+								className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
 							>
 								{creating ? "..." : t("createSession")}
 							</button>
@@ -3048,21 +3264,21 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{(["s0", "s1", "s2"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
 						>
 							<div className="flex items-center justify-between mb-4">
 								<div className="space-y-2">
-									<div className="h-4 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
-									<div className="h-3 w-48 bg-zinc-100 dark:bg-zinc-600 rounded" />
+									<div className="h-4 w-36 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+									<div className="h-3 w-48 bg-zinc-100 dark:bg-white/[0.04] rounded" />
 								</div>
-								<div className="h-6 w-16 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
+								<div className="h-6 w-16 bg-zinc-100 dark:bg-white/[0.04] rounded-full" />
 							</div>
-							<div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-700" />
+							<div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04]" />
 						</div>
 					))}
 				</div>
 			) : sessions.length === 0 ? (
-				<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-12 text-center">
+				<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-12 text-center">
 					<p className="text-zinc-500 dark:text-zinc-400 text-sm">
 						{t("noSessions")}
 					</p>
@@ -3072,7 +3288,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 					{sessions.map((session) => (
 						<div
 							key={session.id}
-							className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 						>
 							<div className="flex items-start justify-between gap-4 mb-4">
 								<div className="min-w-0">
@@ -3108,7 +3324,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 										{t("answered")}
 									</span>
 								</div>
-								<div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+								<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
 									<div
 										className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
 										style={{ width: `${session.progress_percent}%` }}
@@ -3125,7 +3341,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 											fetchDetail(session.id);
 										}
 									}}
-									className="px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+									className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-colors"
 								>
 									{t("viewDetails")}
 								</button>
@@ -3134,7 +3350,7 @@ function HarvestTab({ getAccessToken }: { getAccessToken: () => string }) {
 										type="button"
 										onClick={() => handleToggle(session)}
 										disabled={togglingId === session.id}
-										className="px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+										className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
 									>
 										{session.status === "paused"
 											? t("resumeSession")
@@ -3165,10 +3381,8 @@ export default function AdminPage() {
 		{},
 	);
 
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	// Fetch knowledge sources on mount
@@ -3180,7 +3394,7 @@ export default function AdminPage() {
 			setSourcesError(null);
 			try {
 				const res = await fetch(`${API_BASE_URL}/api/v1/knowledge/sources`, {
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
+					headers: { Authorization: `Bearer ${getToken()}` },
 				});
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: KnowledgeSource[] = await res.json();
@@ -3196,7 +3410,7 @@ export default function AdminPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken, t]);
+	}, [getToken, t]);
 
 	// Trigger ingestion for a connector
 	const handleIngest = useCallback(
@@ -3207,7 +3421,7 @@ export default function AdminPage() {
 					`${API_BASE_URL}/api/v1/knowledge/ingest?connector_type=${encodeURIComponent(sourceId)}`,
 					{
 						method: "POST",
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status}`);
@@ -3222,7 +3436,7 @@ export default function AdminPage() {
 				}, 4000);
 			}
 		},
-		[getAccessToken],
+		[getToken],
 	);
 
 	const tabs: { id: TabId; label: string }[] = [
@@ -3260,19 +3474,19 @@ export default function AdminPage() {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950/80 px-8 py-4 shrink-0">
-				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+			<div className="bg-transparent px-4 sm:px-8 py-4 shrink-0">
+				<h1 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
-				<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+				<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
 					{t("subtitle")}
 				</p>
 			</div>
 
 			{/* Tab bar */}
-			<div className="bg-white dark:bg-zinc-950/80 px-8 py-3 shrink-0">
+			<div className="bg-transparent px-4 sm:px-8 py-3 shrink-0 border-b border-zinc-200/60 dark:border-white/[0.04] overflow-x-auto">
 				<div
-					className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 inline-flex gap-0.5"
+					className="bg-zinc-100/80 dark:bg-white/[0.04] rounded-xl p-1 inline-flex gap-0.5 min-w-max"
 					role="tablist"
 					aria-label="Admin tabs"
 				>
@@ -3283,10 +3497,10 @@ export default function AdminPage() {
 							role="tab"
 							aria-selected={activeTab === tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`px-3 py-1.5 text-sm transition-colors whitespace-nowrap ${
+							className={`min-h-[44px] px-3 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap flex items-center ${
 								activeTab === tab.id
-									? "bg-white dark:bg-zinc-700 rounded-md shadow-sm text-zinc-950 dark:text-zinc-100 font-medium"
-									: "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-md"
+									? "bg-white dark:bg-white/[0.1] rounded-lg shadow-sm text-zinc-950 dark:text-zinc-100 font-medium"
+									: "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
 							}`}
 						>
 							{tab.label}
@@ -3296,8 +3510,16 @@ export default function AdminPage() {
 			</div>
 
 			{/* Tab content */}
-			<div className="flex-1 overflow-y-auto p-6">
-				<div className="max-w-3xl mx-auto">
+			<div className="flex-1 overflow-y-auto p-4 sm:p-8">
+				<div
+					className={
+						activeTab === "users" || activeTab === "safety"
+							? "max-w-5xl mx-auto w-full"
+							: activeTab === "knowledge" || activeTab === "harvest"
+								? "max-w-4xl mx-auto w-full"
+								: "max-w-4xl mx-auto w-full"
+					}
+				>
 					{activeTab === "datasources" && (
 						<DataSourcesTab
 							sources={sources}
@@ -3306,29 +3528,20 @@ export default function AdminPage() {
 							ingestStates={ingestStates}
 							onIngest={handleIngest}
 							locale={locale}
+							getAccessToken={getToken}
 						/>
 					)}
 					{activeTab === "settings" && (
-						<SettingsTab getAccessToken={getAccessToken} />
+						<SettingsTab getAccessToken={getToken} />
 					)}
-					{activeTab === "users" && (
-						<UsersTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "health" && (
-						<HealthTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "safety" && (
-						<SafetyTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "recipes" && (
-						<RecipesTab getAccessToken={getAccessToken} />
-					)}
+					{activeTab === "users" && <UsersTab getAccessToken={getToken} />}
+					{activeTab === "health" && <HealthTab getAccessToken={getToken} />}
+					{activeTab === "safety" && <SafetyTab getAccessToken={getToken} />}
+					{activeTab === "recipes" && <RecipesTab getAccessToken={getToken} />}
 					{activeTab === "knowledge" && (
-						<KnowledgeTab getAccessToken={getAccessToken} />
+						<KnowledgeTab getAccessToken={getToken} />
 					)}
-					{activeTab === "harvest" && (
-						<HarvestTab getAccessToken={getAccessToken} />
-					)}
+					{activeTab === "harvest" && <HarvestTab getAccessToken={getToken} />}
 				</div>
 			</div>
 		</div>

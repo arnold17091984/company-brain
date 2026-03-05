@@ -14,8 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.database import SafetyViolation
 from app.services.security.data_classifier import (
-    DataClassification,
-    DetectedCategory,
     RiskLevel,
     classify_input,
     mask_pii,

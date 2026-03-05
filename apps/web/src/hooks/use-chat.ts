@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import type { Message, Source } from "@/types";
 import { useSession } from "next-auth/react";
 import { useCallback, useRef, useState } from "react";
@@ -77,10 +78,8 @@ export function useChat(): UseChatReturn {
 	const messagesRef = useRef<Message[]>([]);
 	messagesRef.current = messages;
 
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	const clearMessages = useCallback(() => {
@@ -107,7 +106,7 @@ export function useChat(): UseChatReturn {
 					`${API_BASE_URL}/api/v1/chat/sessions/${id}`,
 					{
 						headers: {
-							Authorization: `Bearer ${getAccessToken()}`,
+							Authorization: `Bearer ${getToken()}`,
 						},
 					},
 				);
@@ -135,14 +134,14 @@ export function useChat(): UseChatReturn {
 				setIsLoading(false);
 			}
 		},
-		[isLoading, getAccessToken],
+		[isLoading, getToken],
 	);
 
 	const sendMessage = useCallback(
 		async (text: string) => {
 			if (!text.trim() || isLoading) return;
 
-			const accessToken = getAccessToken();
+			const accessToken = getToken();
 
 			const userMessage: Message = {
 				id: generateId(),
@@ -316,7 +315,7 @@ export function useChat(): UseChatReturn {
 				setIsLoading(false);
 			}
 		},
-		[isLoading, sessionId, getAccessToken],
+		[isLoading, sessionId, getToken],
 	);
 
 	return {

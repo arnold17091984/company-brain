@@ -57,7 +57,7 @@ class QdrantRetrieverService:
         )
         prefetch_sparse = Prefetch(
             query=Query(nearest=dense_vector),
-            using=_DENSE_VECTOR_NAME,
+            using=_SPARSE_VECTOR_NAME,
             limit=top_k * 2,
             filter=access_filter,
         )

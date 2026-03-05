@@ -6,7 +6,7 @@ LLM response metadata, etc.).
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import (
@@ -35,7 +35,7 @@ def _uuid() -> uuid.UUID:
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(tz=UTC)
 
 
 # ---------------------------------------------------------------------------

@@ -695,7 +695,7 @@ class TestCreateDepartment:
 
     async def test_admin_can_create_department(self) -> None:
         """POST /admin/departments returns 201 for admin."""
-        new_dept = _make_dept_orm(name="Customer Success", slug="customer-success")
+        _make_dept_orm(name="Customer Success", slug="customer-success")
         db = _FakeSession(
             execute_results=[
                 _FakeResult(scalar=None),  # slug uniqueness check (no existing)

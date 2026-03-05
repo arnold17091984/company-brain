@@ -2,6 +2,7 @@
 
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -75,6 +76,19 @@ class Settings(BaseSettings):
     # ── CORS ───────────────────────────────────────────────────────────────────
     # Comma-separated list of allowed origins, e.g. "http://localhost:3000,https://app.example.com"
     cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+
+    @model_validator(mode="after")
+    def _validate_production_secrets(self) -> "Settings":
+        """Fail fast when critical secrets are missing in production."""
+        if (
+            self.app_env != "development"
+            and self.jwt_secret_key == "change-me-in-production"
+        ):
+            raise ValueError(
+                "JWT_SECRET_KEY must be set to a strong random value "
+                "in non-development environments."
+            )
+        return self
 
     @property
     def admin_email_set(self) -> set[str]:

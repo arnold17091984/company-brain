@@ -8,9 +8,8 @@ positive user feedback.
 from __future__ import annotations
 
 import logging
-import uuid
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.database import AIRecipe, ChatMessage, Feedback
@@ -140,7 +139,6 @@ class RecipeExtractor:
                 logger.debug("Skipping duplicate recipe title: %r", title)
                 continue
 
-            up_count = content_feedback_stmt and content_counts.get(msg.content, 1)
             effectiveness = _normalise_effectiveness(
                 content_counts.get(msg.content, 1)
             )

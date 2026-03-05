@@ -188,7 +188,6 @@ export function UsageMetricsTable({ data }: UsageMetricsTableProps) {
 				<tbody className="divide-y divide-zinc-100 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
 					{sorted.map((row, idx) => (
 						<tr
-							// biome-ignore lint/suspicious/noArrayIndexKey: table rows keyed by index when no unique id
 							key={`${row.user_email}-${row.date}-${idx}`}
 							className="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
 						>

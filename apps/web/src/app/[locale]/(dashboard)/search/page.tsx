@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import type { Source } from "@/types";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -307,8 +308,7 @@ export default function SearchPage() {
 	async function runSearch(searchQuery: string) {
 		if (!searchQuery.trim()) return;
 
-		const accessToken =
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+		const accessToken = getAccessToken(session);
 
 		setIsLoading(true);
 		setError(null);

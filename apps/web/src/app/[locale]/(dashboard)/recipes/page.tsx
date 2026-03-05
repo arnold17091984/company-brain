@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -265,9 +266,7 @@ export default function RecipesPage() {
 	const searchRef = useRef<HTMLInputElement>(null);
 
 	const getToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+		return getAccessToken(session);
 	}, [session]);
 
 	const loadRecipes = useCallback(

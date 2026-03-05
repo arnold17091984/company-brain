@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -411,7 +412,7 @@ async def chat_stream(
         if scores:
             _confidence = round(min(sum(scores[:3]) / len(scores[:3]), 1.0), 3)
 
-    async def token_generator():
+    async def token_generator() -> AsyncIterator[dict[str, str]]:
         accumulated: list[str] = []
         provider = ProviderFactory.get(_model_config.provider)
         _metrics = StreamMetrics()

@@ -68,7 +68,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			persistTheme("dark");
 			return;
 		}
-		applyTheme(theme);
+		// Apply current theme on mount; subsequent changes handled by setTheme
+		applyTheme(getInitialTheme());
 	}, []);
 
 	const setTheme = useCallback((newTheme: Theme) => {

@@ -26,6 +26,8 @@ from app.models.database import User as DBUser
 from app.models.schemas import (
     APIKeyStatus,
     APIKeyUpdate,
+    ConnectorConfig,
+    ConnectorConfigResponse,
     HealthCheck,
     PerformanceMetrics,
     SafetyStats,
@@ -33,6 +35,7 @@ from app.models.schemas import (
     SafetyViolationResponse,
     SystemSettings,
 )
+from app.services.types import ConnectorType
 
 logger = logging.getLogger(__name__)
 
@@ -566,3 +569,77 @@ async def resolve_safety_violation(
     await db.flush()
     await db.commit()
     logger.info("Safety violation %s resolved by %s", violation_id, current_user.email)
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/admin/connectors/{connector_type}/config
+# ---------------------------------------------------------------------------
+
+
+@router.get("/connectors/{connector_type}/config", response_model=ConnectorConfigResponse)
+async def get_connector_config(
+    connector_type: str,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> ConnectorConfigResponse:
+    """Return the stored configuration for a specific connector."""
+    try:
+        ConnectorType(connector_type)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Unknown connector_type: {connector_type}"
+        ) from exc
+
+    key = f"connector:{connector_type}"
+    result = await db.execute(select(SystemSetting).where(SystemSetting.key == key))
+    setting = result.scalar_one_or_none()
+
+    return ConnectorConfigResponse(
+        connector_type=connector_type,
+        config=setting.value if setting else {},
+    )
+
+
+# ---------------------------------------------------------------------------
+# PUT /api/v1/admin/connectors/{connector_type}/config
+# ---------------------------------------------------------------------------
+
+
+@router.put("/connectors/{connector_type}/config", response_model=ConnectorConfigResponse)
+async def update_connector_config(
+    connector_type: str,
+    body: ConnectorConfig,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> ConnectorConfigResponse:
+    """Update the configuration for a specific connector."""
+    try:
+        ConnectorType(connector_type)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Unknown connector_type: {connector_type}"
+        ) from exc
+
+    logger.info(
+        "Connector config update [%s]",
+        connector_type,
+        extra={"user": current_user.email},
+    )
+
+    key = f"connector:{connector_type}"
+    config_value = body.model_dump(exclude_unset=False)
+
+    result = await db.execute(select(SystemSetting).where(SystemSetting.key == key))
+    setting = result.scalar_one_or_none()
+
+    if setting:
+        setting.value = config_value
+    else:
+        db.add(SystemSetting(key=key, value=config_value))
+
+    await db.commit()
+
+    return ConnectorConfigResponse(
+        connector_type=connector_type,
+        config=config_value,
+    )

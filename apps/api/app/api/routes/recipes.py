@@ -143,7 +143,8 @@ async def list_recipes(
         base_stmt = base_stmt.where(AIRecipe.department_id == dept_uuid)
 
     if search:
-        pattern = f"%{search}%"
+        escaped = search.replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
         base_stmt = base_stmt.where(
             AIRecipe.title.ilike(pattern) | AIRecipe.description.ilike(pattern)
         )

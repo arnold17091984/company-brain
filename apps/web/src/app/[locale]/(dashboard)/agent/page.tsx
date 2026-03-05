@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -338,10 +339,8 @@ export default function AgentPage() {
 	const PAGE_SIZE = 50;
 
 	// ---- Auth token
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	// ---- Fetch clusters
@@ -353,7 +352,7 @@ export default function AgentPage() {
 			setClustersError(null);
 			try {
 				const res = await fetch(`${API_BASE_URL}/api/v1/analytics/clusters`, {
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
+					headers: { Authorization: `Bearer ${getToken()}` },
 				});
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: Cluster[] = await res.json();
@@ -369,7 +368,7 @@ export default function AgentPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken]);
+	}, [getToken]);
 
 	// ---- Fetch recommendations
 	useEffect(() => {
@@ -382,7 +381,7 @@ export default function AgentPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/recommendations`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -406,7 +405,7 @@ export default function AgentPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken]);
+	}, [getToken]);
 
 	// ---- Fetch ingestion status
 	useEffect(() => {
@@ -419,7 +418,7 @@ export default function AgentPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/ingestion-status`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -436,7 +435,7 @@ export default function AgentPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken]);
+	}, [getToken]);
 
 	// ---- Fetch logs
 	useEffect(() => {
@@ -449,7 +448,7 @@ export default function AgentPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/logs?page=${logsPage}&page_size=${PAGE_SIZE}`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -469,7 +468,7 @@ export default function AgentPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken, logsPage]);
+	}, [getToken, logsPage]);
 
 	const totalPages = Math.max(1, Math.ceil(logsTotal / PAGE_SIZE));
 

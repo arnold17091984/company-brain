@@ -13,6 +13,7 @@ import { ROIReportViewer } from "@/components/analytics/roi-report-viewer";
 import type { UsageMetricsRow } from "@/components/analytics/usage-metrics-table";
 import { UsageMetricsTable } from "@/components/analytics/usage-metrics-table";
 import { UseCases } from "@/components/analytics/use-cases";
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -73,10 +74,8 @@ export default function AnalyticsPage() {
 	const [selectedReport, setSelectedReport] = useState<ROIReport | null>(null);
 
 	// ---- Auth token --------------------------------------------------------
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	// ---- Fetch overview ----------------------------------------------------
@@ -89,7 +88,7 @@ export default function AnalyticsPage() {
 			try {
 				const res = await fetch(`${API_BASE_URL}/api/v1/analytics/overview`, {
 					headers: {
-						Authorization: `Bearer ${getAccessToken()}`,
+						Authorization: `Bearer ${getToken()}`,
 					},
 				});
 
@@ -116,7 +115,7 @@ export default function AnalyticsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken]);
+	}, [getToken]);
 
 	// ---- Fetch departments -------------------------------------------------
 	useEffect(() => {
@@ -130,7 +129,7 @@ export default function AnalyticsPage() {
 					`${API_BASE_URL}/api/v1/analytics/departments`,
 					{
 						headers: {
-							Authorization: `Bearer ${getAccessToken()}`,
+							Authorization: `Bearer ${getToken()}`,
 						},
 					},
 				);
@@ -158,7 +157,7 @@ export default function AnalyticsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken]);
+	}, [getToken]);
 
 	// ---- Fetch correlation + usage metrics (Usage vs KPI tab) -------------
 	useEffect(() => {
@@ -173,7 +172,7 @@ export default function AnalyticsPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/correlation?period=${roiPeriod}`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -193,7 +192,7 @@ export default function AnalyticsPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/usage-metrics?period=${roiPeriod}`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -213,7 +212,7 @@ export default function AnalyticsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeTab, roiPeriod, getAccessToken]);
+	}, [activeTab, roiPeriod, getToken]);
 
 	// ---- Fetch ROI reports -------------------------------------------------
 	useEffect(() => {
@@ -228,7 +227,7 @@ export default function AnalyticsPage() {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/roi-reports`,
 					{
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
@@ -249,7 +248,7 @@ export default function AnalyticsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [activeTab, getAccessToken]);
+	}, [activeTab, getToken]);
 
 	// ---- Tabs --------------------------------------------------------------
 	const TABS: { id: Tab; label: string }[] = [
@@ -585,7 +584,7 @@ export default function AnalyticsPage() {
 							<h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-4">
 								{tRoi("tabKpiInput")}
 							</h2>
-							<KPIInputForm token={getAccessToken()} />
+							<KPIInputForm token={getToken()} />
 						</div>
 					)}
 				</div>

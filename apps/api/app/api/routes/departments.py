@@ -60,7 +60,10 @@ async def create_department(
     # Check for duplicate slug
     existing = await db.execute(select(Department).where(Department.slug == body.slug))
     if existing.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=409, detail=f"Department slug '{body.slug}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"Department slug '{body.slug}' already exists.",
+        )
 
     dept = Department(name=body.name, slug=body.slug)
     db.add(dept)
@@ -152,7 +155,10 @@ async def delete_department(
     if user_count > 0:
         raise HTTPException(
             status_code=409,
-            detail=f"Cannot delete department with {user_count} assigned user(s). Reassign them first.",
+            detail=(
+                f"Cannot delete department with {user_count}"
+                " assigned user(s). Reassign them first."
+            ),
         )
 
     await db.delete(dept)
