@@ -189,7 +189,7 @@ def mask_pii(text: str) -> tuple[str, list[DetectedCategory]]:
         DetectedCategory.CURRENCY_AMOUNT,
     }
 
-    for category, risk, pattern in _PATTERNS:
+    for category, _risk, pattern in _PATTERNS:
         if category not in pii_categories:
             continue
         matches = list(pattern.finditer(masked))

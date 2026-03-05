@@ -139,7 +139,6 @@ class RecipeExtractor:
                 logger.debug("Skipping duplicate recipe title: %r", title)
                 continue
 
-            up_count = content_feedback_stmt and content_counts.get(msg.content, 1)
             effectiveness = _normalise_effectiveness(
                 content_counts.get(msg.content, 1)
             )

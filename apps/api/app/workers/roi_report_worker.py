@@ -132,7 +132,9 @@ def _build_markdown(
             "| Department | Queries | Input tokens | Output tokens |",
             "|------------|---------|--------------|---------------|",
         ]
-        for dept_name, stats in sorted(dept_breakdown.items(), key=lambda kv: -kv[1].get("queries", 0)):
+        for dept_name, stats in sorted(
+            dept_breakdown.items(), key=lambda kv: -kv[1].get("queries", 0)
+        ):
             lines.append(
                 f"| {dept_name} "
                 f"| {stats.get('queries', 0):,} "
@@ -160,7 +162,11 @@ def _build_markdown(
     else:
         lines.append("_No KPI records found for this period._")
 
-    lines += ["", "---", f"_Generated automatically by Company Brain on {date.today().isoformat()}_"]
+    lines += [
+        "",
+        "---",
+        f"_Generated automatically by Company Brain on {date.today().isoformat()}_",
+    ]
     return "\n".join(lines)
 
 
@@ -203,8 +209,12 @@ async def monthly_roi_report(
             # ── Step 1: overall aggregates ────────────────────────────────────
             agg_stmt = select(
                 func.coalesce(func.sum(UsageMetricsDaily.query_count), 0).label("total_queries"),
-                func.coalesce(func.sum(UsageMetricsDaily.total_input_tokens), 0).label("total_input"),
-                func.coalesce(func.sum(UsageMetricsDaily.total_output_tokens), 0).label("total_output"),
+                func.coalesce(func.sum(UsageMetricsDaily.total_input_tokens), 0).label(
+                    "total_input"
+                ),
+                func.coalesce(func.sum(UsageMetricsDaily.total_output_tokens), 0).label(
+                    "total_output"
+                ),
                 func.count(func.distinct(UsageMetricsDaily.user_id)).label("active_users"),
             ).where(
                 UsageMetricsDaily.date >= first_day,
@@ -270,7 +280,10 @@ async def monthly_roi_report(
                 select(
                     UsageMetricsDaily.user_id,
                     func.sum(UsageMetricsDaily.query_count).label("query_count"),
-                    func.sum(UsageMetricsDaily.total_input_tokens + UsageMetricsDaily.total_output_tokens).label("total_tokens"),
+                    func.sum(
+                        UsageMetricsDaily.total_input_tokens
+                        + UsageMetricsDaily.total_output_tokens
+                    ).label("total_tokens"),
                 )
                 .where(
                     UsageMetricsDaily.date >= first_day,
@@ -397,7 +410,9 @@ async def monthly_roi_report(
 
         except Exception:
             await db.rollback()
-            logger.exception("ROI report generation failed for %s; transaction rolled back.", period)
+            logger.exception(
+                "ROI report generation failed for %s; transaction rolled back.", period
+            )
             raise
 
     logger.info(

@@ -210,7 +210,11 @@ async def get_session_detail(
         answered_questions=session.answered_questions,
         progress_percent=_progress_pct(session.answered_questions, session.total_questions),
         created_at=str(session.created_at),
-        suspension_date=(str(target.suspension_date) if target and target.suspension_date else None),
+        suspension_date=(
+            str(target.suspension_date)
+            if target and target.suspension_date
+            else None
+        ),
         questions=[
             HarvestQuestionDetail(
                 id=str(q.id),

@@ -718,7 +718,7 @@ async def get_usage_metrics(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="period must be in YYYY-MM format",
-            )
+            ) from None
         from calendar import monthrange
 
         first_day = date(year, month, 1)
@@ -735,7 +735,7 @@ async def get_usage_metrics(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="department_id must be a valid UUID",
-            )
+            ) from None
         stmt = stmt.where(UsageMetricsDaily.department_id == dept_uuid)
 
     stmt = stmt.order_by(UsageMetricsDaily.date.desc())
@@ -796,7 +796,7 @@ async def get_correlation(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="period must be in YYYY-MM format",
-        )
+        ) from None
 
     from calendar import monthrange
 
@@ -953,7 +953,7 @@ async def create_kpi_record(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="user_id must be a valid UUID",
-        )
+        ) from None
 
     dept_uuid: uuid.UUID | None = None
     if body.department_id:
@@ -963,7 +963,7 @@ async def create_kpi_record(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="department_id must be a valid UUID",
-            )
+            ) from None
 
     # Calculate achievement percentage
     if body.target_value > 0:
@@ -1026,7 +1026,7 @@ async def update_kpi_record(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="kpi_id must be a valid UUID",
-        )
+        ) from None
 
     result = await db.execute(select(KPIRecord).where(KPIRecord.id == kid))
     kpi = result.scalar_one_or_none()
@@ -1040,7 +1040,7 @@ async def update_kpi_record(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="user_id must be a valid UUID",
-        )
+        ) from None
 
     dept_uuid: uuid.UUID | None = None
     if body.department_id:
@@ -1050,7 +1050,7 @@ async def update_kpi_record(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="department_id must be a valid UUID",
-            )
+            ) from None
 
     if body.target_value > 0:
         achievement_pct = round(body.actual_value / body.target_value * 100, 2)
@@ -1099,7 +1099,7 @@ async def delete_kpi_record(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="kpi_id must be a valid UUID",
-        )
+        ) from None
 
     result = await db.execute(select(KPIRecord).where(KPIRecord.id == kid))
     kpi = result.scalar_one_or_none()
