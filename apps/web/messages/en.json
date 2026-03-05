@@ -168,7 +168,18 @@
 		"backToList": "Back to List",
 		"answerVia": "Answered via {source}",
 		"noAnswer": "Not yet answered",
-		"allCategories": "All"
+		"allCategories": "All",
+		"statusOverview": "Status Overview",
+		"sessions": "Sessions",
+		"totalUsers": "Total Users",
+		"notStarted": "Not Started",
+		"inProgress": "In Progress",
+		"statusNone": "Not Started",
+		"startHarvestFor": "Start Harvest",
+		"department": "Department",
+		"harvestStatus": "Harvest Status",
+		"completed": "Completed",
+		"filterAll": "All"
 	},
 	"admin": {
 		"pageTitle": "Admin",

@@ -168,7 +168,18 @@
 		"backToList": "목록으로 돌아가기",
 		"answerVia": "{source}을(를) 통해 답변",
 		"noAnswer": "아직 답변 없음",
-		"allCategories": "전체"
+		"allCategories": "전체",
+		"statusOverview": "수집 현황",
+		"sessions": "세션",
+		"totalUsers": "전체 사용자",
+		"notStarted": "미시작",
+		"inProgress": "진행 중",
+		"statusNone": "미시작",
+		"startHarvestFor": "수집 시작",
+		"department": "부서",
+		"harvestStatus": "수집 상태",
+		"completed": "완료",
+		"filterAll": "전체"
 	},
 	"admin": {
 		"pageTitle": "관리",

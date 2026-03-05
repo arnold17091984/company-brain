@@ -168,7 +168,18 @@
 		"backToList": "一覧に戻る",
 		"answerVia": "{source}経由で回答",
 		"noAnswer": "未回答",
-		"allCategories": "すべて"
+		"allCategories": "すべて",
+		"statusOverview": "回収状況",
+		"sessions": "セッション",
+		"totalUsers": "全ユーザー",
+		"notStarted": "未開始",
+		"inProgress": "進行中",
+		"statusNone": "未開始",
+		"startHarvestFor": "回収開始",
+		"department": "部署",
+		"harvestStatus": "回収ステータス",
+		"completed": "完了",
+		"filterAll": "すべて"
 	},
 	"admin": {
 		"pageTitle": "管理",

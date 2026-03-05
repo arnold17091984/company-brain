@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -47,6 +47,22 @@ interface HarvestSessionDetail extends HarvestSession {
 	questions: HarvestQuestion[];
 }
 
+type HarvestStatusType = "none" | "active" | "paused" | "completed";
+
+interface UserHarvestStatus {
+	userId: string;
+	userName: string;
+	userEmail: string;
+	department: string | null;
+	harvestStatus: HarvestStatusType;
+	sessionId: string | null;
+	progress: number;
+	answeredQuestions: number;
+	totalQuestions: number;
+}
+
+type ViewMode = "sessions" | "status";
+
 // ---- HarvestTab -----------------------------------------------------------
 
 export function HarvestTab({
@@ -60,6 +76,12 @@ export function HarvestTab({
 	const [sessions, setSessions] = useState<HarvestSession[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	// View mode
+	const [viewMode, setViewMode] = useState<ViewMode>("sessions");
+	const [statusFilter, setStatusFilter] = useState<"all" | HarvestStatusType>(
+		"all",
+	);
 
 	// Detail view
 	const [selectedSession, setSelectedSession] =
@@ -117,7 +139,7 @@ export function HarvestTab({
 		}
 	};
 
-	const fetchUsers = async () => {
+	const fetchUsers = useCallback(async () => {
 		setUsersLoading(true);
 		try {
 			const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
@@ -130,14 +152,61 @@ export function HarvestTab({
 		} finally {
 			setUsersLoading(false);
 		}
-	};
+	}, [getAccessToken]);
 
-	const openCreate = () => {
+	// Fetch users when switching to status view
+	useEffect(() => {
+		if (viewMode === "status" && users.length === 0 && !usersLoading) {
+			fetchUsers();
+		}
+	}, [viewMode, users.length, usersLoading, fetchUsers]);
+
+	// Join users + sessions to build harvest statuses
+	const userHarvestStatuses = useMemo<UserHarvestStatus[]>(() => {
+		if (users.length === 0) return [];
+		const sessionByEmail = new Map<string, HarvestSession>();
+		for (const s of sessions) {
+			const existing = sessionByEmail.get(s.target_user_email);
+			if (!existing || new Date(s.created_at) > new Date(existing.created_at)) {
+				sessionByEmail.set(s.target_user_email, s);
+			}
+		}
+		return users.map((user) => {
+			const session = sessionByEmail.get(user.email);
+			return {
+				userId: user.id,
+				userName: user.name,
+				userEmail: user.email,
+				department: user.department,
+				harvestStatus: session ? (session.status as HarvestStatusType) : "none",
+				sessionId: session?.id ?? null,
+				progress: session?.progress_percent ?? 0,
+				answeredQuestions: session?.answered_questions ?? 0,
+				totalQuestions: session?.total_questions ?? 0,
+			};
+		});
+	}, [users, sessions]);
+
+	const filteredStatuses = useMemo(() => {
+		if (statusFilter === "all") return userHarvestStatuses;
+		return userHarvestStatuses.filter((u) => u.harvestStatus === statusFilter);
+	}, [userHarvestStatuses, statusFilter]);
+
+	const statusCounts = useMemo(() => {
+		const counts = { total: 0, none: 0, active: 0, paused: 0, completed: 0 };
+		for (const u of userHarvestStatuses) {
+			counts.total++;
+			counts[u.harvestStatus]++;
+		}
+		return counts;
+	}, [userHarvestStatuses]);
+
+	const openCreate = (presetUserId?: string) => {
 		setShowCreate(true);
-		setFormUserId("");
+		setFormUserId(presetUserId ?? "");
 		setFormDate("");
 		setCreateError(null);
-		fetchUsers();
+		if (users.length === 0) fetchUsers();
 	};
 
 	const handleCreate = async () => {
@@ -390,27 +459,46 @@ export function HarvestTab({
 						{t("description")}
 					</p>
 				</div>
-				<button
-					type="button"
-					onClick={openCreate}
-					className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none flex items-center gap-2"
-				>
-					<svg
-						className="w-4 h-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth={2}
-						aria-hidden="true"
+				<div className="flex items-center gap-3">
+					{/* View toggle */}
+					<div className="bg-zinc-100/80 dark:bg-white/[0.04] rounded-xl p-1 inline-flex gap-0.5">
+						{(["sessions", "status"] as const).map((mode) => (
+							<button
+								key={mode}
+								type="button"
+								onClick={() => setViewMode(mode)}
+								className={`min-h-[36px] px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
+									viewMode === mode
+										? "bg-white dark:bg-white/[0.1] text-zinc-900 dark:text-zinc-100 shadow-sm"
+										: "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+								}`}
+							>
+								{mode === "sessions" ? t("sessions") : t("statusOverview")}
+							</button>
+						))}
+					</div>
+					<button
+						type="button"
+						onClick={() => openCreate()}
+						className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none flex items-center gap-2"
 					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M12 4.5v15m7.5-7.5h-15"
-						/>
-					</svg>
-					{t("flagUser")}
-				</button>
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M12 4.5v15m7.5-7.5h-15"
+							/>
+						</svg>
+						{t("flagUser")}
+					</button>
+				</div>
 			</div>
 
 			{error && (
@@ -498,120 +586,316 @@ export function HarvestTab({
 				</div>
 			)}
 
-			{/* Sessions list */}
-			{loading ? (
-				<div className="space-y-4">
-					{(["s0", "s1", "s2"] as const).map((key) => (
-						<div
-							key={key}
-							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
-						>
-							<div className="flex items-center justify-between mb-4">
-								<div className="space-y-2">
-									<Skeleton height="1rem" width="9rem" />
-									<Skeleton height="0.75rem" width="12rem" />
-								</div>
-								<Skeleton
-									height="1.5rem"
-									width="4rem"
-									className="rounded-full"
-								/>
+			{/* Status Overview */}
+			{viewMode === "status" && (
+				<>
+					{/* Summary stats */}
+					<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+						{(
+							[
+								{
+									label: t("totalUsers"),
+									count: statusCounts.total,
+									color: "text-zinc-900 dark:text-zinc-100",
+								},
+								{
+									label: t("notStarted"),
+									count: statusCounts.none,
+									color: "text-amber-600 dark:text-amber-400",
+								},
+								{
+									label: t("inProgress"),
+									count: statusCounts.active + statusCounts.paused,
+									color: "text-blue-600 dark:text-blue-400",
+								},
+								{
+									label: t("completed"),
+									count: statusCounts.completed,
+									color: "text-green-600 dark:text-green-400",
+								},
+							] as const
+						).map((stat) => (
+							<div
+								key={stat.label}
+								className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-4"
+							>
+								<p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+									{stat.label}
+								</p>
+								<p className={`text-2xl font-semibold ${stat.color}`}>
+									{stat.count}
+								</p>
 							</div>
-							<Skeleton height="0.5rem" className="rounded-full" />
-						</div>
-					))}
-				</div>
-			) : sessions.length === 0 ? (
-				<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-12 text-center">
-					<p className="text-zinc-500 dark:text-zinc-400 text-sm">
-						{t("noSessions")}
-					</p>
-				</div>
-			) : (
-				<div className="space-y-4">
-					{sessions.map((session, _sIdx) => (
-						<div
-							key={session.id}
-							className="animate-fade-in opacity-0"
-							style={{
-								animationDelay: `${_sIdx * 70}ms`,
-								animationFillMode: "forwards",
-							}}
-						>
-							<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
-								<div className="flex items-start justify-between gap-4 mb-4">
-									<div className="min-w-0">
-										<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-											{session.target_user_name}
-										</h3>
-										<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-											{session.target_user_email}
-										</p>
-										{session.suspension_date && (
-											<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-												{t("suspensionDate")}: {session.suspension_date}
-											</p>
-										)}
-									</div>
-									<div className="flex items-center gap-2 shrink-0">
-										<span
-											className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(session.status)}`}
-										>
-											{statusLabel(session.status)}
-										</span>
-									</div>
-								</div>
+						))}
+					</div>
 
-								{/* Progress bar */}
-								<div className="mb-4">
-									<div className="flex items-center justify-between mb-1">
-										<span className="text-xs text-zinc-500 dark:text-zinc-400">
-											{t("progress")}
-										</span>
-										<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-											{session.answered_questions}/{session.total_questions}{" "}
-											{t("answered")}
-										</span>
-									</div>
-									<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
-										<div
-											className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
-											style={{ width: `${session.progress_percent}%` }}
+					{/* Status filters */}
+					<div className="flex flex-wrap gap-2">
+						{(
+							[
+								{ key: "all", label: t("filterAll") },
+								{ key: "none", label: t("statusNone") },
+								{ key: "active", label: t("status.active") },
+								{ key: "paused", label: t("status.paused") },
+								{ key: "completed", label: t("status.completed") },
+							] as const
+						).map((f) => (
+							<button
+								key={f.key}
+								type="button"
+								onClick={() =>
+									setStatusFilter(f.key as "all" | HarvestStatusType)
+								}
+								className={`min-h-[44px] px-3 py-1 text-sm rounded-full border transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
+									statusFilter === f.key
+										? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
+										: "border-zinc-200/80 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/[0.15]"
+								}`}
+							>
+								{f.label}
+							</button>
+						))}
+					</div>
+
+					{/* User list */}
+					{usersLoading || loading ? (
+						<div className="space-y-4">
+							{(["u0", "u1", "u2", "u3"] as const).map((key) => (
+								<div
+									key={key}
+									className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
+								>
+									<div className="flex items-center justify-between">
+										<div className="space-y-2">
+											<Skeleton height="1rem" width="8rem" />
+											<Skeleton height="0.75rem" width="12rem" />
+										</div>
+										<Skeleton
+											height="1.5rem"
+											width="4rem"
+											className="rounded-full"
 										/>
 									</div>
 								</div>
+							))}
+						</div>
+					) : filteredStatuses.length === 0 ? (
+						<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-12 text-center">
+							<p className="text-zinc-500 dark:text-zinc-400 text-sm">
+								{t("noSessions")}
+							</p>
+						</div>
+					) : (
+						<div className="space-y-3">
+							{filteredStatuses.map((user, _uIdx) => (
+								<div
+									key={user.userId}
+									className="animate-fade-in opacity-0"
+									style={{
+										animationDelay: `${_uIdx * 50}ms`,
+										animationFillMode: "forwards",
+									}}
+								>
+									<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
+										<div className="flex items-start justify-between gap-4">
+											<div className="min-w-0 flex-1">
+												<div className="flex items-center gap-3 mb-1">
+													<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+														{user.userName}
+													</h3>
+													<span
+														className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0 ${
+															user.harvestStatus === "none"
+																? "text-zinc-500 bg-zinc-100 border-zinc-200 dark:text-zinc-400 dark:bg-white/[0.06] dark:border-white/[0.08]"
+																: user.harvestStatus === "completed"
+																	? "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/40 dark:border-green-800"
+																	: user.harvestStatus === "active"
+																		? "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/40 dark:border-blue-800"
+																		: "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800"
+														}`}
+													>
+														{user.harvestStatus === "none"
+															? t("statusNone")
+															: statusLabel(user.harvestStatus)}
+													</span>
+												</div>
+												<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+													{user.userEmail}
+													{user.department && <> · {user.department}</>}
+												</p>
 
-								{/* Actions */}
-								<div className="flex items-center gap-2">
-									<button
-										type="button"
-										onClick={() => {
-											if (!detailLoading) {
-												fetchDetail(session.id);
-											}
-										}}
-										className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
-									>
-										{t("viewDetails")}
-									</button>
-									{session.status !== "completed" && (
+												{/* Progress bar for users with sessions */}
+												{user.harvestStatus !== "none" && (
+													<div className="mt-3">
+														<div className="flex items-center justify-between mb-1">
+															<span className="text-xs text-zinc-500 dark:text-zinc-400">
+																{t("progress")}
+															</span>
+															<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+																{user.answeredQuestions}/{user.totalQuestions}{" "}
+																{t("answered")}
+															</span>
+														</div>
+														<div className="h-1.5 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
+															<div
+																className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
+																style={{
+																	width: `${user.progress}%`,
+																}}
+															/>
+														</div>
+													</div>
+												)}
+											</div>
+
+											{/* Action */}
+											<div className="shrink-0">
+												{user.harvestStatus === "none" ? (
+													<button
+														type="button"
+														onClick={() => openCreate(user.userId)}
+														className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+													>
+														{t("startHarvestFor")}
+													</button>
+												) : user.sessionId ? (
+													<button
+														type="button"
+														onClick={() => {
+															if (!detailLoading && user.sessionId) {
+																fetchDetail(user.sessionId);
+															}
+														}}
+														className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+													>
+														{t("viewDetails")}
+													</button>
+												) : null}
+											</div>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</>
+			)}
+
+			{/* Sessions list */}
+			{viewMode === "sessions" &&
+				(loading ? (
+					<div className="space-y-4">
+						{(["s0", "s1", "s2"] as const).map((key) => (
+							<div
+								key={key}
+								className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
+							>
+								<div className="flex items-center justify-between mb-4">
+									<div className="space-y-2">
+										<Skeleton height="1rem" width="9rem" />
+										<Skeleton height="0.75rem" width="12rem" />
+									</div>
+									<Skeleton
+										height="1.5rem"
+										width="4rem"
+										className="rounded-full"
+									/>
+								</div>
+								<Skeleton height="0.5rem" className="rounded-full" />
+							</div>
+						))}
+					</div>
+				) : sessions.length === 0 ? (
+					<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-12 text-center">
+						<p className="text-zinc-500 dark:text-zinc-400 text-sm">
+							{t("noSessions")}
+						</p>
+					</div>
+				) : (
+					<div className="space-y-4">
+						{sessions.map((session, _sIdx) => (
+							<div
+								key={session.id}
+								className="animate-fade-in opacity-0"
+								style={{
+									animationDelay: `${_sIdx * 70}ms`,
+									animationFillMode: "forwards",
+								}}
+							>
+								<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
+									<div className="flex items-start justify-between gap-4 mb-4">
+										<div className="min-w-0">
+											<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+												{session.target_user_name}
+											</h3>
+											<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+												{session.target_user_email}
+											</p>
+											{session.suspension_date && (
+												<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+													{t("suspensionDate")}: {session.suspension_date}
+												</p>
+											)}
+										</div>
+										<div className="flex items-center gap-2 shrink-0">
+											<span
+												className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(session.status)}`}
+											>
+												{statusLabel(session.status)}
+											</span>
+										</div>
+									</div>
+
+									{/* Progress bar */}
+									<div className="mb-4">
+										<div className="flex items-center justify-between mb-1">
+											<span className="text-xs text-zinc-500 dark:text-zinc-400">
+												{t("progress")}
+											</span>
+											<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+												{session.answered_questions}/{session.total_questions}{" "}
+												{t("answered")}
+											</span>
+										</div>
+										<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
+											<div
+												className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
+												style={{ width: `${session.progress_percent}%` }}
+											/>
+										</div>
+									</div>
+
+									{/* Actions */}
+									<div className="flex items-center gap-2">
 										<button
 											type="button"
-											onClick={() => handleToggle(session)}
-											disabled={togglingId === session.id}
-											className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+											onClick={() => {
+												if (!detailLoading) {
+													fetchDetail(session.id);
+												}
+											}}
+											className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 										>
-											{session.status === "paused"
-												? t("resumeSession")
-												: t("pauseSession")}
+											{t("viewDetails")}
 										</button>
-									)}
+										{session.status !== "completed" && (
+											<button
+												type="button"
+												onClick={() => handleToggle(session)}
+												disabled={togglingId === session.id}
+												className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+											>
+												{session.status === "paused"
+													? t("resumeSession")
+													: t("pauseSession")}
+											</button>
+										)}
+									</div>
 								</div>
 							</div>
-						</div>
-					))}
-				</div>
-			)}
+						))}
+					</div>
+				))}
 		</div>
 	);
 }
