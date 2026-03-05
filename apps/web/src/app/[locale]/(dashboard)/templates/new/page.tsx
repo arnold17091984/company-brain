@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -56,9 +57,7 @@ export default function TemplateFormPage() {
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const getToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+		return getAccessToken(session);
 	}, [session]);
 
 	// Load existing template when editing

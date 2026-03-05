@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -53,9 +54,7 @@ export default function TemplateDetailPage({
 		(session?.user as { id?: string } | undefined)?.id ?? "";
 
 	const getToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+		return getAccessToken(session);
 	}, [session]);
 
 	useEffect(() => {

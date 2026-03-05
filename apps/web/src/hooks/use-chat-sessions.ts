@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import type { ChatSessionSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
@@ -17,8 +18,7 @@ export function useChatSessions(): UseChatSessionsReturn {
 	const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const accessToken =
-		(session as { accessToken?: string } | null)?.accessToken ?? "dev-token";
+	const accessToken = getAccessToken(session);
 
 	const refresh = useCallback(async () => {
 		setIsLoading(true);

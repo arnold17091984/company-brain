@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -3380,10 +3381,8 @@ export default function AdminPage() {
 		{},
 	);
 
-	const getAccessToken = useCallback(() => {
-		return (
-			(session as { accessToken?: string } | null)?.accessToken ?? "dev-token"
-		);
+	const getToken = useCallback(() => {
+		return getAccessToken(session);
 	}, [session]);
 
 	// Fetch knowledge sources on mount
@@ -3395,7 +3394,7 @@ export default function AdminPage() {
 			setSourcesError(null);
 			try {
 				const res = await fetch(`${API_BASE_URL}/api/v1/knowledge/sources`, {
-					headers: { Authorization: `Bearer ${getAccessToken()}` },
+					headers: { Authorization: `Bearer ${getToken()}` },
 				});
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: KnowledgeSource[] = await res.json();
@@ -3411,7 +3410,7 @@ export default function AdminPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [getAccessToken, t]);
+	}, [getToken, t]);
 
 	// Trigger ingestion for a connector
 	const handleIngest = useCallback(
@@ -3422,7 +3421,7 @@ export default function AdminPage() {
 					`${API_BASE_URL}/api/v1/knowledge/ingest?connector_type=${encodeURIComponent(sourceId)}`,
 					{
 						method: "POST",
-						headers: { Authorization: `Bearer ${getAccessToken()}` },
+						headers: { Authorization: `Bearer ${getToken()}` },
 					},
 				);
 				if (!res.ok) throw new Error(`${res.status}`);
@@ -3437,7 +3436,7 @@ export default function AdminPage() {
 				}, 4000);
 			}
 		},
-		[getAccessToken],
+		[getToken],
 	);
 
 	const tabs: { id: TabId; label: string }[] = [
@@ -3529,30 +3528,20 @@ export default function AdminPage() {
 							ingestStates={ingestStates}
 							onIngest={handleIngest}
 							locale={locale}
-							getAccessToken={getAccessToken}
+							getAccessToken={getToken}
 						/>
 					)}
 					{activeTab === "settings" && (
-						<SettingsTab getAccessToken={getAccessToken} />
+						<SettingsTab getAccessToken={getToken} />
 					)}
-					{activeTab === "users" && (
-						<UsersTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "health" && (
-						<HealthTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "safety" && (
-						<SafetyTab getAccessToken={getAccessToken} />
-					)}
-					{activeTab === "recipes" && (
-						<RecipesTab getAccessToken={getAccessToken} />
-					)}
+					{activeTab === "users" && <UsersTab getAccessToken={getToken} />}
+					{activeTab === "health" && <HealthTab getAccessToken={getToken} />}
+					{activeTab === "safety" && <SafetyTab getAccessToken={getToken} />}
+					{activeTab === "recipes" && <RecipesTab getAccessToken={getToken} />}
 					{activeTab === "knowledge" && (
-						<KnowledgeTab getAccessToken={getAccessToken} />
+						<KnowledgeTab getAccessToken={getToken} />
 					)}
-					{activeTab === "harvest" && (
-						<HarvestTab getAccessToken={getAccessToken} />
-					)}
+					{activeTab === "harvest" && <HarvestTab getAccessToken={getToken} />}
 				</div>
 			</div>
 		</div>
