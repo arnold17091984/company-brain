@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import User, get_current_user
+from app.core.auth import User, get_admin_user, get_current_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.database import Document
@@ -155,13 +155,14 @@ async def query_knowledge(
                 llm_service = ClaudeService()
 
                 try:
-                    answer = await llm_service.generate(
+                    llm_result = await llm_service.generate(
                         llm_messages,
                         system_prompt=_RAG_SYSTEM_PROMPT,
                     )
+                    answer_text = llm_result.text
                 except LLMError as exc:
                     logger.error("LLM error during RAG answer generation: %s", exc)
-                    answer = (
+                    answer_text = (
                         "Sorry, I'm unable to generate an answer right now. "
                         "Please try again in a moment."
                     )
@@ -176,7 +177,7 @@ async def query_knowledge(
                     for chunk in chunks
                 ]
 
-                response = QueryResponse(answer=answer, sources=sources, cached=False)
+                response = QueryResponse(answer=answer_text, sources=sources, cached=False)
 
                 # ── Write cache ──────────────────────────────────────────
                 if cache is not None:
@@ -204,12 +205,13 @@ async def query_knowledge(
     messages = [{"role": "user", "content": body.query}]
     service = ClaudeService()
     try:
-        answer = await service.generate(messages, system_prompt=_SEARCH_SYSTEM_PROMPT)
+        fallback_result = await service.generate(messages, system_prompt=_SEARCH_SYSTEM_PROMPT)
+        fallback_text = fallback_result.text
     except LLMError as exc:
         logger.error("LLM error in knowledge query fallback: %s", exc)
-        answer = "Sorry, I'm unable to search right now. Please try again in a moment."
+        fallback_text = "Sorry, I'm unable to search right now. Please try again in a moment."
 
-    return QueryResponse(answer=answer, sources=[], cached=False)
+    return QueryResponse(answer=fallback_text, sources=[], cached=False)
 
 
 @router.get("/sources", response_model=list[dict])
@@ -278,7 +280,7 @@ async def list_sources(
 async def trigger_ingest(
     connector_type: str,
     full_sync: bool = False,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Trigger an ingestion run for the given connector type via Inngest.
@@ -291,7 +293,7 @@ async def trigger_ingest(
         connector_type: One of ``"google_drive"``, ``"telegram"``, or ``"notion"``.
         full_sync: When ``True``, ignore previous sync state and re-process
             all documents from scratch (default ``False``).
-        current_user: Injected authenticated user (admin-level actions only).
+        current_user: Injected authenticated admin user.
         db: Injected database session (reserved for future audit logging).
 
     Returns:
