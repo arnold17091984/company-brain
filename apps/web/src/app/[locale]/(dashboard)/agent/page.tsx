@@ -1,5 +1,12 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import type { Column } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import { Pagination } from "@/components/ui/pagination";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -7,7 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-// ---- Types ----------------------------------------------------------------
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Cluster {
 	label: string;
@@ -45,7 +52,7 @@ interface LogsResponse {
 	page_size: number;
 }
 
-// ---- Helpers ---------------------------------------------------------------
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function priorityOrder(p: Recommendation["priority"]): number {
 	if (p === "high") return 0;
@@ -53,14 +60,32 @@ function priorityOrder(p: Recommendation["priority"]): number {
 	return 2;
 }
 
-function formatTime(iso: string): string {
+/**
+ * Returns a human-friendly relative time string for an ISO timestamp.
+ * Falls back to a short absolute date/time if the difference is large.
+ */
+function formatRelativeTime(iso: string): string {
+	const now = Date.now();
+	const then = new Date(iso).getTime();
+	const diffMs = now - then;
+	const diffSec = Math.floor(diffMs / 1000);
+	const diffMin = Math.floor(diffSec / 60);
+	const diffHour = Math.floor(diffMin / 60);
+	const diffDay = Math.floor(diffHour / 24);
+
+	if (diffSec < 60) return "just now";
+	if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? "s" : ""} ago`;
+	if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? "s" : ""} ago`;
+	if (diffDay === 1) return "yesterday";
+	if (diffDay < 7) return `${diffDay} days ago`;
+
 	return new Date(iso).toLocaleString(undefined, {
 		dateStyle: "short",
 		timeStyle: "short",
 	});
 }
 
-// ---- Sub-components --------------------------------------------------------
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function SectionHeader({
 	title,
@@ -81,42 +106,41 @@ function SectionHeader({
 	);
 }
 
-function SkeletonCard() {
-	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
-			<div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-700 rounded mb-3" />
-			<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded mb-3" />
-			<div className="space-y-1.5">
-				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-4/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-3/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
-			</div>
-		</div>
-	);
+// ── Cluster Card ───────────────────────────────────────────────────────────────
+
+interface ClusterCardProps {
+	cluster: Cluster;
+	isActive: boolean;
+	onClick: () => void;
 }
 
-function ErrorBanner({ message }: { message: string }) {
-	return (
-		<div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-			{message}
-		</div>
-	);
-}
-
-// ---- Cluster Card ----------------------------------------------------------
-
-function ClusterCard({ cluster }: { cluster: Cluster }) {
+function ClusterCard({ cluster, isActive, onClick }: ClusterCardProps) {
 	const t = useTranslations("agent");
 
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+		<button
+			type="button"
+			onClick={onClick}
+			className={`card-glow w-full text-left rounded-xl border p-5 transition-all duration-150 ${
+				isActive
+					? "border-indigo-400 dark:border-indigo-500/60 bg-indigo-50/60 dark:bg-indigo-950/20 ring-1 ring-indigo-300 dark:ring-indigo-600/30"
+					: "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-zinc-800/60 hover:border-indigo-200 dark:hover:border-indigo-600/30"
+			}`}
+			aria-pressed={isActive}
+		>
 			<div className="flex items-start justify-between gap-3 mb-3">
-				<h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm leading-snug">
+				<h3
+					className={`font-medium text-sm leading-snug ${
+						isActive
+							? "text-indigo-700 dark:text-indigo-300"
+							: "text-zinc-900 dark:text-zinc-100"
+					}`}
+				>
 					{cluster.label}
 				</h3>
-				<span className="shrink-0 inline-flex items-center text-xs font-medium rounded-full px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800">
+				<Badge variant="primary" size="sm">
 					{t("queries", { count: cluster.count })}
-				</span>
+				</Badge>
 			</div>
 			{cluster.sample_queries.length > 0 && (
 				<div>
@@ -136,42 +160,11 @@ function ClusterCard({ cluster }: { cluster: Cluster }) {
 					</ul>
 				</div>
 			)}
-		</div>
+		</button>
 	);
 }
 
-// ---- Priority Badge --------------------------------------------------------
-
-function PriorityBadge({
-	priority,
-}: {
-	priority: Recommendation["priority"];
-}) {
-	const t = useTranslations("agent");
-
-	const styles: Record<Recommendation["priority"], string> = {
-		high: "text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/40 dark:border-red-800",
-		medium:
-			"text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-800",
-		low: "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/40 dark:border-green-800",
-	};
-
-	const labels: Record<Recommendation["priority"], string> = {
-		high: t("priorityHigh"),
-		medium: t("priorityMedium"),
-		low: t("priorityLow"),
-	};
-
-	return (
-		<span
-			className={`inline-flex items-center text-xs font-medium rounded-full px-2.5 py-0.5 border ${styles[priority]}`}
-		>
-			{labels[priority]}
-		</span>
-	);
-}
-
-// ---- Ingestion Status Card -------------------------------------------------
+// ── Ingestion Card ─────────────────────────────────────────────────────────────
 
 function IngestionCard({ item }: { item: IngestionStatus }) {
 	const t = useTranslations("agent");
@@ -180,10 +173,7 @@ function IngestionCard({ item }: { item: IngestionStatus }) {
 
 	const lastSyncedText = item.last_synced
 		? t("lastSynced", {
-				time: new Date(item.last_synced).toLocaleString(undefined, {
-					dateStyle: "medium",
-					timeStyle: "short",
-				}),
+				time: formatRelativeTime(item.last_synced),
 			})
 		: t("neverSynced");
 
@@ -194,9 +184,9 @@ function IngestionCard({ item }: { item: IngestionStatus }) {
 				item.connector.slice(1).replace(/_/g, " ");
 
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+		<div className="card-glow bg-white dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-white/[0.06] p-5">
 			<div className="flex items-start gap-4">
-				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+				<div className="shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
 					<ConnectorIcon connector={item.connector} />
 				</div>
 				<div className="flex-1 min-w-0">
@@ -204,18 +194,15 @@ function IngestionCard({ item }: { item: IngestionStatus }) {
 						<h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm">
 							{connectorLabel}
 						</h3>
-						<span
-							className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 border ${
-								isActive
-									? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/40 dark:border-green-800"
-									: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-700 dark:border-zinc-600"
-							}`}
-						>
+						<Badge variant={isActive ? "success" : "default"} size="sm">
 							<span
-								className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-zinc-400"}`}
+								className={`mr-1 inline-block w-1.5 h-1.5 rounded-full ${
+									isActive ? "bg-emerald-500" : "bg-zinc-400"
+								}`}
+								aria-hidden="true"
 							/>
 							{isActive ? "Active" : "Inactive"}
-						</span>
+						</Badge>
 					</div>
 					<p className="text-sm text-zinc-500 dark:text-zinc-400">
 						{t("documents", { count: item.document_count })}
@@ -234,7 +221,7 @@ function IngestionCard({ item }: { item: IngestionStatus }) {
 	);
 }
 
-// ---- Connector Icon --------------------------------------------------------
+// ── Connector Icon ─────────────────────────────────────────────────────────────
 
 function ConnectorIcon({ connector }: { connector: string }) {
 	switch (connector) {
@@ -309,28 +296,50 @@ function ConnectorIcon({ connector }: { connector: string }) {
 	}
 }
 
-// ---- Page ------------------------------------------------------------------
+// ── Logs empty state icon ──────────────────────────────────────────────────────
+
+function LogsEmptyIcon() {
+	return (
+		<svg
+			className="w-6 h-6"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke="currentColor"
+			strokeWidth={1.5}
+			aria-hidden="true"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"
+			/>
+		</svg>
+	);
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
 	const t = useTranslations("agent");
 	const { data: session } = useSession();
 
-	// ---- Clusters state
+	// ── Clusters state
 	const [clusters, setClusters] = useState<Cluster[]>([]);
 	const [clustersLoading, setClustersLoading] = useState(true);
 	const [clustersError, setClustersError] = useState<string | null>(null);
+	const [activeCluster, setActiveCluster] = useState<string | null>(null);
 
-	// ---- Recommendations state
+	// ── Recommendations state
 	const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 	const [recsLoading, setRecsLoading] = useState(true);
 	const [recsError, setRecsError] = useState<string | null>(null);
 
-	// ---- Ingestion status state
+	// ── Ingestion status state
 	const [ingestionStatus, setIngestionStatus] = useState<IngestionStatus[]>([]);
 	const [ingestionLoading, setIngestionLoading] = useState(true);
 	const [ingestionError, setIngestionError] = useState<string | null>(null);
 
-	// ---- Logs state
+	// ── Logs state
 	const [logs, setLogs] = useState<LogEntry[]>([]);
 	const [logsLoading, setLogsLoading] = useState(true);
 	const [logsError, setLogsError] = useState<string | null>(null);
@@ -338,12 +347,12 @@ export default function AgentPage() {
 	const [logsTotal, setLogsTotal] = useState(0);
 	const PAGE_SIZE = 50;
 
-	// ---- Auth token
+	// ── Auth token
 	const getToken = useCallback(() => {
 		return getAccessToken(session);
 	}, [session]);
 
-	// ---- Fetch clusters
+	// ── Fetch clusters
 	useEffect(() => {
 		let cancelled = false;
 
@@ -370,7 +379,7 @@ export default function AgentPage() {
 		};
 	}, [getToken]);
 
-	// ---- Fetch recommendations
+	// ── Fetch recommendations
 	useEffect(() => {
 		let cancelled = false;
 
@@ -380,9 +389,7 @@ export default function AgentPage() {
 			try {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/recommendations`,
-					{
-						headers: { Authorization: `Bearer ${getToken()}` },
-					},
+					{ headers: { Authorization: `Bearer ${getToken()}` } },
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: Recommendation[] = await res.json();
@@ -407,7 +414,7 @@ export default function AgentPage() {
 		};
 	}, [getToken]);
 
-	// ---- Fetch ingestion status
+	// ── Fetch ingestion status
 	useEffect(() => {
 		let cancelled = false;
 
@@ -417,9 +424,7 @@ export default function AgentPage() {
 			try {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/ingestion-status`,
-					{
-						headers: { Authorization: `Bearer ${getToken()}` },
-					},
+					{ headers: { Authorization: `Bearer ${getToken()}` } },
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: IngestionStatus[] = await res.json();
@@ -437,7 +442,7 @@ export default function AgentPage() {
 		};
 	}, [getToken]);
 
-	// ---- Fetch logs
+	// ── Fetch logs
 	useEffect(() => {
 		let cancelled = false;
 
@@ -447,9 +452,7 @@ export default function AgentPage() {
 			try {
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/analytics/logs?page=${logsPage}&page_size=${PAGE_SIZE}`,
-					{
-						headers: { Authorization: `Bearer ${getToken()}` },
-					},
+					{ headers: { Authorization: `Bearer ${getToken()}` } },
 				);
 				if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 				const data: LogsResponse = await res.json();
@@ -470,12 +473,79 @@ export default function AgentPage() {
 		};
 	}, [getToken, logsPage]);
 
+	// ── Derived state
 	const totalPages = Math.max(1, Math.ceil(logsTotal / PAGE_SIZE));
+
+	const filteredLogs = activeCluster
+		? logs.filter(
+				(entry) =>
+					entry.query?.toLowerCase().includes(activeCluster.toLowerCase()) ??
+					false,
+			)
+		: logs;
+
+	// ── Cluster card toggle handler
+	function handleClusterClick(label: string) {
+		setActiveCluster((prev) => (prev === label ? null : label));
+	}
+
+	// ── DataTable column definitions
+	const logColumns: Column<LogEntry>[] = [
+		{
+			key: "created_at",
+			label: t("logTime"),
+			sortable: true,
+			width: "w-36",
+			render: (entry) => (
+				<span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+					{formatRelativeTime(entry.created_at)}
+				</span>
+			),
+		},
+		{
+			key: "user_email",
+			label: t("logUser"),
+			sortable: true,
+			width: "w-44",
+			render: (entry) => (
+				<span className="text-zinc-700 dark:text-zinc-300 truncate block max-w-[11rem]">
+					{entry.user_email}
+				</span>
+			),
+		},
+		{
+			key: "action",
+			label: t("logAction"),
+			sortable: true,
+			width: "w-32",
+			render: (entry) => (
+				<span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-white/[0.06] dark:text-zinc-300 whitespace-nowrap">
+					{entry.action}
+				</span>
+			),
+		},
+		{
+			key: "query",
+			label: t("logQuery"),
+			render: (entry) =>
+				entry.query ? (
+					<span className="text-zinc-600 dark:text-zinc-400 truncate block max-w-[20rem]">
+						{entry.query}
+					</span>
+				) : (
+					<span className="text-zinc-400 dark:text-zinc-600 italic text-xs">
+						—
+					</span>
+				),
+		},
+	];
+
+	// ── Render ────────────────────────────────────────────────────────────────
 
 	return (
 		<div className="flex flex-col h-full">
 			{/* Page header */}
-			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
+			<div className="border-b border-zinc-200 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
 				<h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
 				</h1>
@@ -507,14 +577,56 @@ export default function AgentPage() {
 										<SkeletonCard />
 									</>
 								) : clusters.length === 0 ? (
-									<p className="text-sm text-zinc-500 dark:text-zinc-400 col-span-full">
-										{t("noData")}
-									</p>
+									<div className="col-span-full">
+										<EmptyState
+											icon={
+												<svg
+													className="w-6 h-6"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													strokeWidth={1.5}
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+													/>
+												</svg>
+											}
+											title={t("noData")}
+										/>
+									</div>
 								) : (
 									clusters.map((cluster) => (
-										<ClusterCard key={cluster.label} cluster={cluster} />
+										<ClusterCard
+											key={cluster.label}
+											cluster={cluster}
+											isActive={activeCluster === cluster.label}
+											onClick={() => handleClusterClick(cluster.label)}
+										/>
 									))
 								)}
+							</div>
+						)}
+
+						{/* Active cluster filter indicator */}
+						{activeCluster && (
+							<div className="mt-3 flex items-center gap-2">
+								<span className="text-xs text-zinc-500 dark:text-zinc-400">
+									Filtering logs by:
+								</span>
+								<Badge variant="primary" size="sm">
+									{activeCluster}
+								</Badge>
+								<button
+									type="button"
+									onClick={() => setActiveCluster(null)}
+									className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors ml-1"
+								>
+									Clear
+								</button>
 							</div>
 						)}
 					</section>
@@ -529,69 +641,81 @@ export default function AgentPage() {
 						{recsError && <ErrorBanner message={recsError} />}
 
 						{!recsError && (
-							<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-								<table className="w-full text-sm">
-									<thead>
-										<tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-700/30">
-											<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-												{t("topic")}
-											</th>
-											<th className="px-5 py-3 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-												{t("queryCount")}
-											</th>
-											<th className="px-5 py-3 text-right text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-												{t("priority")}
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{recsLoading ? (
-											["r0", "r1", "r2", "r3", "r4"].map((k) => (
-												<tr
-													key={k}
-													className="border-b border-zinc-100 dark:border-zinc-800 animate-pulse"
-												>
-													<td className="px-5 py-3">
-														<div className="h-3 w-48 bg-zinc-200 dark:bg-zinc-700 rounded" />
-													</td>
-													<td className="px-5 py-3 text-right">
-														<div className="h-3 w-10 bg-zinc-200 dark:bg-zinc-700 rounded ml-auto" />
-													</td>
-													<td className="px-5 py-3 text-right">
-														<div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full ml-auto" />
-													</td>
-												</tr>
-											))
-										) : recommendations.length === 0 ? (
-											<tr>
-												<td
-													colSpan={3}
-													className="px-5 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400"
-												>
-													{t("noData")}
-												</td>
-											</tr>
-										) : (
-											recommendations.map((rec) => (
-												<tr
-													key={rec.topic}
-													className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 transition-colors"
-												>
-													<td className="px-5 py-3 text-zinc-900 dark:text-zinc-100 font-medium">
-														{rec.topic}
-													</td>
-													<td className="px-5 py-3 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">
-														{rec.query_count}
-													</td>
-													<td className="px-5 py-3 text-right">
-														<PriorityBadge priority={rec.priority} />
-													</td>
-												</tr>
-											))
-										)}
-									</tbody>
-								</table>
-							</div>
+							<DataTable<Recommendation>
+								columns={[
+									{
+										key: "topic",
+										label: t("topic"),
+										sortable: true,
+										render: (rec) => (
+											<span className="font-medium text-zinc-900 dark:text-zinc-100">
+												{rec.topic}
+											</span>
+										),
+									},
+									{
+										key: "query_count",
+										label: t("queryCount"),
+										sortable: true,
+										align: "right",
+										width: "w-24",
+										render: (rec) => (
+											<span className="tabular-nums text-zinc-600 dark:text-zinc-400">
+												{rec.query_count}
+											</span>
+										),
+									},
+									{
+										key: "priority",
+										label: t("priority"),
+										sortable: true,
+										align: "right",
+										width: "w-28",
+										render: (rec) => (
+											<Badge
+												variant={
+													rec.priority === "high"
+														? "danger"
+														: rec.priority === "medium"
+															? "warning"
+															: "default"
+												}
+											>
+												{rec.priority === "high"
+													? t("priorityHigh")
+													: rec.priority === "medium"
+														? t("priorityMedium")
+														: t("priorityLow")}
+											</Badge>
+										),
+									},
+								]}
+								data={recommendations}
+								isLoading={recsLoading}
+								loadingRows={5}
+								rowKey={(rec) => rec.topic}
+								emptyState={
+									<EmptyState
+										icon={
+											<svg
+												className="w-6 h-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth={1.5}
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
+												/>
+											</svg>
+										}
+										title={t("noData")}
+									/>
+								}
+							/>
 						)}
 					</section>
 
@@ -613,9 +737,27 @@ export default function AgentPage() {
 										<SkeletonCard />
 									</>
 								) : ingestionStatus.length === 0 ? (
-									<p className="text-sm text-zinc-500 dark:text-zinc-400 col-span-full">
-										{t("noData")}
-									</p>
+									<div className="col-span-full">
+										<EmptyState
+											icon={
+												<svg
+													className="w-6 h-6"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													strokeWidth={1.5}
+													aria-hidden="true"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"
+													/>
+												</svg>
+											}
+											title={t("noData")}
+										/>
+									</div>
 								) : (
 									ingestionStatus.map((item) => (
 										<IngestionCard key={item.connector} item={item} />
@@ -629,160 +771,55 @@ export default function AgentPage() {
 					<section>
 						<SectionHeader title={t("logsTitle")} subtitle={t("logsSub")} />
 
+						{activeCluster && (
+							<p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+								Showing filtered results for &ldquo;{activeCluster}&rdquo; (
+								{filteredLogs.length} entries)
+							</p>
+						)}
+
 						{logsError && <ErrorBanner message={logsError} />}
 
 						{!logsError && (
-							<>
-								<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-									<div className="overflow-x-auto">
-										<table className="w-full text-sm">
-											<thead>
-												<tr className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-700/30">
-													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest whitespace-nowrap">
-														{t("logTime")}
-													</th>
-													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-														{t("logUser")}
-													</th>
-													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-														{t("logAction")}
-													</th>
-													<th className="px-5 py-3 text-left text-[11px] font-medium text-zinc-400 uppercase tracking-widest">
-														{t("logQuery")}
-													</th>
-												</tr>
-											</thead>
-											<tbody>
-												{logsLoading ? (
-													["l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7"].map(
-														(k) => (
-															<tr
-																key={k}
-																className="border-b border-zinc-100 dark:border-zinc-800 animate-pulse"
-															>
-																<td className="px-5 py-3">
-																	<div className="h-3 w-28 bg-zinc-200 dark:bg-zinc-700 rounded" />
-																</td>
-																<td className="px-5 py-3">
-																	<div className="h-3 w-36 bg-zinc-200 dark:bg-zinc-700 rounded" />
-																</td>
-																<td className="px-5 py-3">
-																	<div className="h-3 w-20 bg-zinc-200 dark:bg-zinc-700 rounded" />
-																</td>
-																<td className="px-5 py-3">
-																	<div className="h-3 w-52 bg-zinc-200 dark:bg-zinc-700 rounded" />
-																</td>
-															</tr>
-														),
-													)
-												) : logs.length === 0 ? (
-													<tr>
-														<td
-															colSpan={4}
-															className="px-5 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400"
-														>
-															{t("noData")}
-														</td>
-													</tr>
-												) : (
-													logs.map((entry) => (
-														<tr
-															key={entry.id}
-															className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 transition-colors"
-														>
-															<td className="px-5 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap tabular-nums text-xs">
-																{formatTime(entry.created_at)}
-															</td>
-															<td className="px-5 py-3 text-zinc-700 dark:text-zinc-300 truncate max-w-[12rem]">
-																{entry.user_email}
-															</td>
-															<td className="px-5 py-3">
-																<span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
-																	{entry.action}
-																</span>
-															</td>
-															<td className="px-5 py-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[20rem]">
-																{entry.query ?? (
-																	<span className="text-zinc-400 dark:text-zinc-600 italic text-xs">
-																		—
-																	</span>
-																)}
-															</td>
-														</tr>
-													))
-												)}
-											</tbody>
-										</table>
-									</div>
-								</div>
+							<div className="space-y-3">
+								<DataTable<LogEntry>
+									columns={logColumns}
+									data={filteredLogs}
+									isLoading={logsLoading}
+									loadingRows={8}
+									rowKey={(entry) => entry.id}
+									emptyState={
+										<EmptyState
+											icon={<LogsEmptyIcon />}
+											title={t("noData")}
+											subtitle={
+												activeCluster
+													? `No log entries match the cluster "${activeCluster}". Try clearing the filter.`
+													: undefined
+											}
+											action={
+												activeCluster
+													? {
+															label: "Clear filter",
+															onClick: () => setActiveCluster(null),
+														}
+													: undefined
+											}
+										/>
+									}
+								/>
 
-								{/* Pagination */}
-								{!logsLoading && logsTotal > PAGE_SIZE && (
-									<div className="flex items-center justify-between mt-3 px-1">
-										<p className="text-xs text-zinc-500 dark:text-zinc-400">
-											Page {logsPage} of {totalPages}
-										</p>
-										<div className="flex items-center gap-2">
-											<button
-												type="button"
-												disabled={logsPage <= 1}
-												onClick={() => setLogsPage((p) => Math.max(1, p - 1))}
-												className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
-													bg-white border-zinc-200 text-zinc-700
-													hover:bg-zinc-50 hover:border-zinc-300
-													dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300
-													dark:hover:bg-zinc-700 dark:hover:border-zinc-600
-													disabled:opacity-40 disabled:cursor-not-allowed"
-											>
-												<svg
-													className="w-3.5 h-3.5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													strokeWidth={2}
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														d="M15.75 19.5L8.25 12l7.5-7.5"
-													/>
-												</svg>
-												Prev
-											</button>
-											<button
-												type="button"
-												disabled={logsPage >= totalPages}
-												onClick={() =>
-													setLogsPage((p) => Math.min(totalPages, p + 1))
-												}
-												className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
-													bg-white border-zinc-200 text-zinc-700
-													hover:bg-zinc-50 hover:border-zinc-300
-													dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300
-													dark:hover:bg-zinc-700 dark:hover:border-zinc-600
-													disabled:opacity-40 disabled:cursor-not-allowed"
-											>
-												Next
-												<svg
-													className="w-3.5 h-3.5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-													strokeWidth={2}
-													aria-hidden="true"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														d="M8.25 4.5l7.5 7.5-7.5 7.5"
-													/>
-												</svg>
-											</button>
-										</div>
-									</div>
+								{/* Pagination — only shown when not filtering by cluster */}
+								{!logsLoading && !activeCluster && logsTotal > PAGE_SIZE && (
+									<Pagination
+										page={logsPage}
+										totalPages={totalPages}
+										onPageChange={setLogsPage}
+										totalItems={logsTotal}
+										className="mt-3 px-1"
+									/>
 								)}
-							</>
+							</div>
 						)}
 					</section>
 				</div>

@@ -2,7 +2,35 @@
 	"common": {
 		"companyBrain": "Company Brain",
 		"signOut": "Sign out",
-		"comingSoon": "Coming soon"
+		"comingSoon": "Coming soon",
+		"copy": "Copy",
+		"copied": "Copied!",
+		"close": "Close",
+		"cancel": "Cancel",
+		"save": "Save",
+		"loading": "Loading...",
+		"error": "Error",
+		"retry": "Retry",
+		"noResults": "No results",
+		"searchPlaceholder": "Search..."
+	},
+	"commandPalette": {
+		"placeholder": "Search pages, chats, templates...",
+		"noResults": "No results found",
+		"hint": "Search or jump to...",
+		"navigate": "navigate",
+		"select": "select",
+		"pages": "Pages",
+		"recentChats": "Recent Chats",
+		"templates": "Templates",
+		"recipes": "Recipes"
+	},
+	"toast": {
+		"success": "Success",
+		"error": "Error",
+		"info": "Info",
+		"warning": "Warning",
+		"dismiss": "Dismiss"
 	},
 	"nav": {
 		"chat": "Chat",
@@ -48,7 +76,12 @@
 		"suggestCode": "Code review",
 		"suggestCodeDesc": "Review my latest pull request",
 		"thinkingProcess": "Thinking Process",
-		"confidence": "Confidence"
+		"confidence": "Confidence",
+		"copyMessage": "Copy message",
+		"regenerate": "Regenerate",
+		"thumbsUp": "Helpful",
+		"thumbsDown": "Not helpful",
+		"followUp": "Follow-up questions"
 	},
 	"search": {
 		"pageTitle": "Search",
@@ -425,7 +458,11 @@
 		"deleting": "Deleting...",
 		"notFound": "Template not found",
 		"prev": "Previous",
-		"next": "Next"
+		"next": "Next",
+		"useInChat": "Use in Chat",
+		"preview": "Preview",
+		"previewTitle": "Template Preview",
+		"pagination": "Page {page} of {total}"
 	},
 	"recipes": {
 		"pageTitle": "AI Recipes",
@@ -464,7 +501,12 @@
 		"allCategories": "All Categories",
 		"recipesFound": "{count, plural, one {# recipe found} other {# recipes found}}",
 		"copied": "Copied!",
-		"copy": "Copy"
+		"copy": "Copy",
+		"tryInChat": "Try in Chat",
+		"favorites": "Favorites",
+		"favorited": "Favorited",
+		"showFavorites": "Show Favorites",
+		"allRecipes": "All Recipes"
 	},
 	"safety": {
 		"pageTitle": "Safety Monitor",

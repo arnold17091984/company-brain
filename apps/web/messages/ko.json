@@ -2,7 +2,35 @@
 	"common": {
 		"companyBrain": "Company Brain",
 		"signOut": "로그아웃",
-		"comingSoon": "출시 예정"
+		"comingSoon": "출시 예정",
+		"copy": "복사",
+		"copied": "복사됨!",
+		"close": "닫기",
+		"cancel": "취소",
+		"save": "저장",
+		"loading": "로딩 중...",
+		"error": "오류",
+		"retry": "재시도",
+		"noResults": "결과 없음",
+		"searchPlaceholder": "검색..."
+	},
+	"commandPalette": {
+		"placeholder": "페이지, 채팅, 템플릿 검색...",
+		"noResults": "결과를 찾을 수 없습니다",
+		"hint": "검색 또는 이동...",
+		"navigate": "이동",
+		"select": "선택",
+		"pages": "페이지",
+		"recentChats": "최근 채팅",
+		"templates": "템플릿",
+		"recipes": "레시피"
+	},
+	"toast": {
+		"success": "성공",
+		"error": "오류",
+		"info": "정보",
+		"warning": "경고",
+		"dismiss": "닫기"
 	},
 	"nav": {
 		"chat": "채팅",
@@ -48,7 +76,12 @@
 		"suggestCode": "코드 리뷰",
 		"suggestCodeDesc": "최신 풀 리퀘스트 검토",
 		"thinkingProcess": "사고 과정",
-		"confidence": "신뢰도"
+		"confidence": "신뢰도",
+		"copyMessage": "메시지 복사",
+		"regenerate": "재생성",
+		"thumbsUp": "도움이 됨",
+		"thumbsDown": "도움이 안 됨",
+		"followUp": "후속 질문"
 	},
 	"search": {
 		"pageTitle": "검색",
@@ -425,7 +458,11 @@
 		"deleting": "삭제 중...",
 		"notFound": "템플릿을 찾을 수 없습니다",
 		"prev": "이전",
-		"next": "다음"
+		"next": "다음",
+		"useInChat": "채팅에서 사용",
+		"preview": "미리보기",
+		"previewTitle": "템플릿 미리보기",
+		"pagination": "{page} / {total} 페이지"
 	},
 	"recipes": {
 		"pageTitle": "AI 레시피",
@@ -464,7 +501,12 @@
 		"allCategories": "모든 카테고리",
 		"recipesFound": "레시피 {count}개 발견",
 		"copied": "복사됨!",
-		"copy": "복사"
+		"copy": "복사",
+		"tryInChat": "채팅에서 시도",
+		"favorites": "즐겨찾기",
+		"favorited": "즐겨찾기됨",
+		"showFavorites": "즐겨찾기 표시",
+		"allRecipes": "모든 레시피"
 	},
 	"safety": {
 		"pageTitle": "안전 모니터",

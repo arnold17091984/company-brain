@@ -1,11 +1,17 @@
 "use client";
 
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const FAVORITES_KEY = "recipe_favorites";
 
 interface Recipe {
 	id: string;
@@ -13,6 +19,7 @@ interface Recipe {
 	description: string;
 	department: string;
 	category: string;
+	status?: string;
 	effectiveness_score: number;
 	usage_count: number;
 	prompt_template: string;
@@ -25,17 +32,19 @@ interface RecipesResponse {
 	total: number;
 }
 
-const DEPT_COLORS: Record<string, string> = {
-	cs: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-	marketing:
-		"bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
-	development:
-		"bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
-	accounting:
-		"bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800",
-	general_affairs:
-		"bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-	hr: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
+const DEPT_BADGE_VARIANT: Record<string, BadgeVariant> = {
+	cs: "info",
+	marketing: "danger",
+	development: "primary",
+	accounting: "success",
+	general_affairs: "warning",
+	hr: "danger",
+};
+
+const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
+	draft: "default",
+	published: "success",
+	archived: "warning",
 };
 
 function StarRating({ score }: { score: number }) {
@@ -43,7 +52,7 @@ function StarRating({ score }: { score: number }) {
 	return (
 		<div
 			className="flex items-center gap-0.5"
-			aria-label={`${score * 100}% effectiveness`}
+			aria-label={`${Math.round(score * 100)}% effectiveness`}
 		>
 			{Array.from({ length: 5 }).map((_, i) => (
 				<svg
@@ -61,22 +70,40 @@ function StarRating({ score }: { score: number }) {
 	);
 }
 
-function SkeletonCard() {
+function FavoriteButton({
+	isFavorited,
+	onToggle,
+}: {
+	isFavorited: boolean;
+	onToggle: (e: React.MouseEvent) => void;
+}) {
+	const t = useTranslations("recipes");
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
-			<div className="flex items-start justify-between gap-3 mb-3">
-				<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
-				<div className="h-5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
-			</div>
-			<div className="space-y-2 mb-3">
-				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-4/5 bg-zinc-100 dark:bg-zinc-600 rounded" />
-			</div>
-			<div className="flex items-center gap-3">
-				<div className="h-3.5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-12 bg-zinc-100 dark:bg-zinc-600 rounded" />
-			</div>
-		</div>
+		<button
+			type="button"
+			onClick={onToggle}
+			aria-label={isFavorited ? t("favorited") : t("favorites")}
+			className={`p-1.5 rounded-lg transition-colors ${
+				isFavorited
+					? "text-rose-500 hover:text-rose-600 dark:text-rose-400"
+					: "text-zinc-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400"
+			}`}
+		>
+			<svg
+				className="w-4 h-4"
+				fill={isFavorited ? "currentColor" : "none"}
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={2}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+				/>
+			</svg>
+		</button>
 	);
 }
 
@@ -84,12 +111,26 @@ function RecipeCard({
 	recipe,
 	isExpanded,
 	onToggle,
-}: { recipe: Recipe; isExpanded: boolean; onToggle: () => void }) {
+	isFavorited,
+	onFavoriteToggle,
+	index,
+}: {
+	recipe: Recipe;
+	isExpanded: boolean;
+	onToggle: () => void;
+	isFavorited: boolean;
+	onFavoriteToggle: (id: string) => void;
+	index: number;
+}) {
 	const t = useTranslations("recipes");
+	const router = useRouter();
 	const [promptCopied, setPromptCopied] = useState(false);
-	const deptColor =
-		DEPT_COLORS[recipe.department] ??
-		"bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600";
+	const contentRef = useRef<HTMLDivElement>(null);
+
+	const deptVariant: BadgeVariant =
+		DEPT_BADGE_VARIANT[recipe.department] ?? "default";
+	const statusVariant: BadgeVariant =
+		STATUS_BADGE_VARIANT[recipe.status ?? ""] ?? "default";
 
 	const handleCopyPrompt = async (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -102,9 +143,21 @@ function RecipeCard({
 		}
 	};
 
+	const handleTryInChat = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		const params = new URLSearchParams({ recipe: recipe.id });
+		if (recipe.prompt_template) params.set("content", recipe.prompt_template);
+		router.push(`/chat?${params.toString()}`);
+	};
+
 	return (
 		<div
-			className={`bg-white dark:bg-zinc-800 rounded-lg border ${isExpanded ? "border-indigo-300 dark:border-indigo-600" : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"}`}
+			className={`card-glow animate-fade-in bg-white dark:bg-zinc-800/60 rounded-2xl border transition-all ${
+				isExpanded
+					? "border-indigo-300 dark:border-indigo-600/60"
+					: "border-zinc-200 dark:border-zinc-700/60"
+			}`}
+			style={{ animationDelay: `${index * 40}ms` }}
 		>
 			{/* Card header - clickable */}
 			<button
@@ -115,107 +168,170 @@ function RecipeCard({
 			>
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex-1 min-w-0">
+						{/* Badges row */}
 						<div className="flex items-center gap-2 mb-1.5 flex-wrap">
-							<span
-								className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${deptColor}`}
-							>
+							<Badge variant={deptVariant} size="sm">
 								{recipe.department.replace("_", " ")}
-							</span>
+							</Badge>
 							{recipe.category && (
-								<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600">
+								<Badge variant="default" size="sm">
 									{recipe.category}
-								</span>
+								</Badge>
+							)}
+							{recipe.status && recipe.status !== "published" && (
+								<Badge variant={statusVariant} size="sm">
+									{t(
+										`status${recipe.status.charAt(0).toUpperCase()}${recipe.status.slice(1)}` as Parameters<
+											typeof t
+										>[0],
+									)}
+								</Badge>
 							)}
 						</div>
-						<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">
+
+						{/* Title */}
+						<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
 							{recipe.title}
 						</h3>
+
+						{/* Description */}
 						{recipe.description && (
 							<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
 								{recipe.description}
 							</p>
 						)}
 					</div>
-					<svg
-						className={`w-4 h-4 text-zinc-400 shrink-0 mt-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth={2}
-						aria-hidden="true"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+
+					{/* Right: favorite + chevron */}
+					<div className="flex items-center gap-1 shrink-0">
+						<FavoriteButton
+							isFavorited={isFavorited}
+							onToggle={(e) => {
+								e.stopPropagation();
+								onFavoriteToggle(recipe.id);
+							}}
 						/>
-					</svg>
+						<svg
+							className={`w-4 h-4 text-zinc-400 mt-0.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+							/>
+						</svg>
+					</div>
 				</div>
 
+				{/* Stats row */}
 				<div className="flex items-center gap-4 mt-3">
 					<StarRating score={recipe.effectiveness_score} />
 					<span className="text-xs text-zinc-400 dark:text-zinc-500">
-						{recipe.usage_count} {t("usages")}
+						{t("usages", { count: recipe.usage_count })}
 					</span>
 				</div>
 			</button>
 
-			{/* Expanded content */}
-			{isExpanded && (
-				<div className="border-t border-zinc-100 dark:border-zinc-700 p-5 space-y-4">
+			{/* Expanded content — CSS-driven smooth expand */}
+			<div
+				ref={contentRef}
+				className="overflow-hidden transition-all duration-300 ease-in-out"
+				style={{
+					maxHeight: isExpanded ? "1200px" : "0px",
+					opacity: isExpanded ? 1 : 0,
+				}}
+				aria-hidden={!isExpanded}
+			>
+				<div className="border-t border-zinc-100 dark:border-zinc-700/60 p-5 space-y-4">
 					{/* Prompt template */}
 					<div>
 						<div className="flex items-center justify-between mb-2">
 							<span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
 								{t("promptTemplate")}
 							</span>
-							<button
-								type="button"
-								onClick={handleCopyPrompt}
-								className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-zinc-500 hover:bg-zinc-100 transition-colors dark:text-zinc-400 dark:hover:bg-zinc-700"
-							>
-								{promptCopied ? (
-									<>
-										<svg
-											className="w-3.5 h-3.5 text-green-600 dark:text-green-400"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											strokeWidth={2.5}
-											aria-hidden="true"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M4.5 12.75l6 6 9-13.5"
-											/>
-										</svg>
-										{t("copied")}
-									</>
-								) : (
-									<>
-										<svg
-											className="w-3.5 h-3.5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											strokeWidth={2}
-											aria-hidden="true"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z"
-											/>
-										</svg>
-										{t("copy")}
-									</>
-								)}
-							</button>
+							<div className="flex items-center gap-2">
+								{/* Copy prompt */}
+								<button
+									type="button"
+									onClick={handleCopyPrompt}
+									className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-zinc-500 hover:bg-zinc-100 transition-colors dark:text-zinc-400 dark:hover:bg-zinc-700"
+								>
+									{promptCopied ? (
+										<>
+											<svg
+												className="w-3.5 h-3.5 text-green-600 dark:text-green-400"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth={2.5}
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M4.5 12.75l6 6 9-13.5"
+												/>
+											</svg>
+											{t("copied")}
+										</>
+									) : (
+										<>
+											<svg
+												className="w-3.5 h-3.5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth={2}
+												aria-hidden="true"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z"
+												/>
+											</svg>
+											{t("copy")}
+										</>
+									)}
+								</button>
+
+								{/* Try in Chat */}
+								<button
+									type="button"
+									onClick={handleTryInChat}
+									className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+								>
+									<svg
+										className="w-3.5 h-3.5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+										/>
+									</svg>
+									{t("tryInChat")}
+								</button>
+							</div>
 						</div>
-						<pre className="text-xs font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md p-3 whitespace-pre-wrap break-words leading-relaxed border border-zinc-100 dark:border-zinc-800">
-							{recipe.prompt_template}
-						</pre>
+
+						{/* Prompt displayed via MarkdownRenderer */}
+						<div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 max-h-72 overflow-y-auto">
+							<MarkdownRenderer
+								content={recipe.prompt_template}
+								className="text-xs"
+							/>
+						</div>
 					</div>
 
 					{/* Example Q&A */}
@@ -226,7 +342,7 @@ function RecipeCard({
 									<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
 										{t("exampleQuery")}
 									</p>
-									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
+									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-900 leading-relaxed">
 										{recipe.example_query}
 									</div>
 								</div>
@@ -236,7 +352,7 @@ function RecipeCard({
 									<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
 										{t("exampleResponse")}
 									</p>
-									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-green-50/50 dark:bg-green-950/20 rounded-lg p-3 border border-green-100 dark:border-green-900 leading-relaxed">
+									<div className="text-xs text-zinc-600 dark:text-zinc-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl p-3 border border-emerald-100 dark:border-emerald-900 leading-relaxed">
 										{recipe.example_response}
 									</div>
 								</div>
@@ -244,7 +360,7 @@ function RecipeCard({
 						</div>
 					)}
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }
@@ -263,7 +379,21 @@ export default function RecipesPage() {
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 	const [departments, setDepartments] = useState<string[]>([]);
 	const [categories, setCategories] = useState<string[]>([]);
+	const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+	const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 	const searchRef = useRef<HTMLInputElement>(null);
+
+	// Load favorites from localStorage on mount
+	useEffect(() => {
+		try {
+			const stored = localStorage.getItem(FAVORITES_KEY);
+			if (stored) {
+				setFavoriteIds(new Set(JSON.parse(stored) as string[]));
+			}
+		} catch {
+			// ignore parse errors
+		}
+	}, []);
 
 	const getToken = useCallback(() => {
 		return getAccessToken(session);
@@ -322,6 +452,24 @@ export default function RecipesPage() {
 	const handleToggle = (id: string) => {
 		setExpandedId((prev) => (prev === id ? null : id));
 	};
+
+	const handleFavoriteToggle = useCallback((id: string) => {
+		setFavoriteIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			try {
+				localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
+			} catch {
+				// ignore storage errors
+			}
+			return next;
+		});
+	}, []);
+
+	const displayedRecipes = showFavoritesOnly
+		? recipes.filter((r) => favoriteIds.has(r.id))
+		: recipes;
 
 	return (
 		<div className="flex flex-col h-full">
@@ -412,6 +560,33 @@ export default function RecipesPage() {
 							))}
 						</select>
 					)}
+
+					{/* Favorites toggle */}
+					<button
+						type="button"
+						onClick={() => setShowFavoritesOnly((v) => !v)}
+						className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+							showFavoritesOnly
+								? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
+								: "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 dark:hover:bg-zinc-700"
+						}`}
+					>
+						<svg
+							className="w-4 h-4"
+							fill={showFavoritesOnly ? "currentColor" : "none"}
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+							/>
+						</svg>
+						{showFavoritesOnly ? t("favorites") : t("showFavorites")}
+					</button>
 				</div>
 			</div>
 
@@ -445,11 +620,11 @@ export default function RecipesPage() {
 								<SkeletonCard key={i} />
 							))}
 						</div>
-					) : recipes.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-20 text-center">
-							<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/40 dark:to-indigo-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-700/30 flex items-center justify-center mb-4">
+					) : displayedRecipes.length === 0 ? (
+						<EmptyState
+							icon={
 								<svg
-									className="w-9 h-9 text-indigo-400 dark:text-indigo-500"
+									className="w-7 h-7"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -462,25 +637,32 @@ export default function RecipesPage() {
 										d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
 									/>
 								</svg>
-							</div>
-							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
-								{t("noRecipes")}
-							</p>
-							<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">
-								{t("noRecipesHint")}
-							</p>
-						</div>
+							}
+							title={t("noRecipes")}
+							subtitle={t("noRecipesHint")}
+							action={
+								showFavoritesOnly
+									? {
+											label: t("allRecipes"),
+											onClick: () => setShowFavoritesOnly(false),
+										}
+									: undefined
+							}
+						/>
 					) : (
 						<div className="space-y-3">
 							<p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
-								{t("recipesFound", { count: recipes.length })}
+								{t("recipesFound", { count: displayedRecipes.length })}
 							</p>
-							{recipes.map((recipe) => (
+							{displayedRecipes.map((recipe, index) => (
 								<RecipeCard
 									key={recipe.id}
 									recipe={recipe}
 									isExpanded={expandedId === recipe.id}
 									onToggle={() => handleToggle(recipe.id)}
+									isFavorited={favoriteIds.has(recipe.id)}
+									onFavoriteToggle={handleFavoriteToggle}
+									index={index}
 								/>
 							))}
 						</div>

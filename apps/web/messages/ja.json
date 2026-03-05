@@ -2,7 +2,35 @@
 	"common": {
 		"companyBrain": "Company Brain",
 		"signOut": "サインアウト",
-		"comingSoon": "近日公開"
+		"comingSoon": "近日公開",
+		"copy": "コピー",
+		"copied": "コピーしました！",
+		"close": "閉じる",
+		"cancel": "キャンセル",
+		"save": "保存",
+		"loading": "読み込み中...",
+		"error": "エラー",
+		"retry": "再試行",
+		"noResults": "結果なし",
+		"searchPlaceholder": "検索..."
+	},
+	"commandPalette": {
+		"placeholder": "ページ、チャット、テンプレートを検索...",
+		"noResults": "結果が見つかりません",
+		"hint": "検索またはジャンプ...",
+		"navigate": "移動",
+		"select": "選択",
+		"pages": "ページ",
+		"recentChats": "最近のチャット",
+		"templates": "テンプレート",
+		"recipes": "レシピ"
+	},
+	"toast": {
+		"success": "成功",
+		"error": "エラー",
+		"info": "情報",
+		"warning": "警告",
+		"dismiss": "閉じる"
 	},
 	"nav": {
 		"chat": "チャット",
@@ -48,7 +76,12 @@
 		"suggestCode": "コードレビュー",
 		"suggestCodeDesc": "最新のプルリクエストをレビュー",
 		"thinkingProcess": "思考プロセス",
-		"confidence": "確信度"
+		"confidence": "確信度",
+		"copyMessage": "メッセージをコピー",
+		"regenerate": "再生成",
+		"thumbsUp": "役に立った",
+		"thumbsDown": "役に立たなかった",
+		"followUp": "フォローアップ質問"
 	},
 	"search": {
 		"pageTitle": "検索",
@@ -425,7 +458,11 @@
 		"deleting": "削除中...",
 		"notFound": "テンプレートが見つかりません",
 		"prev": "前へ",
-		"next": "次へ"
+		"next": "次へ",
+		"useInChat": "チャットで使用",
+		"preview": "プレビュー",
+		"previewTitle": "テンプレートプレビュー",
+		"pagination": "{page} / {total} ページ"
 	},
 	"recipes": {
 		"pageTitle": "AIレシピ",
@@ -464,7 +501,12 @@
 		"allCategories": "すべてのカテゴリ",
 		"recipesFound": "{count}件のレシピが見つかりました",
 		"copied": "コピーしました！",
-		"copy": "コピー"
+		"copy": "コピー",
+		"tryInChat": "チャットで試す",
+		"favorites": "お気に入り",
+		"favorited": "お気に入り済み",
+		"showFavorites": "お気に入りを表示",
+		"allRecipes": "すべてのレシピ"
 	},
 	"safety": {
 		"pageTitle": "セーフティモニター",

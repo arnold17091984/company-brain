@@ -53,6 +53,8 @@ interface SessionMessageApi {
 interface UseChatReturn {
 	messages: Message[];
 	sendMessage: (text: string) => Promise<void>;
+	regenerateMessage: () => Promise<void>;
+	sendFeedback: (messageId: string, rating: "up" | "down") => Promise<void>;
 	isLoading: boolean;
 	error: string | null;
 	clearMessages: () => void;
@@ -318,9 +320,59 @@ export function useChat(): UseChatReturn {
 		[isLoading, sessionId, getToken],
 	);
 
+	/**
+	 * Re-sends the last user message to regenerate the assistant's response.
+	 * Removes the last assistant message before resending.
+	 */
+	const regenerateMessage = useCallback(async () => {
+		const current = messagesRef.current;
+		if (isLoading || current.length === 0) return;
+
+		// Find the last user message
+		const lastUserIndex = [...current]
+			.reverse()
+			.findIndex((m) => m.role === "user");
+		if (lastUserIndex === -1) return;
+
+		const realIndex = current.length - 1 - lastUserIndex;
+		const lastUserMessage = current[realIndex];
+
+		// Strip everything from the last user message onward (the user msg + assistant response)
+		setMessages(current.slice(0, realIndex));
+
+		await sendMessage(lastUserMessage.content);
+	}, [isLoading, sendMessage]);
+
+	/**
+	 * Sends thumbs-up or thumbs-down feedback for a specific message.
+	 */
+	const sendFeedback = useCallback(
+		async (messageId: string, rating: "up" | "down") => {
+			try {
+				await fetch(`${API_BASE_URL}/api/v1/chat/feedback`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${getToken()}`,
+					},
+					body: JSON.stringify({
+						message_id: messageId,
+						rating,
+						session_id: sessionId,
+					}),
+				});
+			} catch {
+				// Feedback is best-effort — fail silently
+			}
+		},
+		[sessionId, getToken],
+	);
+
 	return {
 		messages,
 		sendMessage,
+		regenerateMessage,
+		sendFeedback,
 		isLoading,
 		error,
 		clearMessages,

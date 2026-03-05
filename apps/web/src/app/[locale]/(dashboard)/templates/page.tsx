@@ -1,9 +1,15 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Modal } from "@/components/ui/modal";
+import { Pagination } from "@/components/ui/pagination";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { getAccessToken } from "@/lib/session";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -22,6 +28,7 @@ interface Template {
 	title: string;
 	description: string;
 	category: string;
+	content?: string;
 	vote_count: number;
 	copy_count: number;
 	author_name: string;
@@ -45,47 +52,114 @@ const CATEGORIES: { id: Category; labelKey: string }[] = [
 	{ id: "general_affairs", labelKey: "categoryGeneralAffairs" },
 ];
 
-const CATEGORY_COLORS: Record<string, string> = {
-	cs: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-	marketing:
-		"bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
-	development:
-		"bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
-	accounting:
-		"bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800",
-	general_affairs:
-		"bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+const CATEGORY_VARIANT: Record<
+	string,
+	"default" | "primary" | "success" | "warning" | "danger" | "info"
+> = {
+	cs: "info",
+	marketing: "danger",
+	development: "primary",
+	accounting: "success",
+	general_affairs: "warning",
 };
 
-function CategoryBadge({ category }: { category: string }) {
-	const colorClass =
-		CATEGORY_COLORS[category] ??
-		"bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600";
-	return (
-		<span
-			className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}
-		>
-			{category.replace("_", " ")}
-		</span>
-	);
-}
+function TemplatePreviewModal({
+	template,
+	onClose,
+}: {
+	template: Template | null;
+	onClose: () => void;
+}) {
+	const t = useTranslations("templates");
+	const router = useRouter();
 
-function SkeletonCard() {
+	if (!template) return null;
+
+	const handleUseInChat = () => {
+		const params = new URLSearchParams({ template: template.id });
+		if (template.content) params.set("content", template.content);
+		router.push(`/chat?${params.toString()}`);
+		onClose();
+	};
+
 	return (
-		<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 animate-pulse">
-			<div className="flex items-start justify-between gap-3 mb-3">
-				<div className="h-4 w-40 bg-zinc-200 dark:bg-zinc-700 rounded" />
-				<div className="h-5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
+		<Modal
+			isOpen={template !== null}
+			onClose={onClose}
+			title={t("previewTitle")}
+			size="lg"
+		>
+			<div className="space-y-4">
+				{/* Title + badge */}
+				<div className="flex items-start justify-between gap-3">
+					<h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+						{template.title}
+					</h3>
+					<Badge
+						variant={CATEGORY_VARIANT[template.category] ?? "default"}
+						size="md"
+					>
+						{template.category.replace("_", " ")}
+					</Badge>
+				</div>
+
+				{/* Description */}
+				{template.description && (
+					<p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+						{template.description}
+					</p>
+				)}
+
+				{/* Content */}
+				{template.content && (
+					<div>
+						<p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+							{t("promptContent")}
+						</p>
+						<pre className="text-sm font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-xl p-4 whitespace-pre-wrap break-words leading-relaxed border border-zinc-100 dark:border-zinc-800 max-h-60 overflow-y-auto">
+							{template.content}
+						</pre>
+					</div>
+				)}
+
+				{/* Author */}
+				<p className="text-xs text-zinc-400 dark:text-zinc-500">
+					{t("by", { name: template.author_name })}
+				</p>
+
+				{/* CTA */}
+				<div className="flex items-center gap-3 pt-2">
+					<button
+						type="button"
+						onClick={handleUseInChat}
+						className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+					>
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+							/>
+						</svg>
+						{t("useInChat")}
+					</button>
+					<button
+						type="button"
+						onClick={onClose}
+						className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+					>
+						{t("cancel")}
+					</button>
+				</div>
 			</div>
-			<div className="space-y-2 mb-4">
-				<div className="h-3 w-full bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-600 rounded" />
-			</div>
-			<div className="flex items-center gap-4">
-				<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
-				<div className="h-3 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
-			</div>
-		</div>
+		</Modal>
 	);
 }
 
@@ -93,38 +167,66 @@ function TemplateCard({
 	template,
 	onVote,
 	onCopy,
+	onPreview,
 	votedIds,
 	copiedIds,
+	index,
 }: {
 	template: Template;
 	onVote: (id: string) => void;
 	onCopy: (id: string) => void;
+	onPreview: (template: Template) => void;
 	votedIds: Set<string>;
 	copiedIds: Set<string>;
+	index: number;
 }) {
 	const t = useTranslations("templates");
+	const router = useRouter();
 	const voted = votedIds.has(template.id);
 	const copied = copiedIds.has(template.id);
 
+	const handleUseInChat = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		const params = new URLSearchParams({ template: template.id });
+		if (template.content) params.set("content", template.content);
+		router.push(`/chat?${params.toString()}`);
+	};
+
 	return (
-		<div className="group bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors flex flex-col gap-3">
-			<div className="flex items-start justify-between gap-3">
-				<Link
-					href={`./templates/${template.id}`}
-					className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors line-clamp-2 leading-snug"
-				>
-					{template.title}
-				</Link>
-				<CategoryBadge category={template.category} />
-			</div>
+		<div
+			className="card-glow group bg-white dark:bg-zinc-800/60 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 animate-fade-in hover:border-indigo-300 dark:hover:border-indigo-600/50 transition-all flex flex-col"
+			style={{ animationDelay: `${index * 40}ms` }}
+		>
+			{/* Clickable preview area */}
+			<button
+				type="button"
+				onClick={() => onPreview(template)}
+				className="text-left p-5 flex flex-col gap-3 flex-1 w-full"
+				aria-label={`Preview template: ${template.title}`}
+			>
+				{/* Header */}
+				<div className="flex items-start justify-between gap-3">
+					<span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors line-clamp-2 leading-snug">
+						{template.title}
+					</span>
+					<Badge
+						variant={CATEGORY_VARIANT[template.category] ?? "default"}
+						size="sm"
+					>
+						{template.category.replace("_", " ")}
+					</Badge>
+				</div>
 
-			{template.description && (
-				<p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-					{template.description}
-				</p>
-			)}
+				{/* Description */}
+				{template.description && (
+					<p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+						{template.description}
+					</p>
+				)}
+			</button>
 
-			<div className="flex items-center justify-between mt-auto pt-1">
+			{/* Footer */}
+			<div className="flex items-center justify-between px-5 pb-4 pt-0">
 				<span className="text-xs text-zinc-400 dark:text-zinc-500">
 					{template.author_name}
 				</span>
@@ -133,7 +235,10 @@ function TemplateCard({
 					{/* Vote button */}
 					<button
 						type="button"
-						onClick={() => onVote(template.id)}
+						onClick={(e) => {
+							e.stopPropagation();
+							onVote(template.id);
+						}}
 						title={t("vote")}
 						className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors min-w-[36px] ${
 							voted
@@ -161,7 +266,10 @@ function TemplateCard({
 					{/* Copy button */}
 					<button
 						type="button"
-						onClick={() => onCopy(template.id)}
+						onClick={(e) => {
+							e.stopPropagation();
+							onCopy(template.id);
+						}}
 						title={t("copy")}
 						className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors min-w-[36px] ${
 							copied
@@ -185,6 +293,30 @@ function TemplateCard({
 						</svg>
 						{template.copy_count}
 					</button>
+
+					{/* Use in Chat button */}
+					<button
+						type="button"
+						onClick={handleUseInChat}
+						title={t("useInChat")}
+						className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+					>
+						<svg
+							className="w-3.5 h-3.5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+							/>
+						</svg>
+						{t("useInChat")}
+					</button>
 				</div>
 			</div>
 		</div>
@@ -204,6 +336,7 @@ export default function TemplatesPage() {
 	const [total, setTotal] = useState(0);
 	const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
 	const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+	const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
 	const PAGE_SIZE = 12;
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -266,15 +399,15 @@ export default function TemplatesPage() {
 					return next;
 				});
 				setTemplates((prev) =>
-					prev.map((t) =>
-						t.id === id
+					prev.map((tpl) =>
+						tpl.id === id
 							? {
-									...t,
+									...tpl,
 									vote_count: votedIds.has(id)
-										? t.vote_count - 1
-										: t.vote_count + 1,
+										? tpl.vote_count - 1
+										: tpl.vote_count + 1,
 								}
-							: t,
+							: tpl,
 					),
 				);
 			} catch {
@@ -294,8 +427,8 @@ export default function TemplatesPage() {
 				if (!res.ok) return;
 				setCopiedIds((prev) => new Set(prev).add(id));
 				setTemplates((prev) =>
-					prev.map((t) =>
-						t.id === id ? { ...t, copy_count: t.copy_count + 1 } : t,
+					prev.map((tpl) =>
+						tpl.id === id ? { ...tpl, copy_count: tpl.copy_count + 1 } : tpl,
 					),
 				);
 			} catch {
@@ -317,6 +450,12 @@ export default function TemplatesPage() {
 
 	return (
 		<div className="flex flex-col h-full">
+			{/* Template Preview Modal */}
+			<TemplatePreviewModal
+				template={previewTemplate}
+				onClose={() => setPreviewTemplate(null)}
+			/>
+
 			{/* Header */}
 			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
 				<div className="flex items-center justify-between gap-4">
@@ -419,10 +558,10 @@ export default function TemplatesPage() {
 							))}
 						</div>
 					) : templates.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-20 text-center">
-							<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/40 dark:to-indigo-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-700/30 flex items-center justify-center mb-4">
+						<EmptyState
+							icon={
 								<svg
-									className="w-9 h-9 text-indigo-400 dark:text-indigo-500"
+									className="w-7 h-7"
 									fill="none"
 									viewBox="0 0 24 24"
 									stroke="currentColor"
@@ -435,24 +574,22 @@ export default function TemplatesPage() {
 										d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
 									/>
 								</svg>
-							</div>
-							<p className="text-zinc-700 dark:text-zinc-200 font-medium">
-								{t("noTemplates")}
-							</p>
-							<p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1 max-w-xs">
-								{t("noTemplatesHint")}
-							</p>
-						</div>
+							}
+							title={t("noTemplates")}
+							subtitle={t("noTemplatesHint")}
+						/>
 					) : (
 						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-							{templates.map((tpl) => (
+							{templates.map((tpl, index) => (
 								<TemplateCard
 									key={tpl.id}
 									template={tpl}
 									onVote={handleVote}
 									onCopy={handleCopy}
+									onPreview={setPreviewTemplate}
 									votedIds={votedIds}
 									copiedIds={copiedIds}
+									index={index}
 								/>
 							))}
 						</div>
@@ -460,56 +597,13 @@ export default function TemplatesPage() {
 
 					{/* Pagination */}
 					{!isLoading && total > PAGE_SIZE && (
-						<div className="flex items-center justify-between mt-8 px-1">
-							<p className="text-xs text-zinc-500 dark:text-zinc-400">
-								{t("pagination", { page, total: totalPages })}
-							</p>
-							<div className="flex items-center gap-2">
-								<button
-									type="button"
-									disabled={page <= 1}
-									onClick={() => setPage((p) => Math.max(1, p - 1))}
-									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-								>
-									<svg
-										className="w-3.5 h-3.5"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										strokeWidth={2}
-										aria-hidden="true"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											d="M15.75 19.5L8.25 12l7.5-7.5"
-										/>
-									</svg>
-									{t("prev")}
-								</button>
-								<button
-									type="button"
-									disabled={page >= totalPages}
-									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-								>
-									{t("next")}
-									<svg
-										className="w-3.5 h-3.5"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										strokeWidth={2}
-										aria-hidden="true"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											d="M8.25 4.5l7.5 7.5-7.5 7.5"
-										/>
-									</svg>
-								</button>
-							</div>
+						<div className="mt-8 px-1">
+							<Pagination
+								page={page}
+								totalPages={totalPages}
+								totalItems={total}
+								onPageChange={setPage}
+							/>
 						</div>
 					)}
 				</div>

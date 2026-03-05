@@ -1,5 +1,12 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { type Column, DataTable } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import { Modal } from "@/components/ui/modal";
+import { Pagination } from "@/components/ui/pagination";
+import { useToast } from "@/components/ui/toast";
 import { getAccessToken } from "@/lib/session";
 import type {
 	ACLEntry,
@@ -10,6 +17,8 @@ import type {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const HR_CATEGORIES: DocumentCategory[] = [
 	"hr_evaluation",
@@ -42,7 +51,52 @@ const HR_ROLES: Array<{ value: UserRole; labelKey: string }> = [
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const PAGE_SIZE = 20;
 
-// ---- Source type icon -------------------------------------------------------
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getCategoryLabel(
+	cat: DocumentCategory,
+	t: ReturnType<typeof useTranslations>,
+): string {
+	const keyMap: Record<DocumentCategory, string> = {
+		general: t("categoryGeneral"),
+		hr_evaluation: t("categoryHrEvaluation"),
+		hr_compensation: t("categoryHrCompensation"),
+		hr_contract: t("categoryHrContract"),
+		hr_attendance: t("categoryHrAttendance"),
+		hr_skills: t("categoryHrSkills"),
+		hr_org: t("categoryHrOrg"),
+		hr_compliance: t("categoryHrCompliance"),
+		engineering: t("categoryEngineering"),
+		sales: t("categorySales"),
+		marketing: t("categoryMarketing"),
+		finance: t("categoryFinance"),
+		policy: t("categoryPolicy"),
+		onboarding: t("categoryOnboarding"),
+		project: t("categoryProject"),
+		meeting_notes: t("categoryMeetingNotes"),
+	};
+	return keyMap[cat] ?? cat;
+}
+
+function formatDate(iso: string): string {
+	try {
+		return new Date(iso).toLocaleDateString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	} catch {
+		return iso;
+	}
+}
+
+function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ─── Source type icon ─────────────────────────────────────────────────────────
 
 function SourceTypeIcon({ type }: { type: string }) {
 	const base =
@@ -77,7 +131,6 @@ function SourceTypeIcon({ type }: { type: string }) {
 				</span>
 			);
 		default:
-			// "upload" or anything else
 			return (
 				<span
 					className={`${base} bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400`}
@@ -89,115 +142,7 @@ function SourceTypeIcon({ type }: { type: string }) {
 	}
 }
 
-// ---- Status badge -----------------------------------------------------------
-
-function StatusBadge({
-	status,
-	label,
-}: {
-	status: DocumentItem["status"];
-	label: string;
-}) {
-	if (status === "processing") {
-		return (
-			<span className="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-2 py-0.5 border bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-400">
-				<svg
-					className="w-3 h-3 animate-spin shrink-0"
-					fill="none"
-					viewBox="0 0 24 24"
-					aria-hidden="true"
-				>
-					<circle
-						className="opacity-25"
-						cx="12"
-						cy="12"
-						r="10"
-						stroke="currentColor"
-						strokeWidth="4"
-					/>
-					<path
-						className="opacity-75"
-						fill="currentColor"
-						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-					/>
-				</svg>
-				{label}
-			</span>
-		);
-	}
-
-	if (status === "indexed") {
-		return (
-			<span className="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-2 py-0.5 border bg-green-50 border-green-200 text-green-700 dark:bg-green-950/40 dark:border-green-800 dark:text-green-400">
-				<svg
-					className="w-3 h-3 shrink-0"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					strokeWidth={2.5}
-					aria-hidden="true"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M4.5 12.75l6 6 9-13.5"
-					/>
-				</svg>
-				{label}
-			</span>
-		);
-	}
-
-	// error
-	return (
-		<span className="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-2 py-0.5 border bg-red-50 border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400">
-			<svg
-				className="w-3 h-3 shrink-0"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-				strokeWidth={2.5}
-				aria-hidden="true"
-			>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M6 18L18 6M6 6l12 12"
-				/>
-			</svg>
-			{label}
-		</span>
-	);
-}
-
-// ---- Category label helper --------------------------------------------------
-
-function getCategoryLabel(
-	cat: DocumentCategory,
-	t: ReturnType<typeof useTranslations>,
-): string {
-	const keyMap: Record<DocumentCategory, string> = {
-		general: t("categoryGeneral"),
-		hr_evaluation: t("categoryHrEvaluation"),
-		hr_compensation: t("categoryHrCompensation"),
-		hr_contract: t("categoryHrContract"),
-		hr_attendance: t("categoryHrAttendance"),
-		hr_skills: t("categoryHrSkills"),
-		hr_org: t("categoryHrOrg"),
-		hr_compliance: t("categoryHrCompliance"),
-		engineering: t("categoryEngineering"),
-		sales: t("categorySales"),
-		marketing: t("categoryMarketing"),
-		finance: t("categoryFinance"),
-		policy: t("categoryPolicy"),
-		onboarding: t("categoryOnboarding"),
-		project: t("categoryProject"),
-		meeting_notes: t("categoryMeetingNotes"),
-	};
-	return keyMap[cat] ?? cat;
-}
-
-// ---- AI Classification Badge ------------------------------------------------
+// ─── AI Classification badge ──────────────────────────────────────────────────
 
 function AiClassificationBadge({
 	aiClassification,
@@ -228,12 +173,165 @@ function AiClassificationBadge({
 	);
 }
 
-// ---- Upload zone ------------------------------------------------------------
+// ─── Document preview modal ───────────────────────────────────────────────────
 
-function UploadZone({
-	onUpload,
-	isUploading,
-}: {
+interface DocumentPreviewModalProps {
+	doc: DocumentItem | null;
+	onClose: () => void;
+	t: ReturnType<typeof useTranslations>;
+}
+
+function DocumentPreviewModal({ doc, onClose, t }: DocumentPreviewModalProps) {
+	if (!doc) return null;
+
+	const sourceLabel =
+		doc.sourceType === "google_drive"
+			? "Google Drive"
+			: doc.sourceType.charAt(0).toUpperCase() + doc.sourceType.slice(1);
+
+	const statusVariant =
+		doc.status === "indexed"
+			? "success"
+			: doc.status === "processing"
+				? "warning"
+				: "danger";
+
+	const statusLabel =
+		doc.status === "indexed"
+			? t("statusIndexed")
+			: doc.status === "processing"
+				? t("statusProcessing")
+				: t("statusError");
+
+	return (
+		<Modal isOpen={!!doc} onClose={onClose} title={doc.title} size="lg">
+			<div className="space-y-5">
+				{/* Status + source row */}
+				<div className="flex items-center gap-3 flex-wrap">
+					<Badge variant={statusVariant}>{statusLabel}</Badge>
+					<div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+						<SourceTypeIcon type={doc.sourceType} />
+						<span>{sourceLabel}</span>
+					</div>
+					{doc.aiClassification && (
+						<AiClassificationBadge
+							aiClassification={doc.aiClassification}
+							t={t}
+						/>
+					)}
+				</div>
+
+				{/* Metadata grid */}
+				<dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+					{doc.category && (
+						<>
+							<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+								{t("category")}
+							</dt>
+							<dd className="text-zinc-900 dark:text-zinc-100">
+								{getCategoryLabel(doc.category, t)}
+							</dd>
+						</>
+					)}
+					{doc.mimeType && (
+						<>
+							<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+								{t("columnType")}
+							</dt>
+							<dd className="text-zinc-900 dark:text-zinc-100 font-mono text-xs">
+								{doc.mimeType}
+							</dd>
+						</>
+					)}
+					{doc.fileSize !== undefined && (
+						<>
+							<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+								{t("fileSize")}
+							</dt>
+							<dd className="text-zinc-900 dark:text-zinc-100">
+								{formatBytes(doc.fileSize)}
+							</dd>
+						</>
+					)}
+					{doc.relatedEmployeeId && (
+						<>
+							<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+								{t("relatedEmployee")}
+							</dt>
+							<dd className="text-zinc-900 dark:text-zinc-100">
+								{doc.relatedEmployeeId}
+							</dd>
+						</>
+					)}
+					<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+						{t("columnDate")}
+					</dt>
+					<dd className="text-zinc-900 dark:text-zinc-100">
+						{formatDate(doc.updatedAt)}
+					</dd>
+					<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+						{t("createdAt")}
+					</dt>
+					<dd className="text-zinc-900 dark:text-zinc-100">
+						{formatDate(doc.createdAt)}
+					</dd>
+					{doc.indexedAt && (
+						<>
+							<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+								{t("indexedAt")}
+							</dt>
+							<dd className="text-zinc-900 dark:text-zinc-100">
+								{formatDate(doc.indexedAt)}
+							</dd>
+						</>
+					)}
+					<dt className="text-zinc-500 dark:text-zinc-400 font-medium">
+						{t("accessLevel")}
+					</dt>
+					<dd className="text-zinc-900 dark:text-zinc-100">
+						{doc.accessLevel}
+					</dd>
+				</dl>
+
+				{/* AI classification details */}
+				{doc.aiClassification && !doc.aiClassification.overridden && (
+					<div className="rounded-xl border border-violet-200 dark:border-violet-800/40 bg-violet-50 dark:bg-violet-950/20 px-4 py-3 space-y-1.5">
+						<p className="text-xs font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wider">
+							{t("aiClassified")}
+						</p>
+						<p className="text-sm text-violet-900 dark:text-violet-200">
+							{doc.aiClassification.category}
+							{doc.aiClassification.suggestedDepartment &&
+								` — ${doc.aiClassification.suggestedDepartment}`}
+						</p>
+						<p className="text-xs text-violet-600 dark:text-violet-400">
+							{t("aiConfidence", {
+								confidence: String(
+									Math.round(doc.aiClassification.confidence * 100),
+								),
+							})}
+						</p>
+					</div>
+				)}
+
+				{/* Close button */}
+				<div className="flex justify-end pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
+					<button
+						type="button"
+						onClick={onClose}
+						className="px-4 py-2 text-sm font-medium rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:bg-white/[0.07]"
+					>
+						{t("close")}
+					</button>
+				</div>
+			</div>
+		</Modal>
+	);
+}
+
+// ─── Upload zone ──────────────────────────────────────────────────────────────
+
+interface UploadZoneProps {
 	onUpload: (
 		file: File,
 		category: DocumentCategory,
@@ -241,9 +339,11 @@ function UploadZone({
 		relatedEmployeeId: string,
 	) => Promise<void>;
 	isUploading: boolean;
-}) {
+	isDragOver: boolean;
+}
+
+function UploadZone({ onUpload, isUploading, isDragOver }: UploadZoneProps) {
 	const t = useTranslations("documents");
-	const [isDragging, setIsDragging] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [category, setCategory] = useState<DocumentCategory>("general");
 	const [selectedRoles, setSelectedRoles] = useState<Set<UserRole>>(new Set());
@@ -255,23 +355,6 @@ function UploadZone({
 	const userEmailRef = useRef<HTMLInputElement>(null);
 
 	const isHrCategory = category.startsWith("hr_");
-
-	const handleDragOver = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		setIsDragging(true);
-	}, []);
-
-	const handleDragLeave = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		setIsDragging(false);
-	}, []);
-
-	const handleDrop = useCallback((e: React.DragEvent) => {
-		e.preventDefault();
-		setIsDragging(false);
-		const file = e.dataTransfer.files[0];
-		if (file) setSelectedFile(file);
-	}, []);
 
 	const handleFileChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,13 +447,10 @@ function UploadZone({
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: Drop zone allows click via the hidden input */}
 			<div
 				className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-					isDragging
-						? "border-indigo-400 bg-indigo-50 dark:border-indigo-600 dark:bg-indigo-950/30"
+					isDragOver
+						? "border-indigo-400 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
 						: "border-zinc-300 hover:border-indigo-300 hover:bg-zinc-50 dark:border-zinc-600 dark:hover:border-indigo-700 dark:hover:bg-zinc-700/30"
 				}`}
-				onDragOver={handleDragOver}
-				onDragLeave={handleDragLeave}
-				onDrop={handleDrop}
 				onClick={() => inputRef.current?.click()}
 			>
 				<input
@@ -422,10 +502,9 @@ function UploadZone({
 				</div>
 			</div>
 
-			{/* Category + HR fields — shown only when a file is selected */}
+			{/* Category + HR fields */}
 			{selectedFile && (
 				<div className="mt-4 space-y-4">
-					{/* Category dropdown */}
 					<div>
 						<label
 							htmlFor="doc-category"
@@ -462,14 +541,13 @@ function UploadZone({
 						</select>
 					</div>
 
-					{/* HR-only: Access control section */}
+					{/* HR-only: Access control */}
 					{isHrCategory && (
 						<div className="rounded-lg border border-zinc-200 dark:border-zinc-600 p-4 space-y-4 bg-zinc-50 dark:bg-zinc-700/40">
 							<p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
 								{t("accessControl")}
 							</p>
 
-							{/* Role-based access */}
 							<div>
 								<p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">
 									{t("accessByRole")}
@@ -515,7 +593,6 @@ function UploadZone({
 								</div>
 							</div>
 
-							{/* User-based access */}
 							<div>
 								<p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">
 									{t("accessByUser")}
@@ -544,7 +621,6 @@ function UploadZone({
 									</button>
 								</div>
 
-								{/* User chips */}
 								{addedUsers.length > 0 && (
 									<div className="flex flex-wrap gap-1.5 mt-2">
 										{addedUsers.map((email) => (
@@ -580,7 +656,6 @@ function UploadZone({
 								)}
 							</div>
 
-							{/* ACL validation error */}
 							{aclError && (
 								<p className="text-xs text-red-600 dark:text-red-400">
 									{t("aclRequired")}
@@ -589,7 +664,7 @@ function UploadZone({
 						</div>
 					)}
 
-					{/* Related employee (optional, always visible when file selected) */}
+					{/* Related employee */}
 					<div>
 						<label
 							htmlFor="related-employee"
@@ -666,42 +741,76 @@ function UploadZone({
 	);
 }
 
-// ---- Table skeleton ---------------------------------------------------------
+// ─── Bulk action bar ──────────────────────────────────────────────────────────
 
-function TableSkeleton() {
+interface BulkActionBarProps {
+	selectedCount: number;
+	onDelete: () => void;
+	onClear: () => void;
+	t: ReturnType<typeof useTranslations>;
+}
+
+function BulkActionBar({
+	selectedCount,
+	onDelete,
+	onClear,
+	t,
+}: BulkActionBarProps) {
+	if (selectedCount === 0) return null;
+
 	return (
-		<>
-			{Array.from({ length: 5 }).map((_, i) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows have no meaningful key
-				<tr key={i} className="animate-pulse">
-					<td className="px-4 py-3">
-						<div className="flex items-center gap-3">
-							<div className="w-6 h-6 rounded bg-zinc-200 dark:bg-zinc-700 shrink-0" />
-							<div className="h-3.5 w-48 bg-zinc-200 dark:bg-zinc-700 rounded" />
-						</div>
-					</td>
-					<td className="px-4 py-3">
-						<div className="h-3.5 w-16 bg-zinc-100 dark:bg-zinc-600 rounded" />
-					</td>
-					<td className="px-4 py-3">
-						<div className="h-3.5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded" />
-					</td>
-					<td className="px-4 py-3">
-						<div className="h-5 w-20 bg-zinc-100 dark:bg-zinc-600 rounded-full" />
-					</td>
-					<td className="px-4 py-3">
-						<div className="h-3.5 w-24 bg-zinc-100 dark:bg-zinc-600 rounded" />
-					</td>
-					<td className="px-4 py-3">
-						<div className="h-6 w-6 bg-zinc-100 dark:bg-zinc-600 rounded" />
-					</td>
-				</tr>
-			))}
-		</>
+		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#1a1a1f] backdrop-blur-md animate-fade-in">
+			<span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+				{t("selectedCount", { count: String(selectedCount) })}
+			</span>
+			<div className="w-px h-4 bg-zinc-200 dark:bg-white/[0.08]" />
+			<button
+				type="button"
+				onClick={onDelete}
+				className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors dark:bg-red-500/[0.1] dark:text-red-400 dark:border-red-500/20 dark:hover:bg-red-500/[0.15]"
+			>
+				<svg
+					className="w-3.5 h-3.5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={1.75}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+					/>
+				</svg>
+				{t("deleteSelected", { count: String(selectedCount) })}
+			</button>
+			<button
+				type="button"
+				onClick={onClear}
+				className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors dark:hover:text-zinc-300 dark:hover:bg-white/[0.06]"
+				aria-label={t("clearSelection")}
+			>
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={2.5}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M6 18L18 6M6 6l12 12"
+					/>
+				</svg>
+			</button>
+		</div>
 	);
 }
 
-// ---- Page ------------------------------------------------------------------
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface DocumentsApiResponse {
 	documents: DocumentItem[];
@@ -713,7 +822,9 @@ interface DocumentsApiResponse {
 export default function DocumentsPage() {
 	const t = useTranslations("documents");
 	const { data: session } = useSession();
+	const { addToast } = useToast();
 
+	// ── Data state ──────────────────────────────────────────────────────────────
 	const [documents, setDocuments] = useState<DocumentItem[]>([]);
 	const [total, setTotal] = useState(0);
 	const [page, setPage] = useState(1);
@@ -721,29 +832,27 @@ export default function DocumentsPage() {
 	const [searchInput, setSearchInput] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isUploading, setIsUploading] = useState(false);
-	const [toast, setToast] = useState<{
-		message: string;
-		type: "success" | "error";
-	} | null>(null);
+	const [fetchError, setFetchError] = useState<string | null>(null);
+
+	// ── Selection state ─────────────────────────────────────────────────────────
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+	// ── Preview modal state ─────────────────────────────────────────────────────
+	const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+
+	// ── Drag overlay state ──────────────────────────────────────────────────────
+	const [isDragOver, setIsDragOver] = useState(false);
+	const dragCounterRef = useRef(0);
 
 	const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-	const getToken = useCallback(() => {
-		return getAccessToken(session);
-	}, [session]);
+	const getToken = useCallback(() => getAccessToken(session), [session]);
 
-	const showToast = useCallback(
-		(message: string, type: "success" | "error") => {
-			setToast({ message, type });
-			setTimeout(() => setToast(null), 3500);
-		},
-		[],
-	);
-
-	// Fetch documents
+	// ── Fetch documents ─────────────────────────────────────────────────────────
 	const loadDocuments = useCallback(
 		async (targetPage: number, searchTerm: string) => {
 			setIsLoading(true);
+			setFetchError(null);
 			try {
 				const params = new URLSearchParams({
 					page: String(targetPage),
@@ -755,9 +864,7 @@ export default function DocumentsPage() {
 
 				const res = await fetch(
 					`${API_BASE_URL}/api/v1/documents?${params.toString()}`,
-					{
-						headers: { Authorization: `Bearer ${getToken()}` },
-					},
+					{ headers: { Authorization: `Bearer ${getToken()}` } },
 				);
 
 				if (!res.ok) throw new Error(`${res.status}`);
@@ -766,31 +873,57 @@ export default function DocumentsPage() {
 				setDocuments(data.documents);
 				setTotal(data.total);
 			} catch {
+				setFetchError(t("fetchError"));
 				setDocuments([]);
 				setTotal(0);
 			} finally {
 				setIsLoading(false);
 			}
 		},
-		[getToken],
+		[getToken, t],
 	);
 
-	// Initial load and whenever page or search changes
 	useEffect(() => {
 		loadDocuments(page, search);
 	}, [page, search, loadDocuments]);
 
-	// Submit search (debounce via controlled input + explicit submit)
+	// ── Search ──────────────────────────────────────────────────────────────────
 	const handleSearchSubmit = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
 			setPage(1);
 			setSearch(searchInput);
+			setSelectedIds(new Set());
 		},
 		[searchInput],
 	);
 
-	// Upload handler
+	// ── Page-level drag & drop ──────────────────────────────────────────────────
+	const handleDragEnter = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		dragCounterRef.current += 1;
+		if (dragCounterRef.current === 1) setIsDragOver(true);
+	}, []);
+
+	const handleDragLeave = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		dragCounterRef.current -= 1;
+		if (dragCounterRef.current === 0) setIsDragOver(false);
+	}, []);
+
+	const handleDragOver = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+	}, []);
+
+	const handleDrop = useCallback((e: React.DragEvent) => {
+		e.preventDefault();
+		dragCounterRef.current = 0;
+		setIsDragOver(false);
+		// The actual file pick is handled inside UploadZone via the hidden input;
+		// here we only need to dismiss the overlay.
+	}, []);
+
+	// ── Upload ──────────────────────────────────────────────────────────────────
 	const handleUpload = useCallback(
 		async (
 			file: File,
@@ -818,22 +951,21 @@ export default function DocumentsPage() {
 
 				if (!res.ok) throw new Error(`${res.status}`);
 
-				showToast(t("uploadSuccess"), "success");
-				// Reload first page to show the newly uploaded doc
+				addToast(t("uploadSuccess"), "success");
 				setPage(1);
 				setSearch("");
 				setSearchInput("");
 				await loadDocuments(1, "");
 			} catch {
-				showToast(t("uploadError"), "error");
+				addToast(t("uploadError"), "error");
 			} finally {
 				setIsUploading(false);
 			}
 		},
-		[getToken, showToast, t, loadDocuments],
+		[getToken, addToast, t, loadDocuments],
 	);
 
-	// Delete handler
+	// ── Single delete ───────────────────────────────────────────────────────────
 	const handleDelete = useCallback(
 		async (id: string) => {
 			if (!window.confirm(t("deleteConfirm"))) return;
@@ -846,43 +978,276 @@ export default function DocumentsPage() {
 
 				if (!res.ok) throw new Error(`${res.status}`);
 
-				showToast(t("deleteSuccess"), "success");
-				// Refresh current page (step back if the page is now empty)
+				addToast(t("deleteSuccess"), "success");
 				const newTotal = total - 1;
 				const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
 				const targetPage = Math.min(page, newTotalPages);
 				setPage(targetPage);
+				setSelectedIds((prev) => {
+					const next = new Set(prev);
+					next.delete(id);
+					return next;
+				});
 				await loadDocuments(targetPage, search);
 			} catch {
-				// no-op; user stays on same state
+				addToast(t("deleteError"), "error");
 			}
 		},
-		[getToken, showToast, t, total, page, search, loadDocuments],
+		[getToken, addToast, t, total, page, search, loadDocuments],
 	);
 
-	const formatDate = (iso: string) => {
-		try {
-			return new Date(iso).toLocaleDateString(undefined, {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-			});
-		} catch {
-			return iso;
+	// ── Bulk delete ─────────────────────────────────────────────────────────────
+	const handleBulkDelete = useCallback(async () => {
+		const ids = Array.from(selectedIds);
+		if (ids.length === 0) return;
+		if (!window.confirm(t("bulkDeleteConfirm", { count: String(ids.length) })))
+			return;
+
+		let successCount = 0;
+		for (const id of ids) {
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/v1/documents/${id}`, {
+					method: "DELETE",
+					headers: { Authorization: `Bearer ${getToken()}` },
+				});
+				if (res.ok) successCount += 1;
+			} catch {
+				// continue deleting remaining items
+			}
 		}
-	};
 
-	const statusLabel = (status: DocumentItem["status"]) => {
-		if (status === "processing") return t("statusProcessing");
-		if (status === "indexed") return t("statusIndexed");
-		return t("statusError");
-	};
+		setSelectedIds(new Set());
+		if (successCount > 0) {
+			addToast(
+				t("bulkDeleteSuccess", { count: String(successCount) }),
+				"success",
+			);
+		}
+		const newTotal = Math.max(0, total - successCount);
+		const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
+		const targetPage = Math.min(page, newTotalPages);
+		setPage(targetPage);
+		await loadDocuments(targetPage, search);
+	}, [selectedIds, getToken, t, total, page, search, loadDocuments, addToast]);
 
-	const categoryLabel = (cat: DocumentCategory): string =>
-		getCategoryLabel(cat, t);
+	// ── Selection helpers ───────────────────────────────────────────────────────
+	const allCurrentSelected =
+		documents.length > 0 && documents.every((d) => selectedIds.has(d.id));
+
+	const toggleSelectAll = useCallback(() => {
+		if (allCurrentSelected) {
+			setSelectedIds((prev) => {
+				const next = new Set(prev);
+				for (const d of documents) next.delete(d.id);
+				return next;
+			});
+		} else {
+			setSelectedIds((prev) => {
+				const next = new Set(prev);
+				for (const d of documents) next.add(d.id);
+				return next;
+			});
+		}
+	}, [allCurrentSelected, documents]);
+
+	const toggleSelect = useCallback((id: string) => {
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	}, []);
+
+	// ── Table columns ───────────────────────────────────────────────────────────
+	const columns: Column<DocumentItem>[] = [
+		{
+			key: "_select",
+			label: "",
+			align: "center",
+			width: "w-10",
+			render: (doc) => (
+				// biome-ignore lint/a11y/useKeyWithClickEvents: row click is handled at the tr level in DataTable
+				<span
+					onClick={(e) => {
+						e.stopPropagation();
+						toggleSelect(doc.id);
+					}}
+					className="flex items-center justify-center"
+				>
+					<input
+						type="checkbox"
+						checked={selectedIds.has(doc.id)}
+						onChange={() => toggleSelect(doc.id)}
+						className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800"
+						aria-label={`Select ${doc.title}`}
+						onClick={(e) => e.stopPropagation()}
+					/>
+				</span>
+			),
+		},
+		{
+			key: "title",
+			label: t("columnTitle"),
+			sortable: true,
+			render: (doc) => (
+				<div className="flex items-center gap-2.5 min-w-0">
+					<SourceTypeIcon type={doc.sourceType} />
+					<span
+						className="truncate font-medium text-zinc-800 dark:text-zinc-200 max-w-xs"
+						title={doc.title}
+					>
+						{doc.title}
+					</span>
+					{doc.aiClassification && (
+						<AiClassificationBadge
+							aiClassification={doc.aiClassification}
+							t={t}
+						/>
+					)}
+				</div>
+			),
+		},
+		{
+			key: "sourceType",
+			label: t("columnType"),
+			sortable: true,
+			render: (doc) => (
+				<span className="text-zinc-500 dark:text-zinc-400">
+					{doc.sourceType === "google_drive"
+						? "Google Drive"
+						: doc.sourceType.charAt(0).toUpperCase() + doc.sourceType.slice(1)}
+				</span>
+			),
+		},
+		{
+			key: "status",
+			label: t("columnStatus"),
+			sortable: true,
+			render: (doc) => {
+				const variant =
+					doc.status === "indexed"
+						? "success"
+						: doc.status === "processing"
+							? "warning"
+							: "danger";
+				const label =
+					doc.status === "indexed"
+						? t("statusIndexed")
+						: doc.status === "processing"
+							? t("statusProcessing")
+							: t("statusError");
+				return <Badge variant={variant}>{label}</Badge>;
+			},
+		},
+		{
+			key: "updatedAt",
+			label: t("columnDate"),
+			sortable: true,
+			render: (doc) => (
+				<span className="text-zinc-500 dark:text-zinc-400">
+					{formatDate(doc.updatedAt)}
+				</span>
+			),
+		},
+		{
+			key: "_actions",
+			label: t("columnActions"),
+			align: "right",
+			render: (doc) => (
+				// biome-ignore lint/a11y/useKeyWithClickEvents: row click is handled at the tr level in DataTable
+				<span onClick={(e) => e.stopPropagation()}>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							handleDelete(doc.id);
+						}}
+						title={t("deleteConfirm")}
+						className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors dark:hover:text-red-400 dark:hover:bg-red-950/30"
+					>
+						<svg
+							className="w-4 h-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={1.75}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+							/>
+						</svg>
+					</button>
+				</span>
+			),
+		},
+	];
+
+	// ── Empty state content ─────────────────────────────────────────────────────
+	const emptyStateContent = (
+		<EmptyState
+			icon={
+				<svg
+					className="w-6 h-6"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={1.5}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+					/>
+				</svg>
+			}
+			title={t("noDocuments")}
+			subtitle={t("noDocumentsHint")}
+		/>
+	);
 
 	return (
-		<div className="flex flex-col h-full">
+		<div
+			className="flex flex-col h-full relative"
+			onDragEnter={handleDragEnter}
+			onDragLeave={handleDragLeave}
+			onDragOver={handleDragOver}
+			onDrop={handleDrop}
+		>
+			{/* Full-page drag overlay */}
+			{isDragOver && (
+				<div
+					className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
+					aria-hidden="true"
+				>
+					<div className="absolute inset-4 rounded-2xl border-2 border-dashed border-indigo-400 dark:border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/50 backdrop-blur-sm" />
+					<div className="relative flex flex-col items-center gap-3 text-indigo-700 dark:text-indigo-300">
+						<svg
+							className="w-12 h-12"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={1.5}
+							aria-hidden="true"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+							/>
+						</svg>
+						<p className="text-lg font-semibold">{t("dropToUpload")}</p>
+					</div>
+				</div>
+			)}
+
 			{/* Page header */}
 			<div className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
 				<h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -893,62 +1258,41 @@ export default function DocumentsPage() {
 				</p>
 			</div>
 
-			{/* Toast notification */}
-			{toast && (
-				<output
-					className={`shrink-0 px-6 py-3 flex items-center gap-2 text-sm border-b ${
-						toast.type === "success"
-							? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
-							: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
-					}`}
-					aria-live="polite"
-				>
-					{toast.type === "success" ? (
-						<svg
-							className="w-4 h-4 shrink-0"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth={2}
-							aria-hidden="true"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M4.5 12.75l6 6 9-13.5"
-							/>
-						</svg>
-					) : (
-						<svg
-							className="w-4 h-4 shrink-0"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth={2}
-							aria-hidden="true"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-					)}
-					{toast.message}
-				</output>
-			)}
-
 			{/* Main scrollable content */}
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="max-w-4xl mx-auto space-y-6">
 					{/* Upload zone */}
-					<UploadZone onUpload={handleUpload} isUploading={isUploading} />
+					<UploadZone
+						onUpload={handleUpload}
+						isUploading={isUploading}
+						isDragOver={isDragOver}
+					/>
+
+					{/* Fetch error */}
+					{fetchError && (
+						<ErrorBanner
+							message={fetchError}
+							onDismiss={() => setFetchError(null)}
+						/>
+					)}
 
 					{/* Documents table card */}
 					<div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-						{/* Table toolbar */}
-						<div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
-							<form onSubmit={handleSearchSubmit} className="flex gap-2">
+						{/* Toolbar */}
+						<div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700 flex items-center gap-3">
+							{/* Select-all checkbox */}
+							{!isLoading && documents.length > 0 && (
+								<input
+									type="checkbox"
+									checked={allCurrentSelected}
+									onChange={toggleSelectAll}
+									className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800"
+									aria-label={t("selectAll")}
+								/>
+							)}
+
+							{/* Search form */}
+							<form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1">
 								<div className="relative flex-1 max-w-xs">
 									<svg
 										className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400"
@@ -994,202 +1338,50 @@ export default function DocumentsPage() {
 							</form>
 						</div>
 
-						{/* Table */}
-						<div className="overflow-x-auto">
-							<table className="w-full text-sm">
-								<thead>
-									<tr className="border-b border-zinc-100 dark:border-zinc-800">
-										<th className="px-4 py-3 text-left text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("columnTitle")}
-										</th>
-										<th className="px-4 py-3 text-left text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("columnType")}
-										</th>
-										<th className="px-4 py-3 text-left text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("category")}
-										</th>
-										<th className="px-4 py-3 text-left text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("columnStatus")}
-										</th>
-										<th className="px-4 py-3 text-left text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("columnDate")}
-										</th>
-										<th className="px-4 py-3 text-right text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-widest">
-											{t("columnActions")}
-										</th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-									{isLoading ? (
-										<TableSkeleton />
-									) : documents.length === 0 ? (
-										<tr>
-											<td colSpan={6} className="px-4 py-16 text-center">
-												<div className="flex flex-col items-center gap-3">
-													<div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center">
-														<svg
-															className="w-6 h-6 text-zinc-400 dark:text-zinc-500"
-															fill="none"
-															viewBox="0 0 24 24"
-															stroke="currentColor"
-															strokeWidth={1.5}
-															aria-hidden="true"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-															/>
-														</svg>
-													</div>
-													<p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-														{t("noDocuments")}
-													</p>
-													<p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs">
-														{t("noDocumentsHint")}
-													</p>
-												</div>
-											</td>
-										</tr>
-									) : (
-										documents.map((doc) => (
-											<tr
-												key={doc.id}
-												className="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
-											>
-												{/* Title */}
-												<td className="px-4 py-3">
-													<div className="flex items-center gap-3 min-w-0">
-														<SourceTypeIcon type={doc.sourceType} />
-														<span
-															className="truncate font-medium text-zinc-800 dark:text-zinc-200 max-w-xs"
-															title={doc.title}
-														>
-															{doc.title}
-														</span>
-														{doc.aiClassification && (
-															<AiClassificationBadge
-																aiClassification={doc.aiClassification}
-																t={t}
-															/>
-														)}
-													</div>
-												</td>
-
-												{/* Source type label */}
-												<td className="px-4 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-													{doc.sourceType === "google_drive"
-														? "Google Drive"
-														: doc.sourceType.charAt(0).toUpperCase() +
-															doc.sourceType.slice(1)}
-												</td>
-
-												{/* Category */}
-												<td className="px-4 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap text-xs">
-													{doc.category ? categoryLabel(doc.category) : "-"}
-												</td>
-
-												{/* Status */}
-												<td className="px-4 py-3 whitespace-nowrap">
-													<StatusBadge
-														status={doc.status}
-														label={statusLabel(doc.status)}
-													/>
-												</td>
-
-												{/* Date */}
-												<td className="px-4 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-													{formatDate(doc.updatedAt)}
-												</td>
-
-												{/* Actions */}
-												<td className="px-4 py-3 text-right">
-													<button
-														type="button"
-														onClick={() => handleDelete(doc.id)}
-														title={t("deleteConfirm")}
-														className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors dark:hover:text-red-400 dark:hover:bg-red-950/30"
-													>
-														<svg
-															className="w-4 h-4"
-															fill="none"
-															viewBox="0 0 24 24"
-															stroke="currentColor"
-															strokeWidth={1.75}
-															aria-hidden="true"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-															/>
-														</svg>
-													</button>
-												</td>
-											</tr>
-										))
-									)}
-								</tbody>
-							</table>
-						</div>
+						{/* DataTable */}
+						<DataTable<DocumentItem>
+							columns={columns}
+							data={documents}
+							isLoading={isLoading}
+							loadingRows={5}
+							rowKey={(doc) => doc.id}
+							onRowClick={(doc) => setPreviewDoc(doc)}
+							emptyState={emptyStateContent}
+							className="rounded-none border-0"
+						/>
 
 						{/* Pagination */}
 						{!isLoading && total > 0 && (
-							<div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 dark:border-zinc-700">
-								<p className="text-xs text-zinc-500 dark:text-zinc-400">
-									{t("pagination", { page, total: totalPages })}
-								</p>
-								<div className="flex items-center gap-2">
-									<button
-										type="button"
-										disabled={page <= 1}
-										onClick={() => setPage((p) => Math.max(1, p - 1))}
-										className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-									>
-										<svg
-											className="w-3.5 h-3.5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											strokeWidth={2}
-											aria-hidden="true"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M15.75 19.5L8.25 12l7.5-7.5"
-											/>
-										</svg>
-										Prev
-									</button>
-									<button
-										type="button"
-										disabled={page >= totalPages}
-										onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-										className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-									>
-										Next
-										<svg
-											className="w-3.5 h-3.5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											strokeWidth={2}
-											aria-hidden="true"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M8.25 4.5l7.5 7.5-7.5 7.5"
-											/>
-										</svg>
-									</button>
-								</div>
+							<div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-700">
+								<Pagination
+									page={page}
+									totalPages={totalPages}
+									totalItems={total}
+									onPageChange={(p) => {
+										setPage(p);
+										setSelectedIds(new Set());
+									}}
+								/>
 							</div>
 						)}
 					</div>
 				</div>
 			</div>
+
+			{/* Document preview modal */}
+			<DocumentPreviewModal
+				doc={previewDoc}
+				onClose={() => setPreviewDoc(null)}
+				t={t}
+			/>
+
+			{/* Floating bulk action bar */}
+			<BulkActionBar
+				selectedCount={selectedIds.size}
+				onDelete={handleBulkDelete}
+				onClear={() => setSelectedIds(new Set())}
+				t={t}
+			/>
 		</div>
 	);
 }

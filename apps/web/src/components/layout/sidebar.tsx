@@ -6,30 +6,87 @@ import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+
+// ─── Relative time helper ────────────────────────────────────
+
+function relativeTime(dateStr: string): string {
+	const now = Date.now();
+	const then = new Date(dateStr).getTime();
+	const diffMs = now - then;
+
+	if (Number.isNaN(diffMs)) return "";
+
+	const diffSec = Math.floor(diffMs / 1000);
+	const diffMin = Math.floor(diffSec / 60);
+	const diffHr = Math.floor(diffMin / 60);
+	const diffDay = Math.floor(diffHr / 24);
+
+	if (diffSec < 60) return `${diffSec}s ago`;
+	if (diffMin < 60) return `${diffMin}m ago`;
+	if (diffHr < 24) return `${diffHr}h ago`;
+	if (diffDay < 7) return `${diffDay}d ago`;
+	return new Date(dateStr).toLocaleDateString();
+}
 
 // ─── Sidebar Context ────────────────────────────────────────
 
 interface SidebarContextValue {
 	isOpen: boolean;
+	isCollapsed: boolean;
 	open: () => void;
 	close: () => void;
 	toggle: () => void;
+	toggleCollapsed: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | undefined>(
 	undefined,
 );
 
+const COLLAPSED_STORAGE_KEY = "sidebar-collapsed";
+
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState(false);
+
+	// Restore collapsed state from localStorage on mount
+	useEffect(() => {
+		try {
+			const stored = localStorage.getItem(COLLAPSED_STORAGE_KEY);
+			if (stored === "true") setIsCollapsed(true);
+		} catch {
+			// localStorage unavailable — silently ignore
+		}
+	}, []);
 
 	const open = useCallback(() => setIsOpen(true), []);
 	const close = useCallback(() => setIsOpen(false), []);
 	const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
+	const toggleCollapsed = useCallback(() => {
+		setIsCollapsed((prev) => {
+			const next = !prev;
+			try {
+				localStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
+			} catch {
+				// localStorage unavailable — silently ignore
+			}
+			return next;
+		});
+	}, []);
+
 	return (
-		<SidebarContext.Provider value={{ isOpen, open, close, toggle }}>
+		<SidebarContext.Provider
+			value={{ isOpen, isCollapsed, open, close, toggle, toggleCollapsed }}
+		>
 			{children}
 		</SidebarContext.Provider>
 	);
@@ -57,7 +114,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/chat",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -77,7 +134,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/search",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -97,7 +154,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/documents",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -117,7 +174,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/analytics",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -137,7 +194,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/templates",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -157,7 +214,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/recipes",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -177,7 +234,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/agent",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -197,7 +254,7 @@ const NAV_ITEMS: NavItem[] = [
 		href: "/admin",
 		icon: (
 			<svg
-				className="w-5 h-5"
+				className="w-5 h-5 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
@@ -221,85 +278,253 @@ const NAV_ITEMS: NavItem[] = [
 
 // ─── Recent Chats ────────────────────────────────────────────
 
-function RecentChats({ onNavigate }: { onNavigate?: () => void }) {
+function RecentChats({
+	onNavigate,
+	isCollapsed,
+}: {
+	onNavigate?: () => void;
+	isCollapsed: boolean;
+}) {
 	const { sessions, isLoading } = useChatSessions();
 	const tChat = useTranslations("chat");
-	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const activeSessionId = searchParams.get("session");
+
+	if (isCollapsed) return null;
 
 	if (isLoading && sessions.length === 0) {
 		return (
-			<div className="px-3 py-2">
-				<div className="h-3 w-24 bg-white/[0.06] rounded animate-pulse" />
+			<div className="px-3 py-2 space-y-1.5">
+				{[1, 2, 3].map((i) => (
+					<div
+						key={i}
+						className="h-8 w-full bg-white/[0.04] rounded-lg animate-pulse"
+					/>
+				))}
 			</div>
 		);
 	}
 
 	if (sessions.length === 0) {
 		return (
-			<div className="px-4 py-2">
-				<p className="text-xs text-zinc-500">{tChat("noChats")}</p>
+			<div className="px-4 py-3">
+				<p className="text-xs text-[var(--color-fg-subtle)]">
+					{tChat("noChats")}
+				</p>
 			</div>
 		);
 	}
-
-	// Check if we're on a chat page with a specific session
-	const searchParams = useSearchParams();
-	const activeSessionId = searchParams.get("session");
 
 	return (
 		<div className="space-y-0.5">
 			{sessions.slice(0, 10).map((s) => {
 				const isActive = activeSessionId === s.id;
+				const timeLabel = relativeTime(s.updated_at);
+
 				return (
-					<Link
-						key={s.id}
-						href={`/chat?session=${s.id}`}
-						onClick={onNavigate}
-						className={`block px-3 py-2 rounded-lg text-xs truncate transition-colors duration-150 ${
-							isActive
-								? "bg-white/[0.09] text-zinc-100"
-								: "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.05]"
-						}`}
-						title={s.title || "Untitled"}
-					>
-						{s.title || "Untitled"}
-					</Link>
+					<div key={s.id} className="group relative flex items-center">
+						<Link
+							href={`/chat?session=${s.id}`}
+							onClick={onNavigate}
+							className={[
+								"flex-1 flex items-center justify-between gap-2 pl-3 pr-8 py-2 rounded-lg text-xs transition-colors",
+								"duration-[var(--duration-normal)]",
+								isActive
+									? "bg-indigo-500/[0.12] text-indigo-200 border-l-2 border-indigo-500"
+									: "text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.05] border-l-2 border-transparent",
+							].join(" ")}
+							title={s.title || "Untitled"}
+						>
+							<span className="truncate">{s.title || "Untitled"}</span>
+							{timeLabel && (
+								<span className="shrink-0 text-[10px] text-[var(--color-fg-subtle)] opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-normal)]">
+									{timeLabel}
+								</span>
+							)}
+						</Link>
+						{/* Delete button — revealed on hover */}
+						<button
+							type="button"
+							className="absolute right-1.5 p-1 rounded-md text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.08] opacity-0 group-hover:opacity-100 transition-all duration-[var(--duration-normal)] focus-visible:opacity-100"
+							aria-label={`Delete chat: ${s.title || "Untitled"}`}
+							onClick={(e) => {
+								// Delete handler — wire to API when available
+								e.preventDefault();
+								e.stopPropagation();
+							}}
+						>
+							<svg
+								className="w-3.5 h-3.5"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+								aria-hidden="true"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M6 18L18 6M6 6l12 12"
+								/>
+							</svg>
+						</button>
+					</div>
 				);
 			})}
 		</div>
 	);
 }
 
+// ─── Collapse Toggle Button ──────────────────────────────────
+
+function CollapseToggle({
+	isCollapsed,
+	onToggle,
+}: {
+	isCollapsed: boolean;
+	onToggle: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onToggle}
+			className="p-1.5 rounded-lg text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.06] transition-colors duration-[var(--duration-normal)] focus-visible:ring-2 focus-visible:ring-indigo-500"
+			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+			title={isCollapsed ? "Expand (⌘B)" : "Collapse (⌘B)"}
+		>
+			<svg
+				className={[
+					"w-4 h-4 transition-transform duration-[var(--duration-normal)]",
+					isCollapsed ? "rotate-180" : "",
+				].join(" ")}
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				strokeWidth={1.75}
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M15.75 19.5L8.25 12l7.5-7.5"
+				/>
+			</svg>
+		</button>
+	);
+}
+
 // ─── Sidebar Inner Content ──────────────────────────────────
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+	onNavigate,
+	isCollapsed,
+}: {
+	onNavigate?: () => void;
+	isCollapsed: boolean;
+}) {
 	const pathname = usePathname();
 	const { data: session } = useSession();
+	const { toggleCollapsed } = useSidebar();
 	const tNav = useTranslations("nav");
 	const tChat = useTranslations("chat");
 	const tCommon = useTranslations("common");
 
 	const userName = session?.user?.name ?? "User";
 	const userEmail = session?.user?.email ?? "";
+	const userInitial = userName.charAt(0).toUpperCase();
 
 	// Strip the locale prefix for active detection
-	// e.g. /en/chat → /chat, /ja/admin → /admin
 	const normalizedPath = pathname.replace(/^\/(en|ja|ko)/, "") || "/";
 	const isOnChatPage =
 		normalizedPath === "/chat" || normalizedPath.startsWith("/chat/");
 
 	return (
 		<>
-			{/* Brand */}
-			<div className="flex items-center gap-3 px-5 py-6 border-b border-white/[0.05]">
-				<BrainLogo size="sm" />
-				<span className="text-sm font-semibold text-white/95 tracking-[-0.01em]">
-					{tCommon("companyBrain")}
-				</span>
+			{/* Brand + Collapse Toggle */}
+			<div
+				className={[
+					"flex items-center border-b border-white/[0.05] shrink-0",
+					isCollapsed
+						? "justify-center px-3 py-5"
+						: "justify-between px-4 py-5",
+				].join(" ")}
+			>
+				{isCollapsed ? (
+					<button
+						type="button"
+						onClick={toggleCollapsed}
+						className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"
+						aria-label="Expand sidebar"
+						title="Expand (⌘B)"
+					>
+						<BrainLogo size="sm" />
+					</button>
+				) : (
+					<>
+						<div className="flex items-center gap-3 min-w-0">
+							<BrainLogo size="sm" />
+							<span className="text-sm font-semibold text-white/95 tracking-[-0.01em] truncate">
+								{tCommon("companyBrain")}
+							</span>
+						</div>
+						<CollapseToggle
+							isCollapsed={isCollapsed}
+							onToggle={toggleCollapsed}
+						/>
+					</>
+				)}
+			</div>
+
+			{/* New Chat Button */}
+			<div
+				className={["shrink-0 pt-4 pb-2", isCollapsed ? "px-2" : "px-3"].join(
+					" ",
+				)}
+			>
+				<Link
+					href="/chat"
+					onClick={onNavigate}
+					className={[
+						"flex items-center gap-2.5 rounded-xl font-medium text-sm",
+						"bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700",
+						"text-white shadow-lg shadow-indigo-900/30",
+						"transition-colors duration-[var(--duration-normal)]",
+						"focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-bg-sidebar)]",
+						isCollapsed
+							? "justify-center p-2.5"
+							: "justify-start px-4 py-2.5 w-full",
+					].join(" ")}
+					aria-label={tChat("newChat")}
+					title={isCollapsed ? tChat("newChat") : undefined}
+				>
+					<svg
+						className="w-4 h-4 shrink-0"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+						aria-hidden="true"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M12 4.5v15m7.5-7.5h-15"
+						/>
+					</svg>
+					{!isCollapsed && (
+						<span className="leading-none">{tChat("newChat")}</span>
+					)}
+				</Link>
 			</div>
 
 			{/* Navigation */}
-			<nav className="px-3 pt-5 pb-3 space-y-0.5" aria-label="Main navigation">
+			<nav
+				className={[
+					"pt-3 pb-2 space-y-0.5 shrink-0",
+					isCollapsed ? "px-2" : "px-3",
+				].join(" ")}
+				aria-label="Main navigation"
+			>
 				{NAV_ITEMS.map((item) => {
 					const isActive =
 						normalizedPath === item.href ||
@@ -310,35 +535,95 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 							key={item.href}
 							href={item.href}
 							onClick={onNavigate}
-							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
+							className={[
+								"flex items-center rounded-lg text-sm font-medium",
+								"transition-colors duration-[var(--duration-normal)]",
+								isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
 								isActive
-									? "bg-white/[0.09] text-white ring-1 ring-white/[0.08] shadow-sm"
-									: "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.06] active:bg-white/[0.04]"
-							}`}
+									? "bg-indigo-500/[0.12] text-indigo-200 border-l-2 border-indigo-500 pl-[10px]"
+									: "text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.06] active:bg-white/[0.04] border-l-2 border-transparent",
+							].join(" ")}
 							aria-current={isActive ? "page" : undefined}
+							title={
+								isCollapsed
+									? tNav(item.labelKey as Parameters<typeof tNav>[0])
+									: undefined
+							}
 						>
-							{item.icon}
-							{tNav(item.labelKey as Parameters<typeof tNav>[0])}
+							<span
+								className={isActive ? "text-indigo-400" : ""}
+								aria-hidden="true"
+							>
+								{item.icon}
+							</span>
+							{!isCollapsed && (
+								<span>{tNav(item.labelKey as Parameters<typeof tNav>[0])}</span>
+							)}
 						</Link>
 					);
 				})}
 			</nav>
 
-			{/* Recent Chats */}
-			{isOnChatPage && (
-				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06]">
+			{/* Recent Chats — shown when on chat page and not collapsed */}
+			{isOnChatPage && !isCollapsed && (
+				<div className="flex-1 overflow-y-auto px-3 pb-3 border-t border-white/[0.06] min-h-0">
 					<div className="flex items-center justify-between px-1 pt-3 pb-2">
-						<p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.08em]">
+						<p className="text-[10px] font-semibold text-[var(--color-fg-subtle)] uppercase tracking-[0.08em]">
 							{tChat("recentChats")}
 						</p>
-						<Link
-							href="/chat"
-							onClick={onNavigate}
-							className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-							title={tChat("newChat")}
+					</div>
+					<RecentChats onNavigate={onNavigate} isCollapsed={isCollapsed} />
+				</div>
+			)}
+
+			{/* Spacer when not on chat page or when collapsed */}
+			{(!isOnChatPage || isCollapsed) && <div className="flex-1" />}
+
+			{/* Footer / user area */}
+			<div
+				className={[
+					"border-t border-white/[0.06] py-4 shrink-0",
+					isCollapsed ? "px-2" : "px-3",
+				].join(" ")}
+			>
+				{isCollapsed ? (
+					/* Collapsed: just the avatar */
+					<div className="flex justify-center">
+						<div
+							className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 ring-1 ring-white/[0.12] cursor-default"
+							title={userName}
+							aria-label={userName}
+						>
+							<span className="text-xs font-semibold text-white/90">
+								{userInitial}
+							</span>
+						</div>
+					</div>
+				) : (
+					/* Expanded: full user row + sign-out */
+					<>
+						<div className="flex items-center gap-3 px-3 py-2 rounded-lg">
+							<div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 ring-1 ring-white/[0.12]">
+								<span className="text-xs font-semibold text-white/90">
+									{userInitial}
+								</span>
+							</div>
+							<div className="flex-1 min-w-0">
+								<p className="text-xs font-medium text-zinc-200 truncate">
+									{userName}
+								</p>
+								<p className="text-xs text-[var(--color-fg-subtle)] truncate">
+									{userEmail}
+								</p>
+							</div>
+						</div>
+						<button
+							type="button"
+							onClick={() => signOut({ callbackUrl: "/login" })}
+							className="w-full mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.06] transition-colors duration-[var(--duration-normal)]"
 						>
 							<svg
-								className="w-4 h-4"
+								className="w-4 h-4 shrink-0"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -348,76 +633,52 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
-									d="M12 4.5v15m7.5-7.5h-15"
+									d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
 								/>
 							</svg>
-						</Link>
-					</div>
-					<RecentChats onNavigate={onNavigate} />
-				</div>
-			)}
-
-			{/* Spacer when not on chat page */}
-			{!isOnChatPage && <div className="flex-1" />}
-
-			{/* Footer / user area */}
-			<div className="border-t border-white/[0.06] px-3 py-4">
-				<div className="flex items-center gap-3 px-3 py-2 rounded-lg">
-					<div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 ring-1 ring-white/[0.12]">
-						<svg
-							className="w-3.5 h-3.5 text-white/80"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth={1.75}
-							aria-hidden="true"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-							/>
-						</svg>
-					</div>
-					<div className="flex-1 min-w-0">
-						<p className="text-xs font-medium text-zinc-200 truncate">
-							{userName}
-						</p>
-						<p className="text-xs text-zinc-500 truncate">{userEmail}</p>
-					</div>
-				</div>
-				<button
-					type="button"
-					onClick={() => signOut({ callbackUrl: "/login" })}
-					className="w-full mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-zinc-500 hover:text-red-400/80 hover:bg-red-500/[0.06] transition-colors duration-150"
-				>
-					<svg
-						className="w-4 h-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						strokeWidth={1.75}
-						aria-hidden="true"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-						/>
-					</svg>
-					{tCommon("signOut")}
-				</button>
+							{tCommon("signOut")}
+						</button>
+					</>
+				)}
 			</div>
 		</>
 	);
 }
 
+// ─── Keyboard Shortcut Hook ─────────────────────────────────
+
+function useCollapseShortcut() {
+	const { toggleCollapsed } = useSidebar();
+
+	useEffect(() => {
+		function onKeyDown(e: KeyboardEvent) {
+			if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+				e.preventDefault();
+				toggleCollapsed();
+			}
+		}
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [toggleCollapsed]);
+}
+
 // ─── Desktop Sidebar ────────────────────────────────────────
 
 export function Sidebar() {
+	const { isCollapsed } = useSidebar();
+	useCollapseShortcut();
+
 	return (
-		<aside className="hidden lg:flex flex-col w-64 shrink-0 bg-sidebar-gradient text-zinc-300 border-r border-white/[0.05]">
-			<SidebarContent />
+		<aside
+			className={[
+				"hidden lg:flex flex-col shrink-0 bg-sidebar-gradient text-zinc-300",
+				"border-r border-white/[0.05] overflow-hidden",
+				"transition-[width] ease-[var(--ease-out-expo)] duration-[var(--duration-slow)]",
+				isCollapsed ? "w-[64px]" : "w-64",
+			].join(" ")}
+			aria-label="Sidebar navigation"
+		>
+			<SidebarContent isCollapsed={isCollapsed} />
 		</aside>
 	);
 }
@@ -434,18 +695,21 @@ export function MobileSidebar() {
 			{/* Backdrop */}
 			{/* biome-ignore lint/a11y/useKeyWithClickEvents: Overlay dismisses sidebar; keyboard handled via close button */}
 			<div
-				className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+				className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
 				onClick={close}
 				aria-hidden="true"
 			/>
 
 			{/* Drawer */}
-			<aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar-gradient text-zinc-300 border-r border-white/[0.05] lg:hidden animate-slide-in-left shadow-2xl shadow-black/60">
+			<aside
+				className="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar-gradient text-zinc-300 border-r border-white/[0.05] lg:hidden animate-slide-in-left shadow-2xl shadow-black/60"
+				aria-label="Sidebar navigation"
+			>
 				{/* Close button */}
 				<button
 					type="button"
 					onClick={close}
-					className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-white transition-colors"
+					className="absolute top-3 right-3 p-1.5 rounded-lg text-[var(--color-fg-subtle)] hover:text-white hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-white transition-colors duration-[var(--duration-normal)]"
 					aria-label="Close sidebar"
 				>
 					<svg
@@ -464,7 +728,7 @@ export function MobileSidebar() {
 					</svg>
 				</button>
 
-				<SidebarContent onNavigate={close} />
+				<SidebarContent onNavigate={close} isCollapsed={false} />
 			</aside>
 		</>
 	);

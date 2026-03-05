@@ -7,10 +7,29 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+// ─── Suggestion card data ─────────────────────────────────────────────────────
+
+const SUGGESTION_ICONS = {
+	email:
+		"M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75",
+	policy:
+		"M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
+	translate:
+		"M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802",
+	code: "M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5",
+} as const;
+
+// Animation stagger delays for suggestion cards
+const STAGGER_DELAYS = ["0ms", "60ms", "120ms", "180ms"] as const;
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function ChatPage() {
 	const {
 		messages,
 		sendMessage,
+		regenerateMessage,
+		sendFeedback,
 		isLoading,
 		error,
 		startNewChat,
@@ -39,19 +58,40 @@ export default function ChatPage() {
 		}
 	}, [sessionParam, sessionId, loadSession, startNewChat]);
 
+	const suggestions = [
+		{
+			key: "email" as const,
+			label: t("suggestEmail"),
+			desc: t("suggestEmailDesc"),
+			icon: SUGGESTION_ICONS.email,
+		},
+		{
+			key: "policy" as const,
+			label: t("suggestPolicy"),
+			desc: t("suggestPolicyDesc"),
+			icon: SUGGESTION_ICONS.policy,
+		},
+		{
+			key: "translate" as const,
+			label: t("suggestTranslate"),
+			desc: t("suggestTranslateDesc"),
+			icon: SUGGESTION_ICONS.translate,
+		},
+		{
+			key: "code" as const,
+			label: t("suggestCode"),
+			desc: t("suggestCodeDesc"),
+			icon: SUGGESTION_ICONS.code,
+		},
+	];
+
+	const isEmpty = messages.length === 0;
+
 	return (
 		<div className="flex flex-col h-full">
-			{/* Page header */}
-			<div className="bg-transparent px-8 py-4 shrink-0 flex items-center justify-between">
-				<div>
-					<h1 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-						{t("pageTitle")}
-					</h1>
-					<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-						{t("subtitle")}
-					</p>
-				</div>
-				{messages.length > 0 && (
+			{/* New chat button — shown only when there are messages, top-right overlay */}
+			{!isEmpty && (
+				<div className="absolute top-4 right-6 z-10">
 					<button
 						type="button"
 						onClick={startNewChat}
@@ -59,8 +99,8 @@ export default function ChatPage() {
 					>
 						{t("newChat")}
 					</button>
-				)}
-			</div>
+				</div>
+			)}
 
 			{/* Error banner */}
 			{error && (
@@ -85,9 +125,10 @@ export default function ChatPage() {
 
 			{/* Messages area */}
 			<div className="flex-1 overflow-hidden">
-				{messages.length === 0 ? (
+				{isEmpty ? (
+					/* ── Empty / hero state ── */
 					<div className="flex flex-col items-center justify-center h-full text-center px-6 animate-fade-in bg-hero-glow">
-						{/* Hero icon with glow */}
+						{/* Hero icon with ambient glow */}
 						<div className="relative mb-8">
 							<div className="absolute inset-0 w-24 h-24 -translate-x-2 -translate-y-2 rounded-full bg-indigo-500/15 dark:bg-[rgb(124_108_240_/_0.15)] blur-2xl animate-glow-pulse" />
 							<div className="relative w-20 h-20 rounded-[20px] bg-gradient-to-br from-indigo-500/15 to-violet-600/15 dark:from-indigo-500/[0.12] dark:to-violet-600/[0.12] border border-indigo-400/20 dark:border-indigo-400/[0.12] flex items-center justify-center animate-float shadow-lg shadow-indigo-500/10 dark:shadow-indigo-500/[0.08]">
@@ -115,35 +156,15 @@ export default function ChatPage() {
 							{t("emptySubtitle")}
 						</p>
 
-						{/* Suggestion cards */}
+						{/* Suggestion cards — 2×2 grid with stagger animation */}
 						<div className="grid grid-cols-2 gap-3 mt-12 w-full max-w-[480px]">
-							{[
-								{
-									label: t("suggestEmail"),
-									desc: t("suggestEmailDesc"),
-									icon: "M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75",
-								},
-								{
-									label: t("suggestPolicy"),
-									desc: t("suggestPolicyDesc"),
-									icon: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
-								},
-								{
-									label: t("suggestTranslate"),
-									desc: t("suggestTranslateDesc"),
-									icon: "M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802",
-								},
-								{
-									label: t("suggestCode"),
-									desc: t("suggestCodeDesc"),
-									icon: "M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5",
-								},
-							].map((item) => (
+							{suggestions.map((item, idx) => (
 								<button
-									key={item.label}
+									key={item.key}
 									type="button"
 									onClick={() => sendMessage(item.desc)}
-									className="card-glow gradient-border text-left p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] bg-white dark:bg-[#1a1a1f] hover:bg-zinc-50/80 dark:hover:bg-[#1e1e26] transition-[border-color,background-color,box-shadow,transform] duration-150 group active:scale-[0.98]"
+									style={{ animationDelay: STAGGER_DELAYS[idx] }}
+									className="card-glow gradient-border text-left p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] bg-white dark:bg-[#1a1a1f] hover:bg-zinc-50/80 dark:hover:bg-[#1e1e26] transition-[border-color,background-color,box-shadow,transform] duration-150 group active:scale-[0.98] animate-fade-in"
 								>
 									<div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.12] flex items-center justify-center mb-4">
 										<svg
@@ -172,7 +193,13 @@ export default function ChatPage() {
 						</div>
 					</div>
 				) : (
-					<MessageList messages={messages} isStreaming={isLoading} />
+					/* ── Message list ── */
+					<MessageList
+						messages={messages}
+						isStreaming={isLoading}
+						onRegenerate={regenerateMessage}
+						onFeedback={sendFeedback}
+					/>
 				)}
 			</div>
 
