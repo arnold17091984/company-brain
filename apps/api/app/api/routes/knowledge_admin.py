@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from qdrant_client import AsyncQdrantClient
@@ -13,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import User, get_admin_user
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.database import AuditLog, ChatMessage, Document, Feedback, User as DBUser
+from app.models.database import AuditLog, ChatMessage, Document, Feedback
+from app.models.database import User as DBUser
 from app.models.schemas import (
     KnowledgePromoteRequest,
     KnowledgePromoteResponse,

@@ -12,7 +12,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 
-from app.services.llm.claude_service import ClaudeService, _DEFAULT_HAIKU
+from app.services.llm.claude_service import _DEFAULT_HAIKU, ClaudeService
 from app.services.types import DocumentCategory
 
 logger = logging.getLogger(__name__)

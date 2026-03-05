@@ -15,8 +15,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import User, get_current_user
 from app.core.database import get_db
-from app.models.database import AuditLog, ChatMessage, ChatSession, Department, Document
-from app.models.database import KPIRecord, MonthlyROIReport, UsageMetricsDaily
+from app.models.database import (
+    AuditLog,
+    ChatMessage,
+    ChatSession,
+    Department,
+    Document,
+    KPIRecord,
+    MonthlyROIReport,
+    UsageMetricsDaily,
+)
 from app.models.database import User as DBUser
 from app.models.schemas import (
     ConnectorStatus,

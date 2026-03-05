@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.database import ChatMessage, Document
 from app.services.document_classifier import ClassificationResult, DocumentClassifier
 from app.services.ingestion.chunker import TextChunkingService
-from app.services.rag.collection import COLLECTION_NAME, _DENSE_VECTOR_NAME
+from app.services.rag.collection import _DENSE_VECTOR_NAME, COLLECTION_NAME
 from app.services.rag.embedder import TogetherEmbeddingService
 from app.services.types import ChunkType, ConnectorType, DocumentChunk, RawDocument
 

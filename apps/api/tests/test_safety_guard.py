@@ -22,12 +22,11 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from app.services.security.safety_guard import SafetyCheckResult, SafetyGuard
-
 
 # ---------------------------------------------------------------------------
 # Helpers
