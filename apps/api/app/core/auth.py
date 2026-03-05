@@ -348,6 +348,20 @@ async def get_or_create_user(
             await db.flush()
             logger.info("Linked Google ID to existing user: %s", email)
         else:
+            # Check domain allowlist before creating new user
+            allowed_domains = settings.allowed_email_domain_set
+            if allowed_domains:
+                email_domain = email.lower().rsplit("@", 1)[-1]
+                if email_domain not in allowed_domains:
+                    logger.warning(
+                        "Blocked self-registration for domain %s: %s",
+                        email_domain,
+                        email,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Your email domain is not allowed. Contact your administrator.",
+                    )
             # Create brand new user — auto-promote if email is in ADMIN_EMAILS
             is_admin = email.lower() in settings.admin_email_set
             db_user = DBUser(

@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     # ── Admin ─────────────────────────────────────────────────────────────────
     # Comma-separated emails that are auto-promoted to admin on first login
     admin_emails: str = ""
+    # Comma-separated email domains allowed for self-registration via Google login.
+    # Empty = allow all domains.  Example: "company.com,partner.co"
+    allowed_email_domains: str = ""
 
     # ── CORS ───────────────────────────────────────────────────────────────────
     # Comma-separated list of allowed origins, e.g. "http://localhost:3000,https://app.example.com"
@@ -80,10 +83,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validate_production_secrets(self) -> "Settings":
         """Fail fast when critical secrets are missing in production."""
-        if (
-            self.app_env != "development"
-            and self.jwt_secret_key == "change-me-in-production"
-        ):
+        if self.app_env != "development" and self.jwt_secret_key == "change-me-in-production":
             raise ValueError(
                 "JWT_SECRET_KEY must be set to a strong random value "
                 "in non-development environments."
@@ -94,6 +94,11 @@ class Settings(BaseSettings):
     def admin_email_set(self) -> set[str]:
         """Return ADMIN_EMAILS as a lowercase set."""
         return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}
+
+    @property
+    def allowed_email_domain_set(self) -> set[str]:
+        """Return ALLOWED_EMAIL_DOMAINS as a lowercase set (empty = allow all)."""
+        return {d.strip().lower() for d in self.allowed_email_domains.split(",") if d.strip()}
 
     @property
     def allowed_origins(self) -> list[str]:

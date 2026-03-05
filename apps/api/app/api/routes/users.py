@@ -13,7 +13,14 @@ from app.core.auth import User, get_admin_user
 from app.core.database import get_db
 from app.models.database import Department
 from app.models.database import User as DBUser
-from app.models.schemas import UserCreate, UserDetailResponse, UserSummary, UserUpdate
+from app.models.schemas import (
+    BulkUserCreateItem,
+    BulkUserCreateResult,
+    UserCreate,
+    UserDetailResponse,
+    UserSummary,
+    UserUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +137,72 @@ async def create_user(
         created_at=user_obj.created_at.isoformat(),
         updated_at=user_obj.updated_at.isoformat(),
     )
+
+
+@router.post("/bulk", response_model=list[BulkUserCreateResult])
+async def bulk_create_users(
+    body: list[BulkUserCreateItem],
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[BulkUserCreateResult]:
+    """Bulk-create multiple user accounts.
+
+    Each user is created independently — failures for one do not
+    block others. Returns per-user success/error results.
+    """
+    if len(body) > 200:
+        raise HTTPException(
+            status_code=422,
+            detail="Maximum 200 users per bulk request.",
+        )
+
+    results: list[BulkUserCreateResult] = []
+    for item in body:
+        try:
+            existing = await db.execute(select(DBUser).where(DBUser.email == item.email))
+            if existing.scalar_one_or_none() is not None:
+                results.append(
+                    BulkUserCreateResult(
+                        email=item.email,
+                        success=False,
+                        error="Email already exists",
+                    )
+                )
+                continue
+
+            dept_uuid = None
+            if item.department_id:
+                try:
+                    dept_uuid = uuid.UUID(item.department_id)
+                except ValueError:
+                    results.append(
+                        BulkUserCreateResult(
+                            email=item.email,
+                            success=False,
+                            error="Invalid department_id",
+                        )
+                    )
+                    continue
+
+            new_user = DBUser(
+                email=item.email,
+                name=item.name,
+                role=item.role,
+                department_id=dept_uuid,
+                access_level=item.access_level,
+                google_id=None,
+            )
+            db.add(new_user)
+            await db.flush()
+            results.append(BulkUserCreateResult(email=item.email, success=True))
+        except Exception as exc:
+            logger.warning("Bulk create failed for %s: %s", item.email, exc)
+            results.append(BulkUserCreateResult(email=item.email, success=False, error=str(exc)))
+
+    await db.commit()
+    created_count = sum(1 for r in results if r.success)
+    logger.info("Bulk created %d/%d users by %s", created_count, len(body), current_user.email)
+    return results
 
 
 @router.get("/by-telegram/{telegram_id}", response_model=UserDetailResponse)

@@ -372,6 +372,12 @@ export function UsersTab({
 	);
 	const [createAccessLevel, setCreateAccessLevel] = useState("restricted");
 	const [creating, setCreating] = useState(false);
+	const [showBulkModal, setShowBulkModal] = useState(false);
+	const [bulkText, setBulkText] = useState("");
+	const [bulkImporting, setBulkImporting] = useState(false);
+	const [bulkResults, setBulkResults] = useState<
+		{ email: string; success: boolean; error: string | null }[] | null
+	>(null);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -500,6 +506,62 @@ export function UsersTab({
 		}
 	};
 
+	const parseBulkText = (text: string) => {
+		return text
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((line) => line && !line.toLowerCase().startsWith("email"))
+			.map((line) => {
+				const parts = line.split(/[,\t]/).map((p) => p.trim());
+				if (parts.length >= 2 && parts[0].includes("@")) {
+					return { email: parts[0], name: parts[1] };
+				}
+				return null;
+			})
+			.filter((item): item is { email: string; name: string } => item !== null);
+	};
+
+	const parsedBulkUsers = parseBulkText(bulkText);
+
+	const handleBulkImport = async () => {
+		if (parsedBulkUsers.length === 0) return;
+		setBulkImporting(true);
+		setBulkResults(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/users/bulk`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(
+					parsedBulkUsers.map((u) => ({
+						email: u.email,
+						name: u.name,
+						role: "employee",
+						access_level: "restricted",
+					})),
+				),
+			});
+			if (!res.ok) throw new Error(`${res.status}`);
+			const results: {
+				email: string;
+				success: boolean;
+				error: string | null;
+			}[] = await res.json();
+			setBulkResults(results);
+			// Refresh user list
+			const listRes = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
+				headers: { Authorization: `Bearer ${getAccessToken()}` },
+			});
+			if (listRes.ok) setUsers(await listRes.json());
+		} catch {
+			setError(t("loadError"));
+		} finally {
+			setBulkImporting(false);
+		}
+	};
+
 	const roleOptions = [
 		"admin",
 		"ceo",
@@ -522,13 +584,22 @@ export function UsersTab({
 						{t("usersSub")}
 					</p>
 				</div>
-				<button
-					type="button"
-					onClick={() => setShowCreateModal(true)}
-					className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] shadow-md shadow-indigo-500/25"
-				>
-					{t("addUser")}
-				</button>
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => setShowBulkModal(true)}
+						className="min-h-[44px] px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] border border-indigo-200 dark:border-indigo-500/20 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors active:scale-[0.97]"
+					>
+						{t("bulkImport")}
+					</button>
+					<button
+						type="button"
+						onClick={() => setShowCreateModal(true)}
+						className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] shadow-md shadow-indigo-500/25"
+					>
+						{t("addUser")}
+					</button>
+				</div>
 			</div>
 
 			{error && (
@@ -922,6 +993,140 @@ export function UsersTab({
 								{creating ? "..." : t("addUser")}
 							</button>
 						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Bulk import modal */}
+			{showBulkModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+					<div className="bg-white dark:bg-[#1e1e24] rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl dark:shadow-black/60 w-full max-w-lg mx-4 p-6">
+						<div className="flex items-center justify-between mb-4">
+							<h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+								{t("bulkImportTitle")}
+							</h3>
+							<button
+								type="button"
+								onClick={() => {
+									setShowBulkModal(false);
+									setBulkText("");
+									setBulkResults(null);
+								}}
+								aria-label={t("cancel")}
+								className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+							{t("bulkImportSub")}
+						</p>
+						<p className="text-xs text-zinc-400 dark:text-zinc-500 mb-2">
+							{t("bulkImportFormatHint")}
+						</p>
+
+						{!bulkResults ? (
+							<>
+								<textarea
+									value={bulkText}
+									onChange={(e) => setBulkText(e.target.value)}
+									placeholder={t("bulkImportPlaceholder")}
+									rows={8}
+									className="w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1a1a1f] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors font-mono placeholder:text-zinc-400 resize-y"
+								/>
+								{bulkText.trim() && (
+									<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+										{t("bulkImportParsed", {
+											count: parsedBulkUsers.length,
+										})}
+									</p>
+								)}
+								<div className="flex justify-end gap-3 mt-4">
+									<button
+										type="button"
+										onClick={() => {
+											setShowBulkModal(false);
+											setBulkText("");
+										}}
+										className="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150"
+									>
+										{t("cancel")}
+									</button>
+									<button
+										type="button"
+										onClick={handleBulkImport}
+										disabled={bulkImporting || parsedBulkUsers.length === 0}
+										className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 shadow-md shadow-indigo-500/25"
+									>
+										{bulkImporting ? t("bulkImporting") : t("bulkImport")}
+									</button>
+								</div>
+							</>
+						) : (
+							<>
+								<div className="space-y-2 mb-4">
+									<p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+										{t("bulkImportSuccess", {
+											count: bulkResults.filter((r) => r.success).length,
+										})}
+									</p>
+									{bulkResults.some((r) => !r.success) && (
+										<p className="text-sm font-medium text-red-600 dark:text-red-400">
+											{t("bulkImportFailed", {
+												count: bulkResults.filter((r) => !r.success).length,
+											})}
+										</p>
+									)}
+								</div>
+								<div className="max-h-48 overflow-y-auto rounded-xl border border-zinc-200/80 dark:border-white/[0.06] divide-y divide-zinc-100 dark:divide-white/[0.04]">
+									{bulkResults.map((r) => (
+										<div
+											key={r.email}
+											className="px-3 py-2 flex items-center justify-between text-sm"
+										>
+											<span className="text-zinc-700 dark:text-zinc-300 truncate">
+												{r.email}
+											</span>
+											{r.success ? (
+												<span className="text-emerald-600 dark:text-emerald-400 text-xs font-medium shrink-0 ml-2">
+													OK
+												</span>
+											) : (
+												<span className="text-red-600 dark:text-red-400 text-xs shrink-0 ml-2">
+													{r.error}
+												</span>
+											)}
+										</div>
+									))}
+								</div>
+								<div className="flex justify-end mt-4">
+									<button
+										type="button"
+										onClick={() => {
+											setShowBulkModal(false);
+											setBulkText("");
+											setBulkResults(null);
+										}}
+										className="min-h-[44px] px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150"
+									>
+										{t("cancel")}
+									</button>
+								</div>
+							</>
+						)}
 					</div>
 				</div>
 			)}

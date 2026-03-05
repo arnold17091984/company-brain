@@ -299,6 +299,24 @@ class UserCreate(BaseModel):
     access_level: AccessLevel = "restricted"
 
 
+class BulkUserCreateItem(BaseModel):
+    """A single user entry in a bulk creation request."""
+
+    email: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., min_length=1, max_length=255)
+    role: UserRole = "employee"
+    department_id: str | None = None
+    access_level: AccessLevel = "restricted"
+
+
+class BulkUserCreateResult(BaseModel):
+    """Result of a single user creation in a bulk request."""
+
+    email: str
+    success: bool
+    error: str | None = None
+
+
 class UserUpdate(BaseModel):
     """Request to update user role, department, or access level."""
 
