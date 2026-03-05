@@ -8,7 +8,7 @@ import from anywhere in the codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -163,7 +163,7 @@ class RawDocument(BaseModel):
         description="Connector-specific metadata (MIME type, author, channel, etc.).",
     )
     fetched_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(tz=UTC),
         description="Timestamp when the document was fetched from the source.",
     )
 
@@ -223,7 +223,7 @@ class IngestionResult(BaseModel):
         default_factory=list,
         description="Non-fatal errors encountered during ingestion.",
     )
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
     completed_at: datetime | None = Field(default=None)
     full_sync: bool = Field(
         default=False,
@@ -237,7 +237,7 @@ class IngestionError(BaseModel):
     source_id: str
     error_type: str
     message: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
 
 
 # ---------------------------------------------------------------------------
