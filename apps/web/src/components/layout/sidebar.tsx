@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
+	Suspense,
 	createContext,
 	useCallback,
 	useContext,
@@ -33,7 +34,7 @@ function relativeTime(dateStr: string): string {
 	if (diffMin < 60) return `${diffMin}m ago`;
 	if (diffHr < 24) return `${diffHr}h ago`;
 	if (diffDay < 7) return `${diffDay}d ago`;
-	return new Date(dateStr).toLocaleDateString();
+	return new Date(dateStr).toLocaleDateString("en-US");
 }
 
 // ─── Sidebar Context ────────────────────────────────────────
@@ -672,7 +673,9 @@ export function Sidebar() {
 			].join(" ")}
 			aria-label="Sidebar navigation"
 		>
-			<SidebarContent isCollapsed={isCollapsed} />
+			<Suspense>
+				<SidebarContent isCollapsed={isCollapsed} />
+			</Suspense>
 		</aside>
 	);
 }
@@ -722,7 +725,9 @@ export function MobileSidebar() {
 					</svg>
 				</button>
 
-				<SidebarContent onNavigate={close} isCollapsed={false} />
+				<Suspense>
+					<SidebarContent onNavigate={close} isCollapsed={false} />
+				</Suspense>
 			</aside>
 		</>
 	);
