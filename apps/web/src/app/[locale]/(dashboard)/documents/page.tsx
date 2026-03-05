@@ -841,6 +841,14 @@ export default function DocumentsPage() {
 	// ── Preview modal state ─────────────────────────────────────────────────────
 	const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
 
+	// ── Delete confirmation state ────────────────────────────────────────────────
+	const [deleteTarget, setDeleteTarget] = useState<{
+		type: "single" | "bulk";
+		id?: string;
+		title?: string;
+		count?: number;
+	} | null>(null);
+
 	// ── Drag overlay state ──────────────────────────────────────────────────────
 	const [isDragOver, setIsDragOver] = useState(false);
 	const dragCounterRef = useRef(0);
@@ -966,17 +974,29 @@ export default function DocumentsPage() {
 		[getToken, addToast, t, loadDocuments],
 	);
 
-	// ── Single delete ───────────────────────────────────────────────────────────
-	const handleDelete = useCallback(
-		async (id: string) => {
-			if (!window.confirm(t("deleteConfirm"))) return;
+	// ── Request delete (opens confirmation modal) ──────────────────────────────
+	const requestDelete = useCallback((id: string, title?: string) => {
+		setDeleteTarget({ type: "single", id, title });
+	}, []);
 
+	const requestBulkDelete = useCallback(() => {
+		if (selectedIds.size === 0) return;
+		setDeleteTarget({ type: "bulk", count: selectedIds.size });
+	}, [selectedIds]);
+
+	// ── Confirm delete (executes after modal confirmation) ───────────────────
+	const confirmDelete = useCallback(async () => {
+		if (!deleteTarget) return;
+
+		if (deleteTarget.type === "single" && deleteTarget.id) {
 			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/documents/${id}`, {
-					method: "DELETE",
-					headers: { Authorization: `Bearer ${getToken()}` },
-				});
-
+				const res = await fetch(
+					`${API_BASE_URL}/api/v1/documents/${deleteTarget.id}`,
+					{
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${getToken()}` },
+					},
+				);
 				if (!res.ok) throw new Error(`${res.status}`);
 
 				addToast(t("deleteSuccess"), "success");
@@ -986,50 +1006,53 @@ export default function DocumentsPage() {
 				setPage(targetPage);
 				setSelectedIds((prev) => {
 					const next = new Set(prev);
-					next.delete(id);
+					next.delete(deleteTarget.id as string);
 					return next;
 				});
 				await loadDocuments(targetPage, search);
 			} catch {
 				addToast(t("deleteError"), "error");
 			}
-		},
-		[getToken, addToast, t, total, page, search, loadDocuments],
-	);
-
-	// ── Bulk delete ─────────────────────────────────────────────────────────────
-	const handleBulkDelete = useCallback(async () => {
-		const ids = Array.from(selectedIds);
-		if (ids.length === 0) return;
-		if (!window.confirm(t("bulkDeleteConfirm", { count: String(ids.length) })))
-			return;
-
-		let successCount = 0;
-		for (const id of ids) {
-			try {
-				const res = await fetch(`${API_BASE_URL}/api/v1/documents/${id}`, {
-					method: "DELETE",
-					headers: { Authorization: `Bearer ${getToken()}` },
-				});
-				if (res.ok) successCount += 1;
-			} catch {
-				// continue deleting remaining items
+		} else if (deleteTarget.type === "bulk") {
+			const ids = Array.from(selectedIds);
+			let successCount = 0;
+			for (const id of ids) {
+				try {
+					const res = await fetch(`${API_BASE_URL}/api/v1/documents/${id}`, {
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${getToken()}` },
+					});
+					if (res.ok) successCount += 1;
+				} catch {
+					// continue deleting remaining items
+				}
 			}
+			setSelectedIds(new Set());
+			if (successCount > 0) {
+				addToast(
+					t("bulkDeleteSuccess", { count: String(successCount) }),
+					"success",
+				);
+			}
+			const newTotal = Math.max(0, total - successCount);
+			const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
+			const targetPage = Math.min(page, newTotalPages);
+			setPage(targetPage);
+			await loadDocuments(targetPage, search);
 		}
 
-		setSelectedIds(new Set());
-		if (successCount > 0) {
-			addToast(
-				t("bulkDeleteSuccess", { count: String(successCount) }),
-				"success",
-			);
-		}
-		const newTotal = Math.max(0, total - successCount);
-		const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
-		const targetPage = Math.min(page, newTotalPages);
-		setPage(targetPage);
-		await loadDocuments(targetPage, search);
-	}, [selectedIds, getToken, t, total, page, search, loadDocuments, addToast]);
+		setDeleteTarget(null);
+	}, [
+		deleteTarget,
+		selectedIds,
+		getToken,
+		addToast,
+		t,
+		total,
+		page,
+		search,
+		loadDocuments,
+	]);
 
 	// ── Selection helpers ───────────────────────────────────────────────────────
 	const allCurrentSelected =
@@ -1166,7 +1189,7 @@ export default function DocumentsPage() {
 						type="button"
 						onClick={(e) => {
 							e.stopPropagation();
-							handleDelete(doc.id);
+							requestDelete(doc.id, doc.title);
 						}}
 						aria-label={t("deleteConfirm")}
 						className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:text-red-400 dark:hover:bg-red-950/30"
@@ -1381,10 +1404,54 @@ export default function DocumentsPage() {
 			{/* Floating bulk action bar */}
 			<BulkActionBar
 				selectedCount={selectedIds.size}
-				onDelete={handleBulkDelete}
+				onDelete={requestBulkDelete}
 				onClear={() => setSelectedIds(new Set())}
 				t={t}
 			/>
+
+			{/* Delete confirmation modal */}
+			{deleteTarget && (
+				<Modal
+					isOpen
+					onClose={() => setDeleteTarget(null)}
+					title={
+						deleteTarget.type === "single"
+							? t("deleteConfirm")
+							: t("bulkDeleteConfirm", {
+									count: String(deleteTarget.count ?? 0),
+								})
+					}
+					size="sm"
+				>
+					<div className="flex flex-col gap-4">
+						{deleteTarget.type === "single" && deleteTarget.title && (
+							<p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+								{deleteTarget.title}
+							</p>
+						)}
+						<div className="flex gap-3">
+							<button
+								type="button"
+								onClick={() => setDeleteTarget(null)}
+								className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-zinc-200 dark:border-white/[0.1] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.97]"
+							>
+								{t("close")}
+							</button>
+							<button
+								type="button"
+								onClick={confirmDelete}
+								className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-red-600 text-white hover:bg-red-500 transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+							>
+								{deleteTarget.type === "single"
+									? t("deleteConfirm")
+									: t("deleteSelected", {
+											count: String(deleteTarget.count ?? 0),
+										})}
+							</button>
+						</div>
+					</div>
+				</Modal>
+			)}
 		</div>
 	);
 }
