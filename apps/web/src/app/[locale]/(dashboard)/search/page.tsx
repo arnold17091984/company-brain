@@ -282,8 +282,9 @@ function FilterChips({
 						key={f.value}
 						type="button"
 						onClick={() => onSourceChange(f.value)}
+						aria-pressed={sourceFilter === f.value}
 						className={cn(
-							"animate-fade-in transition-colors duration-150",
+							"animate-fade-in transition-[color,transform] duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
 							"text-xs font-medium px-3 py-1 rounded-full border",
 							sourceFilter === f.value
 								? "bg-indigo-600 border-indigo-600 text-white dark:bg-indigo-500 dark:border-indigo-500"
@@ -305,8 +306,9 @@ function FilterChips({
 						key={f.value}
 						type="button"
 						onClick={() => onTimeChange(f.value)}
+						aria-pressed={timeFilter === f.value}
 						className={cn(
-							"animate-fade-in transition-colors duration-150",
+							"animate-fade-in transition-[color,transform] duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
 							"text-xs font-medium px-3 py-1 rounded-full border",
 							timeFilter === f.value
 								? "bg-indigo-600 border-indigo-600 text-white dark:bg-indigo-500 dark:border-indigo-500"
@@ -711,7 +713,7 @@ export default function SearchPage() {
 	const hasResults = filteredResults.length > 0 || Boolean(answer);
 
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-full animate-fade-in">
 			{/* Page header */}
 			<div className="border-b border-zinc-200 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md px-8 py-4 shrink-0">
 				<h1 className="text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -763,7 +765,8 @@ export default function SearchPage() {
 									type="button"
 									onClick={() => runSearch(query)}
 									disabled={isLoading}
-									className="absolute inset-y-0 right-0 flex items-center gap-1.5 pr-4 pl-3 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium disabled:opacity-50 transition-colors duration-150"
+									aria-label="Search"
+									className="absolute inset-y-0 right-0 flex items-center gap-1.5 pr-4 pl-3 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium disabled:opacity-50 transition-[color,transform] duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
 								>
 									{t("button")}
 								</button>

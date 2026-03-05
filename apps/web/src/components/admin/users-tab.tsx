@@ -212,8 +212,15 @@ function DepartmentManager({
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-zinc-100 dark:divide-white/[0.04]">
-						{departments.map((dept) => (
-							<tr key={dept.id}>
+						{departments.map((dept, _dIdx) => (
+							<tr
+								key={dept.id}
+								className="animate-fade-in opacity-0"
+								style={{
+									animationDelay: `${_dIdx * 50}ms`,
+									animationFillMode: "forwards",
+								}}
+							>
 								{editingId === dept.id ? (
 									<>
 										<td className="px-4 py-2">
@@ -241,7 +248,7 @@ function DepartmentManager({
 													type="button"
 													onClick={() => handleUpdate(dept.id)}
 													disabled={saving}
-													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg hover:brightness-110 transition-[filter] disabled:opacity-50"
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg hover:brightness-110 transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none disabled:opacity-50"
 												>
 													{t("saveConfig")}
 												</button>
@@ -275,7 +282,7 @@ function DepartmentManager({
 														setEditName(dept.name);
 														setEditSlug(dept.slug);
 													}}
-													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors"
+													className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 												>
 													{t("edit")}
 												</button>
@@ -505,7 +512,7 @@ export function UsersTab({
 		"w-full px-3 py-2 text-sm rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors";
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 animate-fade-in">
 			<div className="flex items-center justify-between">
 				<div>
 					<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">

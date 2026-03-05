@@ -168,7 +168,7 @@ export default function AdminPage() {
 							role="tab"
 							aria-selected={activeTab === tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`min-h-[44px] px-3 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap flex items-center ${
+							className={`min-h-[44px] px-3 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap flex items-center active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
 								activeTab === tab.id
 									? "bg-white dark:bg-white/[0.1] rounded-lg shadow-sm text-zinc-950 dark:text-zinc-100 font-medium"
 									: "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
@@ -183,11 +183,11 @@ export default function AdminPage() {
 			{/* Tab content */}
 			<div className="flex-1 overflow-y-auto p-4 sm:p-8">
 				<div
-					className={
+					className={`animate-fade-in ${
 						activeTab === "users" || activeTab === "safety"
 							? "max-w-5xl mx-auto w-full"
 							: "max-w-4xl mx-auto w-full"
-					}
+					}`}
 				>
 					{activeTab === "datasources" && (
 						<DataSourcesTab

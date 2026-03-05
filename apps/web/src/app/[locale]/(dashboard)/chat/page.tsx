@@ -88,14 +88,15 @@ export default function ChatPage() {
 	const isEmpty = messages.length === 0;
 
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-full animate-fade-in">
 			{/* New chat button — shown only when there are messages, top-right overlay */}
 			{!isEmpty && (
 				<div className="absolute top-4 right-6 z-10">
 					<button
 						type="button"
 						onClick={startNewChat}
-						className="text-xs font-medium text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors duration-150 px-3 py-1.5 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-white/[0.08] hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
+						aria-label={t("newChat")}
+						className="text-xs font-medium text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-[colors,transform] duration-150 px-3 py-1.5 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-white/[0.08] hover:bg-zinc-50 dark:hover:bg-white/[0.04] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
 					>
 						{t("newChat")}
 					</button>
@@ -164,7 +165,7 @@ export default function ChatPage() {
 									type="button"
 									onClick={() => sendMessage(item.desc)}
 									style={{ animationDelay: STAGGER_DELAYS[idx] }}
-									className="card-glow gradient-border text-left p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] bg-white dark:bg-[#1a1a1f] hover:bg-zinc-50/80 dark:hover:bg-[#1e1e26] transition-[border-color,background-color,box-shadow,transform] duration-150 group active:scale-[0.98] animate-fade-in"
+									className="card-glow gradient-border text-left p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] bg-white dark:bg-[#1a1a1f] hover:bg-zinc-50/80 dark:hover:bg-[#1e1e26] transition-[border-color,background-color,box-shadow,transform] duration-150 group active:scale-[0.97] animate-fade-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
 								>
 									<div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.12] flex items-center justify-center mb-4">
 										<svg

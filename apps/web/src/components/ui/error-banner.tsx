@@ -51,7 +51,7 @@ export function ErrorBanner({
 					type="button"
 					onClick={onDismiss}
 					aria-label="Dismiss error"
-					className="shrink-0 mt-0.5 opacity-60 hover:opacity-100 transition-opacity duration-150"
+					className="shrink-0 mt-0.5 p-0.5 rounded-md opacity-60 hover:opacity-100 transition-all duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 				>
 					<svg
 						className="w-4 h-4"

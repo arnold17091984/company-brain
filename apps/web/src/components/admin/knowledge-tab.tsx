@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
@@ -87,7 +88,7 @@ export function KnowledgeTab({
 	const totalPages = Math.ceil(total / pageSize);
 
 	return (
-		<div>
+		<div className="animate-fade-in">
 			<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 				{t("knowledgeTitle")}
 			</h2>
@@ -96,8 +97,18 @@ export function KnowledgeTab({
 			</p>
 
 			{loading ? (
-				<div className="flex items-center justify-center py-12">
-					<div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+				<div className="space-y-3 py-4">
+					{[0, 1, 2, 3, 4].map((i) => (
+						<div
+							key={i}
+							className="flex gap-4 py-2 border-b border-zinc-100 dark:border-white/[0.04]"
+						>
+							<Skeleton height="1rem" width="40%" />
+							<Skeleton height="1rem" width="30%" />
+							<Skeleton height="1rem" width="10%" />
+							<Skeleton height="1rem" width="10%" />
+						</div>
+					))}
 				</div>
 			) : items.length === 0 ? (
 				<p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-12">
@@ -161,7 +172,7 @@ export function KnowledgeTab({
 													type="button"
 													onClick={() => handlePromote(item)}
 													disabled={promoting === item.message_id}
-													className="min-h-[44px] px-3 py-1 text-xs font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white hover:brightness-110 disabled:opacity-50 transition-[filter] duration-150 shadow-sm shadow-indigo-500/25"
+													className="min-h-[44px] px-3 py-1 text-xs font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white hover:brightness-110 disabled:opacity-50 transition-[filter,transform] duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none shadow-sm shadow-indigo-500/25"
 												>
 													{promoting === item.message_id
 														? "..."

@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -139,7 +140,7 @@ export function SafetyTab({
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 animate-fade-in">
 			<div>
 				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("pageTitle")}
@@ -161,10 +162,10 @@ export function SafetyTab({
 					(["s0", "s1", "s2", "s3"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 						>
-							<div className="h-3 w-24 bg-zinc-200 dark:bg-white/[0.06] rounded mb-3" />
-							<div className="h-7 w-12 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+							<Skeleton height="0.75rem" width="6rem" className="mb-3" />
+							<Skeleton height="1.75rem" width="3rem" />
 						</div>
 					))
 				) : stats ? (
@@ -250,11 +251,11 @@ export function SafetyTab({
 						<tbody className="divide-y divide-zinc-100 dark:divide-white/[0.04]">
 							{loading ? (
 								(["vr0", "vr1", "vr2", "vr3"] as const).map((rowKey) => (
-									<tr key={rowKey} className="animate-pulse">
+									<tr key={rowKey}>
 										{(["vc0", "vc1", "vc2", "vc3", "vc4", "vc5"] as const).map(
 											(colKey) => (
 												<td key={colKey} className="px-4 py-3">
-													<div className="h-3 bg-zinc-200 dark:bg-white/[0.06] rounded w-20" />
+													<Skeleton height="0.75rem" width="5rem" />
 												</td>
 											),
 										)}
@@ -270,10 +271,14 @@ export function SafetyTab({
 									</td>
 								</tr>
 							) : (
-								violations.map((v) => (
+								violations.map((v, _vIdx) => (
 									<tr
 										key={v.id}
-										className="hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors"
+										style={{
+											animationDelay: `${_vIdx * 40}ms`,
+											animationFillMode: "forwards",
+										}}
+										className="hover:bg-zinc-50 dark:hover:bg-white/[0.03] transition-colors animate-fade-in opacity-0"
 									>
 										<td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap max-w-[160px] truncate">
 											{v.user_email}
@@ -311,7 +316,7 @@ export function SafetyTab({
 													type="button"
 													disabled={resolvingId === v.id}
 													onClick={() => handleResolve(v.id)}
-													className="min-h-[44px] inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-xl border transition-colors duration-150 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+													className="min-h-[44px] inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-xl border transition-[colors,transform] duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
 												>
 													{resolvingId === v.id ? (
 														<svg

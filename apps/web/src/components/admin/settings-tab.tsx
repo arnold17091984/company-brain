@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -203,12 +204,12 @@ export function SettingsTab({
 				{[1, 2, 3].map((i) => (
 					<div
 						key={i}
-						className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
+						className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 					>
-						<div className="h-4 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded mb-4" />
+						<Skeleton height="1rem" width="8rem" className="mb-4" />
 						<div className="space-y-3">
-							<div className="h-8 bg-zinc-100 dark:bg-white/[0.04] rounded" />
-							<div className="h-8 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+							<Skeleton height="2rem" />
+							<Skeleton height="2rem" />
 						</div>
 					</div>
 				))}
@@ -219,7 +220,7 @@ export function SettingsTab({
 	if (!settings) return null;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 animate-fade-in">
 			<div>
 				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("settingsTitle")}
@@ -485,7 +486,7 @@ export function SettingsTab({
 													type="button"
 													onClick={() => handleResetKey(ak.key_name)}
 													disabled={keySaving}
-													className="min-h-[44px] px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150 disabled:opacity-50"
+													className="min-h-[44px] px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-white/[0.06] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none disabled:opacity-50"
 												>
 													{t("apiKeyResetEnv")}
 												</button>

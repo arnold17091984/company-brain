@@ -294,7 +294,7 @@ export function CommandPalette({
 						onKeyDown={handleKeyDown}
 						placeholder="Search pages..."
 						className="flex-1 bg-transparent text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none"
-						aria-label="Search command palette"
+						aria-label="Search commands"
 						aria-autocomplete="list"
 						aria-controls="command-palette-menu"
 						aria-expanded={isOpen}

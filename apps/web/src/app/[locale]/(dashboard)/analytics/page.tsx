@@ -521,7 +521,7 @@ export default function AnalyticsPage() {
 
 			{/* Content */}
 			<div className="flex-1 overflow-y-auto p-6">
-				<div className="max-w-5xl mx-auto space-y-8">
+				<div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
 					{/* Error banners for always-loaded data */}
 					{overviewError &&
 						(activeTab === "overview" || activeTab === "departments") && (
@@ -671,7 +671,7 @@ export default function AnalyticsPage() {
 													key={report.period}
 													type="button"
 													onClick={() => setSelectedReport(report)}
-													className="card-glow text-left bg-white dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-white/[0.06] p-5 hover:border-indigo-300 dark:hover:border-indigo-600/50 transition-[border-color] duration-150 group"
+													className="card-glow text-left bg-white dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-white/[0.06] p-5 hover:border-indigo-300 dark:hover:border-indigo-600/50 transition-[border-color,transform] duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none group"
 												>
 													<div className="flex items-start justify-between gap-2 mb-3">
 														<div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center shrink-0">

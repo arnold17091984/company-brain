@@ -323,8 +323,10 @@ function RecentChats({
 							href={`/chat?session=${s.id}`}
 							onClick={onNavigate}
 							className={[
-								"flex-1 flex items-center justify-between gap-2 pl-3 pr-8 py-2 rounded-lg text-xs transition-colors",
+								"flex-1 flex items-center justify-between gap-2 pl-3 pr-8 py-2 rounded-lg text-xs transition-all",
 								"duration-[var(--duration-normal)]",
+								"active:scale-[0.97]",
+								"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 								isActive
 									? "bg-indigo-500/[0.12] text-indigo-200 border-l-2 border-indigo-500"
 									: "text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.05] border-l-2 border-transparent",
@@ -341,7 +343,7 @@ function RecentChats({
 						{/* Delete button — revealed on hover */}
 						<button
 							type="button"
-							className="absolute right-1.5 p-1 rounded-md text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.08] opacity-0 group-hover:opacity-100 transition-all duration-[var(--duration-normal)] focus-visible:opacity-100"
+							className="absolute right-1.5 p-1 rounded-md text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.08] opacity-0 group-hover:opacity-100 transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 							aria-label={`Delete chat: ${s.title || "Untitled"}`}
 							onClick={(e) => {
 								// Delete handler — wire to API when available
@@ -384,7 +386,7 @@ function CollapseToggle({
 		<button
 			type="button"
 			onClick={onToggle}
-			className="p-1.5 rounded-lg text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.06] transition-colors duration-[var(--duration-normal)] focus-visible:ring-2 focus-visible:ring-indigo-500"
+			className="p-1.5 rounded-lg text-[var(--color-fg-subtle)] hover:text-[var(--color-fg-muted)] hover:bg-white/[0.06] transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 			aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 			title={isCollapsed ? "Expand (⌘B)" : "Collapse (⌘B)"}
 		>
@@ -449,7 +451,7 @@ function SidebarContent({
 					<button
 						type="button"
 						onClick={toggleCollapsed}
-						className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"
+						className="focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded-lg transition-all active:scale-[0.97]"
 						aria-label="Expand sidebar"
 						title="Expand (⌘B)"
 					>
@@ -484,8 +486,9 @@ function SidebarContent({
 						"flex items-center gap-2.5 rounded-xl font-medium text-sm",
 						"bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700",
 						"text-white shadow-lg shadow-indigo-900/30",
-						"transition-colors duration-[var(--duration-normal)]",
-						"focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-bg-sidebar)]",
+						"transition-all duration-[var(--duration-normal)]",
+						"active:scale-[0.97]",
+						"focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-bg-sidebar)] focus-visible:outline-none",
 						isCollapsed
 							? "justify-center p-2.5"
 							: "justify-start px-4 py-2.5 w-full",
@@ -533,7 +536,9 @@ function SidebarContent({
 							onClick={onNavigate}
 							className={[
 								"flex items-center rounded-lg text-sm font-medium",
-								"transition-colors duration-[var(--duration-normal)]",
+								"transition-all duration-[var(--duration-normal)]",
+								"active:scale-[0.97]",
+								"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 								isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
 								isActive
 									? "bg-indigo-500/[0.12] text-indigo-200 border-l-2 border-indigo-500 pl-[10px]"
@@ -615,7 +620,7 @@ function SidebarContent({
 						<button
 							type="button"
 							onClick={() => signOut({ callbackUrl: "/login" })}
-							className="w-full mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.06] transition-colors duration-[var(--duration-normal)]"
+							className="w-full mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-[var(--color-fg-subtle)] hover:text-red-400/80 hover:bg-red-500/[0.06] transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 						>
 							<svg
 								className="w-4 h-4 shrink-0"
@@ -640,35 +645,17 @@ function SidebarContent({
 	);
 }
 
-// ─── Keyboard Shortcut Hook ─────────────────────────────────
-
-function useCollapseShortcut() {
-	const { toggleCollapsed } = useSidebar();
-
-	useEffect(() => {
-		function onKeyDown(e: KeyboardEvent) {
-			if ((e.metaKey || e.ctrlKey) && e.key === "b") {
-				e.preventDefault();
-				toggleCollapsed();
-			}
-		}
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [toggleCollapsed]);
-}
-
 // ─── Desktop Sidebar ────────────────────────────────────────
 
 export function Sidebar() {
 	const { isCollapsed } = useSidebar();
-	useCollapseShortcut();
 
 	return (
 		<aside
 			className={[
 				"hidden lg:flex flex-col shrink-0 bg-sidebar-gradient text-zinc-300",
 				"border-r border-white/[0.05] overflow-hidden",
-				"transition-[width] ease-[var(--ease-out-expo)] duration-[var(--duration-slow)]",
+				"transition-all ease-[var(--ease-out-expo)] duration-300",
 				isCollapsed ? "w-[64px]" : "w-64",
 			].join(" ")}
 			aria-label="Sidebar navigation"

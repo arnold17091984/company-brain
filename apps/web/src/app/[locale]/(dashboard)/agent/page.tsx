@@ -121,7 +121,7 @@ function ClusterCard({ cluster, isActive, onClick }: ClusterCardProps) {
 		<button
 			type="button"
 			onClick={onClick}
-			className={`card-glow w-full text-left rounded-xl border p-5 transition-all duration-150 ${
+			className={`card-glow w-full text-left rounded-xl border p-5 transition-all duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
 				isActive
 					? "border-indigo-400 dark:border-indigo-500/60 bg-indigo-50/60 dark:bg-indigo-950/20 ring-1 ring-indigo-300 dark:ring-indigo-600/30"
 					: "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-zinc-800/60 hover:border-indigo-200 dark:hover:border-indigo-600/30"
@@ -555,7 +555,7 @@ export default function AgentPage() {
 			</div>
 
 			<div className="flex-1 overflow-y-auto p-5">
-				<div className="max-w-5xl mx-auto space-y-10">
+				<div className="max-w-5xl mx-auto space-y-10 animate-fade-in">
 					{/* ── Section 1: Question Clusters ─────────────────────── */}
 					<section>
 						<SectionHeader
@@ -599,13 +599,23 @@ export default function AgentPage() {
 										/>
 									</div>
 								) : (
-									clusters.map((cluster) => (
-										<ClusterCard
+									clusters.map((cluster, _clusterIdx) => (
+										<div
 											key={cluster.label}
-											cluster={cluster}
-											isActive={activeCluster === cluster.label}
-											onClick={() => handleClusterClick(cluster.label)}
-										/>
+											className="animate-fade-in opacity-0"
+											style={
+												{
+													animationDelay: `${_clusterIdx * 60}ms`,
+													animationFillMode: "forwards",
+												} as React.CSSProperties
+											}
+										>
+											<ClusterCard
+												cluster={cluster}
+												isActive={activeCluster === cluster.label}
+												onClick={() => handleClusterClick(cluster.label)}
+											/>
+										</div>
 									))
 								)}
 							</div>
@@ -623,7 +633,8 @@ export default function AgentPage() {
 								<button
 									type="button"
 									onClick={() => setActiveCluster(null)}
-									className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors ml-1"
+									aria-label="Clear cluster filter"
+									className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors ml-1 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded"
 								>
 									Clear
 								</button>

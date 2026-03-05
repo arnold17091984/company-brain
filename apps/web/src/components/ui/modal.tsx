@@ -148,7 +148,7 @@ export function Modal({
 						type="button"
 						onClick={onClose}
 						aria-label="Close dialog"
-						className="p-1.5 rounded-xl text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-white/[0.06] transition-colors duration-150"
+						className="p-1.5 rounded-xl text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-white/[0.06] transition-all duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 					>
 						<svg
 							className="w-4 h-4"

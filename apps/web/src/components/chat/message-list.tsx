@@ -142,7 +142,8 @@ function ThinkingAccordion({ thinking }: { thinking: string }) {
 			<button
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
-				className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+				aria-expanded={isOpen}
+				className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-[color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
 			>
 				<svg
 					className={`w-3 h-3 transition-transform ${isOpen ? "rotate-90" : ""}`}
@@ -273,7 +274,7 @@ function MessageActionBar({
 	}
 
 	const btnBase =
-		"flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 text-zinc-400 dark:text-zinc-500";
+		"flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 text-zinc-400 dark:text-zinc-500 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500";
 	const btnHover =
 		"hover:bg-zinc-100 dark:hover:bg-white/[0.07] hover:text-zinc-600 dark:hover:text-zinc-300";
 
@@ -408,6 +409,7 @@ interface ChatMessageProps {
 	onRegenerate: () => void;
 	onFeedback: (messageId: string, rating: "up" | "down") => void;
 	isLast: boolean;
+	index: number;
 }
 
 function ChatMessage({
@@ -415,6 +417,7 @@ function ChatMessage({
 	onRegenerate,
 	onFeedback,
 	isLast,
+	index,
 }: ChatMessageProps) {
 	const isUser = message.role === "user";
 	const [hovered, setHovered] = useState(false);
@@ -422,6 +425,7 @@ function ChatMessage({
 	return (
 		<div
 			className={`flex gap-3 animate-fade-in ${isUser ? "flex-row-reverse" : "flex-row"}`}
+			style={{ animationDelay: `${Math.min(index * 40, 200)}ms` }}
 			onMouseEnter={() => setHovered(true)}
 			onMouseLeave={() => setHovered(false)}
 		>
@@ -531,6 +535,7 @@ export function MessageList({
 						onRegenerate={handleRegenerate}
 						onFeedback={handleFeedback}
 						isLast={index === messages.length - 1}
+						index={index}
 					/>
 				))}
 				{showTypingIndicator && <TypingIndicator />}

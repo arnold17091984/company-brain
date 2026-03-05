@@ -104,6 +104,8 @@ export function EmptyState({
 						"border border-zinc-200 dark:border-white/[0.06]",
 						"hover:bg-zinc-200 dark:hover:bg-white/[0.08]",
 						"hover:text-zinc-900 dark:hover:text-zinc-100",
+						"active:scale-[0.97]",
+						"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 					)}
 				>
 					{action.label}

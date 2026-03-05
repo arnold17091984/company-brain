@@ -39,7 +39,9 @@ function CopyButton({ text }: { text: string }) {
 			onClick={handleCopy}
 			aria-label={copied ? "Copied!" : "Copy code"}
 			className={cn(
-				"inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150",
+				"inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all duration-150",
+				"active:scale-[0.97]",
+				"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 				copied
 					? "text-emerald-400 bg-emerald-500/[0.1]"
 					: "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.08]",

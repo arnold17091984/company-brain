@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
@@ -239,14 +240,14 @@ export function HarvestTab({
 					);
 
 		return (
-			<div className="space-y-6">
+			<div className="space-y-6 animate-fade-in">
 				{/* Header */}
 				<div className="flex items-center justify-between">
 					<div>
 						<button
 							type="button"
 							onClick={() => setSelectedSession(null)}
-							className="min-h-[44px] text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-1 flex items-center gap-1"
+							className="min-h-[44px] text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-1 flex items-center gap-1 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 						>
 							<svg
 								className="w-4 h-4"
@@ -282,7 +283,7 @@ export function HarvestTab({
 								type="button"
 								onClick={() => handleToggle(selectedSession)}
 								disabled={togglingId === selectedSession.id}
-								className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+								className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 							>
 								{selectedSession.status === "paused"
 									? t("resumeSession")
@@ -321,7 +322,7 @@ export function HarvestTab({
 							key={cat}
 							type="button"
 							onClick={() => setCategoryFilter(cat)}
-							className={`min-h-[44px] px-3 py-1 text-sm rounded-full border transition-colors ${
+							className={`min-h-[44px] px-3 py-1 text-sm rounded-full border transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
 								categoryFilter === cat
 									? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
 									: "border-zinc-200/80 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-white/[0.15]"
@@ -334,35 +335,41 @@ export function HarvestTab({
 
 				{/* Questions list */}
 				<div className="space-y-4">
-					{filtered.map((q) => (
+					{filtered.map((q, _qIdx) => (
 						<div
 							key={q.id}
-							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
+							className="animate-fade-in opacity-0"
+							style={{
+								animationDelay: `${_qIdx * 50}ms`,
+								animationFillMode: "forwards",
+							}}
 						>
-							<div className="flex items-start justify-between gap-3 mb-3">
-								<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
-									{categoryLabel(q.category)}
-								</span>
-								{q.answered_at ? (
-									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-										{q.source
-											? t("answerVia", { source: q.source })
-											: t("answered")}
+							<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
+								<div className="flex items-start justify-between gap-3 mb-3">
+									<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
+										{categoryLabel(q.category)}
 									</span>
-								) : (
-									<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
-										{t("noAnswer")}
-									</span>
+									{q.answered_at ? (
+										<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
+											{q.source
+												? t("answerVia", { source: q.source })
+												: t("answered")}
+										</span>
+									) : (
+										<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/[0.06]">
+											{t("noAnswer")}
+										</span>
+									)}
+								</div>
+								<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+									{q.question}
+								</p>
+								{q.answer && (
+									<p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+										{q.answer}
+									</p>
 								)}
 							</div>
-							<p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-								{q.question}
-							</p>
-							{q.answer && (
-								<p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
-									{q.answer}
-								</p>
-							)}
 						</div>
 					))}
 				</div>
@@ -372,7 +379,7 @@ export function HarvestTab({
 
 	// List view
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 animate-fade-in">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
@@ -386,7 +393,7 @@ export function HarvestTab({
 				<button
 					type="button"
 					onClick={openCreate}
-					className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2"
+					className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none flex items-center gap-2"
 				>
 					<svg
 						className="w-4 h-4"
@@ -435,7 +442,7 @@ export function HarvestTab({
 									{t("selectUser")}
 								</label>
 								{usersLoading ? (
-									<div className="h-9 rounded-lg bg-zinc-100 dark:bg-white/[0.04] animate-pulse" />
+									<Skeleton height="2.25rem" className="rounded-lg" />
 								) : (
 									<select
 										id="harvest-user"
@@ -474,7 +481,7 @@ export function HarvestTab({
 							<button
 								type="button"
 								onClick={() => setShowCreate(false)}
-								className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
+								className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 							>
 								{tAdmin("cancel")}
 							</button>
@@ -482,7 +489,7 @@ export function HarvestTab({
 								type="button"
 								onClick={handleCreate}
 								disabled={creating}
-								className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+								className="min-h-[44px] bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white rounded-xl shadow-md shadow-indigo-500/25 px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 							>
 								{creating ? "..." : t("createSession")}
 							</button>
@@ -497,16 +504,20 @@ export function HarvestTab({
 					{(["s0", "s1", "s2"] as const).map((key) => (
 						<div
 							key={key}
-							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
+							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 						>
 							<div className="flex items-center justify-between mb-4">
 								<div className="space-y-2">
-									<div className="h-4 w-36 bg-zinc-200 dark:bg-white/[0.06] rounded" />
-									<div className="h-3 w-48 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+									<Skeleton height="1rem" width="9rem" />
+									<Skeleton height="0.75rem" width="12rem" />
 								</div>
-								<div className="h-6 w-16 bg-zinc-100 dark:bg-white/[0.04] rounded-full" />
+								<Skeleton
+									height="1.5rem"
+									width="4rem"
+									className="rounded-full"
+								/>
 							</div>
-							<div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04]" />
+							<Skeleton height="0.5rem" className="rounded-full" />
 						</div>
 					))}
 				</div>
@@ -518,78 +529,84 @@ export function HarvestTab({
 				</div>
 			) : (
 				<div className="space-y-4">
-					{sessions.map((session) => (
+					{sessions.map((session, _sIdx) => (
 						<div
 							key={session.id}
-							className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
+							className="animate-fade-in opacity-0"
+							style={{
+								animationDelay: `${_sIdx * 70}ms`,
+								animationFillMode: "forwards",
+							}}
 						>
-							<div className="flex items-start justify-between gap-4 mb-4">
-								<div className="min-w-0">
-									<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-										{session.target_user_name}
-									</h3>
-									<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-										{session.target_user_email}
-									</p>
-									{session.suspension_date && (
-										<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-											{t("suspensionDate")}: {session.suspension_date}
+							<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
+								<div className="flex items-start justify-between gap-4 mb-4">
+									<div className="min-w-0">
+										<h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+											{session.target_user_name}
+										</h3>
+										<p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+											{session.target_user_email}
 										</p>
-									)}
+										{session.suspension_date && (
+											<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+												{t("suspensionDate")}: {session.suspension_date}
+											</p>
+										)}
+									</div>
+									<div className="flex items-center gap-2 shrink-0">
+										<span
+											className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(session.status)}`}
+										>
+											{statusLabel(session.status)}
+										</span>
+									</div>
 								</div>
-								<div className="flex items-center gap-2 shrink-0">
-									<span
-										className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusBadgeClass(session.status)}`}
-									>
-										{statusLabel(session.status)}
-									</span>
-								</div>
-							</div>
 
-							{/* Progress bar */}
-							<div className="mb-4">
-								<div className="flex items-center justify-between mb-1">
-									<span className="text-xs text-zinc-500 dark:text-zinc-400">
-										{t("progress")}
-									</span>
-									<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-										{session.answered_questions}/{session.total_questions}{" "}
-										{t("answered")}
-									</span>
+								{/* Progress bar */}
+								<div className="mb-4">
+									<div className="flex items-center justify-between mb-1">
+										<span className="text-xs text-zinc-500 dark:text-zinc-400">
+											{t("progress")}
+										</span>
+										<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+											{session.answered_questions}/{session.total_questions}{" "}
+											{t("answered")}
+										</span>
+									</div>
+									<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
+										<div
+											className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
+											style={{ width: `${session.progress_percent}%` }}
+										/>
+									</div>
 								</div>
-								<div className="h-2 rounded-full bg-zinc-200 dark:bg-white/[0.06] overflow-hidden">
-									<div
-										className="h-full rounded-full bg-green-500 dark:bg-green-400 transition-all"
-										style={{ width: `${session.progress_percent}%` }}
-									/>
-								</div>
-							</div>
 
-							{/* Actions */}
-							<div className="flex items-center gap-2">
-								<button
-									type="button"
-									onClick={() => {
-										if (!detailLoading) {
-											fetchDetail(session.id);
-										}
-									}}
-									className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-colors"
-								>
-									{t("viewDetails")}
-								</button>
-								{session.status !== "completed" && (
+								{/* Actions */}
+								<div className="flex items-center gap-2">
 									<button
 										type="button"
-										onClick={() => handleToggle(session)}
-										disabled={togglingId === session.id}
-										className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+										onClick={() => {
+											if (!detailLoading) {
+												fetchDetail(session.id);
+											}
+										}}
+										className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:brightness-110 text-white shadow-sm shadow-indigo-500/25 transition-[filter,transform] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 									>
-										{session.status === "paused"
-											? t("resumeSession")
-											: t("pauseSession")}
+										{t("viewDetails")}
 									</button>
-								)}
+									{session.status !== "completed" && (
+										<button
+											type="button"
+											onClick={() => handleToggle(session)}
+											disabled={togglingId === session.id}
+											className="min-h-[44px] px-3 py-1.5 text-sm font-medium rounded-xl border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+										>
+											{session.status === "paused"
+												? t("resumeSession")
+												: t("pauseSession")}
+										</button>
+									)}
+								</div>
 							</div>
 						</div>
 					))}

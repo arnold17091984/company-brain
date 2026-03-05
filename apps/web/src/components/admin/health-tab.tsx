@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -103,7 +104,7 @@ export function HealthTab({
 	}, [getAccessToken, t]);
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 animate-fade-in">
 			<div>
 				<h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
 					{t("healthTitle")}
@@ -124,17 +125,30 @@ export function HealthTab({
 					? (["skel-pg", "skel-qdrant", "skel-redis"] as const).map((key) => (
 							<div
 								key={key}
-								className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse"
+								className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5"
 							>
 								<div className="flex items-center gap-3 mb-3">
-									<div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-white/[0.06]" />
-									<div className="h-4 w-24 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+									<Skeleton
+										className="rounded-full"
+										height="0.75rem"
+										width="0.75rem"
+									/>
+									<Skeleton height="1rem" width="6rem" />
 								</div>
-								<div className="h-3 w-16 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+								<Skeleton height="0.75rem" width="4rem" />
 							</div>
 						))
-					: checks.map((check) => (
-							<HealthCard key={check.service} check={check} />
+					: checks.map((check, _hIdx) => (
+							<div
+								key={check.service}
+								className="animate-fade-in opacity-0"
+								style={{
+									animationDelay: `${_hIdx * 80}ms`,
+									animationFillMode: "forwards",
+								}}
+							>
+								<HealthCard check={check} />
+							</div>
 						))}
 			</div>
 		</div>

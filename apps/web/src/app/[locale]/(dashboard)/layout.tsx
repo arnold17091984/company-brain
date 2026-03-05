@@ -5,6 +5,7 @@ import {
 	MobileSidebar,
 	Sidebar,
 	SidebarProvider,
+	useSidebar,
 } from "@/components/layout/sidebar";
 import {
 	CommandPalette,
@@ -12,16 +13,50 @@ import {
 } from "@/components/ui/command-palette";
 import { ToastProvider } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 // ─── Inner layout — needs router + command palette ──────────
 
 function DashboardInner({ children }: { readonly children: React.ReactNode }) {
 	const router = useRouter();
 	const { isOpen, open, close } = useCommandPalette();
+	const { toggleCollapsed } = useSidebar();
 
 	function handleNavigate(path: string) {
 		router.push(path);
 	}
+
+	// Global keyboard shortcuts
+	useEffect(() => {
+		function onKeyDown(e: KeyboardEvent) {
+			if (!(e.metaKey || e.ctrlKey)) return;
+
+			switch (e.key) {
+				case "k":
+					e.preventDefault();
+					open();
+					break;
+				case "b":
+					e.preventDefault();
+					toggleCollapsed();
+					break;
+				case "n":
+					e.preventDefault();
+					router.push("/chat");
+					break;
+				case "/":
+					e.preventDefault();
+					// Keyboard shortcuts help — log for now
+					console.info(
+						"Keyboard shortcuts: Cmd+K (search), Cmd+B (sidebar), Cmd+N (new chat)",
+					);
+					break;
+			}
+		}
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [open, toggleCollapsed, router]);
 
 	return (
 		<div className="flex h-screen overflow-hidden bg-(--color-bg-subtle) dark:bg-(--color-bg-base)">

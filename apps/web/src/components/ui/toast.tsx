@@ -195,7 +195,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 				type="button"
 				onClick={() => onDismiss(toast.id)}
 				aria-label="Dismiss notification"
-				className="shrink-0 mt-0.5 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-150"
+				className="shrink-0 mt-0.5 p-0.5 rounded-md text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-all duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 			>
 				<CloseIcon />
 			</button>

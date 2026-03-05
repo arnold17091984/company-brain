@@ -46,7 +46,9 @@ function NavButton({ onClick, disabled, label, direction }: NavButtonProps) {
 				// Base dimensions and typography
 				"inline-flex items-center gap-1.5 min-h-[32px] px-3 py-1.5 text-xs font-medium rounded-lg",
 				// Transition
-				"transition-colors duration-150",
+				"transition-all duration-150",
+				"active:scale-[0.97]",
+				"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 				// Normal state
 				"text-zinc-700 dark:text-zinc-300",
 				"bg-zinc-100 dark:bg-white/[0.04]",

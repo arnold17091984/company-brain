@@ -16,7 +16,7 @@ function HamburgerButton() {
 		<button
 			type="button"
 			onClick={toggle}
-			className="lg:hidden p-2 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-colors duration-[var(--duration-normal)]"
+			className="lg:hidden p-2 rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.06] transition-all duration-[var(--duration-normal)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
 			aria-label="Toggle sidebar"
 		>
 			<svg
@@ -64,8 +64,9 @@ function SearchTrigger({ onOpen }: SearchTriggerProps) {
 				"bg-zinc-100/80 dark:bg-white/[0.05]",
 				"border border-zinc-200/80 dark:border-white/[0.06]",
 				"hover:bg-zinc-200/60 dark:hover:bg-white/[0.08]",
-				"transition-colors duration-[var(--duration-normal)]",
-				"focus-visible:ring-2 focus-visible:ring-indigo-500",
+				"transition-all duration-[var(--duration-normal)]",
+				"active:scale-[0.97]",
+				"focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
 				"min-w-[180px]",
 			].join(" ")}
 			aria-label="Open command palette"
@@ -257,8 +258,9 @@ function UserMenu({ userName, userEmail, userInitial }: UserMenuProps) {
 					"bg-indigo-100 dark:bg-gradient-to-br dark:from-indigo-500 dark:to-violet-600",
 					"ring-2 ring-white/[0.12] dark:ring-white/[0.12]",
 					"hover:ring-indigo-400/40 dark:hover:ring-indigo-400/40",
-					"transition-shadow duration-[var(--duration-normal)]",
-					"focus-visible:ring-indigo-400",
+					"transition-all duration-[var(--duration-normal)]",
+					"active:scale-[0.97]",
+					"focus-visible:ring-indigo-400 focus-visible:outline-none",
 				].join(" ")}
 				aria-label="Open user menu"
 				aria-haspopup="true"

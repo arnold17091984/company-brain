@@ -174,7 +174,7 @@ export function MessageInput({
 								onClick={handleMicClick}
 								aria-label={isRecording ? t("voiceStop") : t("voiceStart")}
 								aria-pressed={isRecording}
-								className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-150 ${
+								className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
 									isRecording
 										? "bg-red-500/90 text-white shadow-md shadow-red-500/30 ring-4 ring-red-500/20"
 										: "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-white/[0.06] hover:text-zinc-600 dark:hover:text-zinc-300"
@@ -231,7 +231,7 @@ export function MessageInput({
 							onClick={handleSend}
 							disabled={!canSend}
 							aria-label={t("sendMessage")}
-							className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150 ${
+							className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
 								canSend
 									? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white hover:brightness-110 shadow-lg shadow-indigo-500/30 active:scale-[0.93] active:shadow-md"
 									: "bg-zinc-100/60 dark:bg-white/[0.05] text-zinc-300 dark:text-zinc-700 cursor-not-allowed"

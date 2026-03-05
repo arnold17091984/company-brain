@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -132,13 +133,17 @@ function ConnectorIcon({ id }: { id: string }) {
 
 function SkeletonCard() {
 	return (
-		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5 animate-pulse">
+		<div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-zinc-200/80 dark:border-white/[0.06] p-5">
 			<div className="flex items-start gap-4">
-				<div className="shrink-0 w-10 h-10 rounded-lg bg-zinc-200 dark:bg-white/[0.06]" />
+				<Skeleton
+					className="shrink-0 rounded-lg"
+					height="2.5rem"
+					width="2.5rem"
+				/>
 				<div className="flex-1 min-w-0 space-y-2">
-					<div className="h-4 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded" />
-					<div className="h-3 w-48 bg-zinc-100 dark:bg-white/[0.04] rounded" />
-					<div className="h-3 w-24 bg-zinc-100 dark:bg-white/[0.04] rounded" />
+					<Skeleton height="1rem" width="8rem" />
+					<Skeleton height="0.75rem" width="12rem" />
+					<Skeleton height="0.75rem" width="6rem" />
 				</div>
 			</div>
 		</div>
@@ -674,7 +679,7 @@ function ConnectorCard({
 						type="button"
 						disabled={ingestState === "loading"}
 						onClick={() => onIngest(source.id)}
-						className="mt-3 min-h-[44px] inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl border transition-colors duration-150 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+						className="mt-3 min-h-[44px] inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl border transition-[colors,transform] duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-500/[0.08] dark:border-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/[0.15] dark:hover:border-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{ingestState === "loading" ? (
 							<>
@@ -804,7 +809,7 @@ export function DataSourcesTab({
 	const t = useTranslations("admin");
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8 animate-fade-in">
 			{/* Data Sources section */}
 			<section>
 				<div className="flex items-center justify-between mb-4">
@@ -833,14 +838,22 @@ export function DataSourcesTab({
 							<SkeletonCard />
 						</>
 					) : (
-						sources.map((source) => (
-							<ConnectorCard
+						sources.map((source, _srcIdx) => (
+							<div
 								key={source.id}
-								source={source}
-								onIngest={onIngest}
-								ingestState={ingestStates[source.id] ?? "idle"}
-								getAccessToken={getAccessToken}
-							/>
+								className="animate-fade-in opacity-0"
+								style={{
+									animationDelay: `${_srcIdx * 80}ms`,
+									animationFillMode: "forwards",
+								}}
+							>
+								<ConnectorCard
+									source={source}
+									onIngest={onIngest}
+									ingestState={ingestStates[source.id] ?? "idle"}
+									getAccessToken={getAccessToken}
+								/>
+							</div>
 						))
 					)}
 				</div>
