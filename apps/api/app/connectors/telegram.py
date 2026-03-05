@@ -36,12 +36,15 @@ _MAX_THREAD_CHARS = 8_000
 class TelegramConnector:
     """Reads message history from Telegram channels/groups via the Bot API."""
 
+    def __init__(self, *, bot_token: str | None = None) -> None:
+        self._bot_token = bot_token
+
     @property
     def connector_type(self) -> ConnectorType:
         return ConnectorType.TELEGRAM
 
     def _base_url(self) -> str:
-        token = settings.telegram_bot_token
+        token = self._bot_token or settings.telegram_bot_token
         if not token:
             raise RuntimeError("telegram_bot_token is not configured")
         return f"{_BOT_API}/bot{token}"

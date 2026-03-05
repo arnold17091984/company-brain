@@ -442,6 +442,256 @@ function GoogleDriveFolderConfig({
 	);
 }
 
+// ---- Connector credential config -----------------------------------------
+
+const CONNECTOR_KEY_MAP: Record<string, string> = {
+	telegram: "telegram_bot_token",
+	notion: "notion_integration_token",
+};
+
+function ConnectorCredentialConfig({
+	connectorId,
+	getAccessToken,
+}: {
+	connectorId: string;
+	getAccessToken: () => string;
+}) {
+	const t = useTranslations("admin");
+	const keyName = CONNECTOR_KEY_MAP[connectorId];
+	const [expanded, setExpanded] = useState(false);
+	const [status, setStatus] = useState<APIKeyStatus | null>(null);
+	const [loading, setLoading] = useState(false);
+	const [editing, setEditing] = useState(false);
+	const [tokenValue, setTokenValue] = useState("");
+	const [saving, setSaving] = useState(false);
+	const [saved, setSaved] = useState(false);
+
+	useEffect(() => {
+		if (!expanded) return;
+		let cancelled = false;
+		async function loadStatus() {
+			setLoading(true);
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+					headers: { Authorization: `Bearer ${getAccessToken()}` },
+				});
+				if (res.ok) {
+					const keys: APIKeyStatus[] = await res.json();
+					const found = keys.find((k) => k.key_name === keyName);
+					if (!cancelled && found) setStatus(found);
+				}
+			} catch {
+				/* non-critical */
+			} finally {
+				if (!cancelled) setLoading(false);
+			}
+		}
+		loadStatus();
+		return () => {
+			cancelled = true;
+		};
+	}, [expanded, getAccessToken, keyName]);
+
+	const handleSave = async () => {
+		if (!tokenValue.trim()) return;
+		setSaving(true);
+		setSaved(false);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ [keyName]: tokenValue }),
+			});
+			if (res.ok) {
+				const keys: APIKeyStatus[] = await res.json();
+				const found = keys.find((k) => k.key_name === keyName);
+				if (found) setStatus(found);
+				setEditing(false);
+				setTokenValue("");
+				setSaved(true);
+				setTimeout(() => setSaved(false), 3000);
+			}
+		} catch {
+			/* non-critical */
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const handleReset = async () => {
+		setSaving(true);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/v1/admin/api-keys`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${getAccessToken()}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ [keyName]: "" }),
+			});
+			if (res.ok) {
+				const keys: APIKeyStatus[] = await res.json();
+				const found = keys.find((k) => k.key_name === keyName);
+				if (found) setStatus(found);
+			}
+		} catch {
+			/* non-critical */
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	if (!keyName) return null;
+
+	const sourceBadge = status
+		? {
+				db: {
+					label: "DB",
+					cls: "text-indigo-600 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-500/[0.12]",
+				},
+				env: {
+					label: "Env",
+					cls: "text-emerald-600 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-500/[0.12]",
+				},
+				none: {
+					label: t("credentialNotSet"),
+					cls: "text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-white/[0.06]",
+				},
+			}[status.source]
+		: null;
+
+	return (
+		<div className="mt-3 border-t border-zinc-200/60 dark:border-white/[0.04] pt-3">
+			<button
+				type="button"
+				onClick={() => setExpanded((v) => !v)}
+				className="min-h-[44px] flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+			>
+				<svg
+					className={`w-3.5 h-3.5 transition-transform ${expanded ? "rotate-90" : ""}`}
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					strokeWidth={2}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M8.25 4.5l7.5 7.5-7.5 7.5"
+					/>
+				</svg>
+				{t("connectionSettings")}
+			</button>
+
+			{expanded && (
+				<div className="mt-2 space-y-2">
+					{loading ? (
+						<div className="h-8 w-full bg-zinc-100 dark:bg-white/[0.04] rounded-lg animate-pulse" />
+					) : (
+						<>
+							{/* Status display */}
+							<div className="flex items-center gap-2 bg-zinc-50 dark:bg-white/[0.03] rounded-lg px-3 py-2">
+								<div className="flex-1 min-w-0">
+									<div className="flex items-center gap-2">
+										<span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+											{connectorId === "telegram"
+												? "Bot Token"
+												: "Integration Token"}
+										</span>
+										{sourceBadge && (
+											<span
+												className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${sourceBadge.cls}`}
+											>
+												{sourceBadge.label}
+											</span>
+										)}
+									</div>
+									{status?.masked_value && (
+										<p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono mt-0.5 truncate">
+											{status.masked_value}
+										</p>
+									)}
+									{status?.source === "none" && (
+										<p className="text-xs text-amber-500 dark:text-amber-400 mt-0.5">
+											{t("credentialNotSet")}
+										</p>
+									)}
+								</div>
+
+								{!editing && (
+									<div className="flex items-center gap-1 shrink-0">
+										<button
+											type="button"
+											onClick={() => setEditing(true)}
+											className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/[0.08] rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/[0.15] transition-colors"
+										>
+											{t("changeCredential")}
+										</button>
+										{status?.source === "db" && (
+											<button
+												type="button"
+												onClick={handleReset}
+												disabled={saving}
+												className="min-h-[32px] px-2.5 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/[0.04] rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors disabled:opacity-50"
+											>
+												{t("resetCredential")}
+											</button>
+										)}
+									</div>
+								)}
+							</div>
+
+							{/* Edit mode */}
+							{editing && (
+								<div className="flex items-center gap-2">
+									<input
+										type="password"
+										value={tokenValue}
+										onChange={(e) => setTokenValue(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") handleSave();
+										}}
+										placeholder={t("enterToken")}
+										className="min-h-[44px] flex-1 px-3 py-2 text-xs rounded-xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1e1e24] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/40 transition-colors font-mono"
+									/>
+									<button
+										type="button"
+										onClick={handleSave}
+										disabled={saving || !tokenValue.trim()}
+										className="min-h-[44px] px-3 py-2 text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl hover:brightness-110 transition-[filter] duration-150 disabled:opacity-50 shadow-sm shadow-indigo-500/25"
+									>
+										{saving ? "..." : t("saveConfig")}
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setEditing(false);
+											setTokenValue("");
+										}}
+										className="min-h-[44px] px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-white/[0.04] rounded-xl hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors"
+									>
+										{t("cancel")}
+									</button>
+								</div>
+							)}
+
+							{saved && (
+								<span className="text-xs text-green-600 dark:text-green-400 font-medium">
+									{t("tokenSaved")}
+								</span>
+							)}
+						</>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
 // ---- Connector card -------------------------------------------------------
 
 function ConnectorCard({
@@ -572,6 +822,12 @@ function ConnectorCard({
 
 					{source.id === "google_drive" && (
 						<GoogleDriveFolderConfig getAccessToken={getAccessToken} />
+					)}
+					{(source.id === "telegram" || source.id === "notion") && (
+						<ConnectorCredentialConfig
+							connectorId={source.id}
+							getAccessToken={getAccessToken}
+						/>
 					)}
 				</div>
 			</div>

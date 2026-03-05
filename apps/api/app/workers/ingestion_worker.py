@@ -46,6 +46,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.connectors import get_connector
 from app.connectors.chunker import DefaultChunkingService
 from app.connectors.google_drive import GoogleDriveConnector
+from app.connectors.notion import NotionConnector
+from app.connectors.telegram import TelegramConnector
+from app.core.api_keys import get_api_key
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.database import Department, Document, SystemSetting
@@ -331,17 +334,24 @@ async def ingestion_sync_fn(
         full_sync=full_sync,
     )
 
-    connector = get_connector(connector_type)
     chunker = DefaultChunkingService()
     qdrant = AsyncQdrantClient(
         url=settings.qdrant_url,
         api_key=settings.qdrant_api_key or None,
     )
 
-    # Load connector-specific config from DB and apply
-    if isinstance(connector, GoogleDriveConnector):
-        connector.folder_ids = None  # reset before loading
+    # Resolve connector with DB-stored credentials (encrypted, with env fallback)
     async with AsyncSessionLocal() as config_session:
+        if connector_type_str == "telegram":
+            token = await get_api_key("telegram_bot_token", config_session)
+            connector = TelegramConnector(bot_token=token)
+        elif connector_type_str == "notion":
+            token = await get_api_key("notion_integration_token", config_session)
+            connector = NotionConnector(integration_token=token)
+        else:
+            connector = get_connector(connector_type)
+
+        # Load connector-specific config (e.g. Google Drive folder scope)
         config_key = f"connector:{connector_type_str}"
         config_result = await config_session.execute(
             select(SystemSetting).where(SystemSetting.key == config_key)

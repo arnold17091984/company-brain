@@ -81,12 +81,15 @@ def _block_to_markdown(block: dict[str, Any]) -> str:  # noqa: PLR0911
 class NotionConnector:
     """Fetches Notion pages and database entries as RawDocuments."""
 
+    def __init__(self, *, integration_token: str | None = None) -> None:
+        self._integration_token = integration_token
+
     @property
     def connector_type(self) -> ConnectorType:
         return ConnectorType.NOTION
 
     def _headers(self) -> dict[str, str]:
-        token = settings.notion_integration_token
+        token = self._integration_token or settings.notion_integration_token
         if not token:
             raise RuntimeError("notion_integration_token is not configured")
         return {
